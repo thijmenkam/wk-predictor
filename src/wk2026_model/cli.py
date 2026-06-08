@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
@@ -9,7 +10,12 @@ import numpy as np
 import pandas as pd
 import typer
 
-from wk2026_model.config import ProjectConfig, load_config
+from wk2026_model.config import (
+    PoolScoringConfig,
+    ProjectConfig,
+    load_config,
+    load_pool_scoring_config,
+)
 from wk2026_model.data.loaders import load_fixtures, load_teams, validate_teams
 from wk2026_model.data.schemas import GROUP_IDS, Fixture, Team
 from wk2026_model.outputs.export import (
@@ -33,6 +39,16 @@ from wk2026_model.simulation.tournament import (
 app = typer.Typer(help="Lokaal WK 2026-voorspelmodel.", no_args_is_help=True)
 DEFAULT_CONFIG_PATH = Path("configs/base.yaml")
 DEFAULT_OUTPUT_DIR = Path("outputs/runs")
+DEFAULT_POOL_SCORING_PATH = Path("configs/pool_scoring.yaml")
+
+
+class PoolScoreStrategy(StrEnum):
+    """Ondersteunde strategieën voor poulescore-aanbevelingen."""
+
+    MOST_LIKELY_SCORE = "most_likely_score"
+    MAX_EXPECTED_POOL_POINTS = "max_expected_pool_points"
+
+
 RUN_LIMITATIONS = [
     "Knock-out bracket uses seeded placeholder, not official FIFA mapping",
     "Expected goals are Elo-derived, not real xG",
@@ -344,6 +360,8 @@ def _export_run(
         teams,
         config.model,
         run_path / "pool_group_predictions.csv",
+        strategy=PoolScoreStrategy.MAX_EXPECTED_POOL_POINTS.value,
+        scoring=load_pool_scoring_config(DEFAULT_POOL_SCORING_PATH).group_stage,
     )
     if tournament_summary is not None:
         write_tournament_summary_csv(tournament_summary, run_path / "tournament_summary.csv")
@@ -358,39 +376,74 @@ def _print_export_result(run_path: Path, filenames: list[str]) -> None:
 
 
 def _print_pool_prediction_highlights(csv_path: Path) -> None:
-    """Toon wedstrijden met de grootste gelijkspelkans en sterkste favorieten."""
+    """Toon verschillen en de hoogste en laagste verwachte poulepunten."""
 
     predictions = pd.read_csv(csv_path)
-
-    typer.echo("\nTop 10 wedstrijden met hoogste draw probability")
-    for row in (
-        predictions.sort_values(["p_draw", "match_id"], ascending=[False, True])
-        .head(10)
-        .itertuples()
-    ):
-        typer.echo(
-            f"{row.match_id}: {row.team_a} - {row.team_b} "
-            f"({row.p_draw:.1%}, advies {row.recommended_score})"
-        )
-
-    favorites = predictions.assign(
-        favorite_probability=predictions[["p_win_a", "p_win_b"]].max(axis=1),
-        favorite_team=predictions["team_a"].where(
-            predictions["p_win_a"] >= predictions["p_win_b"],
-            predictions["team_b"],
-        ),
+    changed = predictions[
+        predictions["recommended_score"] != predictions["most_likely_score"]
+    ]
+    typer.echo(
+        f"\nAanbevolen scores gewijzigd versus most_likely_score: "
+        f"{len(changed)} van {len(predictions)}"
     )
-    typer.echo("\nTop 10 grootste favorieten")
+
+    typer.echo("\nTop 10 gewijzigde aanbevelingen")
+    if changed.empty:
+        typer.echo("(geen verschillen)")
     for row in (
-        favorites.sort_values(["favorite_probability", "match_id"], ascending=[False, True])
+        changed.sort_values(
+            ["expected_pool_points", "match_id"], ascending=[False, True]
+        )
         .head(10)
         .itertuples()
     ):
         typer.echo(
-            f"{row.match_id}: {row.favorite_team} tegen "
-            f"{row.team_b if row.favorite_team == row.team_a else row.team_a} "
-            f"({row.favorite_probability:.1%}, advies {row.recommended_score})"
+            f"{row.match_id}: {row.team_a} - {row.team_b}; "
+            f"{row.most_likely_score} -> {row.recommended_score} "
+            f"(EV {row.expected_pool_points:.3f})"
         )
+
+    for heading, ascending in (
+        ("Top 10 hoogste verwachte poulepunten", False),
+        ("Top 10 laagste verwachte poulepunten", True),
+    ):
+        typer.echo(f"\n{heading}")
+        for row in (
+            predictions.sort_values(
+                ["expected_pool_points", "match_id"], ascending=[ascending, True]
+            )
+            .head(10)
+            .itertuples()
+        ):
+            typer.echo(
+                f"{row.match_id}: {row.team_a} - {row.team_b}; "
+                f"advies {row.recommended_score} (EV {row.expected_pool_points:.3f})"
+            )
+
+
+def _print_pool_scoring_summary(scoring: PoolScoringConfig) -> None:
+    """Toon de geladen puntentelling compact in de CLI."""
+
+    group = scoring.group_stage
+    knockout = scoring.knockout_stage
+    top_scorers = scoring.top_scorers
+    typer.echo("Puntentelling:")
+    typer.echo(
+        f"- groepsfase: {group.correct_outcome_points:g} uitslag + "
+        f"{group.exact_score_bonus_points:g} exacte-scorebonus"
+    )
+    typer.echo(
+        f"- knock-out: {knockout.correct_outcome_points:g} uitslag + "
+        f"{knockout.exact_score_bonus_points:g} exacte-scorebonus; "
+        f"{knockout.correct_semifinalist_points:g} per halvefinalist; "
+        f"{knockout.correct_final_placement_bonus_points:g} per eindpositie"
+    )
+    typer.echo(
+        f"- topscorers: {top_scorers.correct_top_scorer_points:g} correct + "
+        f"{top_scorers.points_per_goal_by_predicted_top_scorer:g} per goal; "
+        "shoot-outgoals "
+        f"{'wel' if top_scorers.include_penalty_shootout_goals else 'niet'} meegeteld"
+    )
 
 
 @app.command("export-pool-predictions")
@@ -399,6 +452,14 @@ def export_pool_predictions_command(
         Path,
         typer.Option("--config", help="Pad naar de YAML-configuratie."),
     ] = DEFAULT_CONFIG_PATH,
+    strategy: Annotated[
+        PoolScoreStrategy,
+        typer.Option("--strategy", help="Strategie voor de aanbevolen invulscore."),
+    ] = PoolScoreStrategy.MAX_EXPECTED_POOL_POINTS,
+    scoring_config: Annotated[
+        Path,
+        typer.Option("--scoring-config", help="Pad naar de poule-puntentelling."),
+    ] = DEFAULT_POOL_SCORING_PATH,
     seed: Annotated[
         int | None,
         typer.Option(
@@ -416,6 +477,7 @@ def export_pool_predictions_command(
 
     config = _config(config_path)
     try:
+        scoring = load_pool_scoring_config(scoring_config)
         teams, _ = _configured_teams(config, demo_fallback=False)
         validate_teams(teams, strict=True)
     except (OSError, ValueError) as exc:
@@ -430,8 +492,13 @@ def export_pool_predictions_command(
         teams,
         config.model,
         run_path / "pool_group_predictions.csv",
+        strategy=strategy.value,
+        scoring=scoring.group_stage,
     )
     typer.echo(f"Pouleadvies-CSV geschreven naar:\n{csv_path}")
+    typer.echo(f"Strategie: {strategy.value}")
+    typer.echo(f"Scoringconfig: {scoring_config}")
+    _print_pool_scoring_summary(scoring)
     _print_pool_prediction_highlights(csv_path)
 
 

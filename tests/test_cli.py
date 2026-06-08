@@ -113,8 +113,10 @@ def test_export_pool_predictions_command_writes_csv(tmp_path: Path) -> None:
 
     assert result.exit_code == 0
     assert "Pouleadvies-CSV geschreven naar:" in result.stdout
-    assert "Top 10 wedstrijden met hoogste draw probability" in result.stdout
-    assert "Top 10 grootste favorieten" in result.stdout
+    assert "Strategie: max_expected_pool_points" in result.stdout
+    assert "Top 10 gewijzigde aanbevelingen" in result.stdout
+    assert "Top 10 hoogste verwachte poulepunten" in result.stdout
+    assert "Top 10 laagste verwachte poulepunten" in result.stdout
     run_directories = list(tmp_path.iterdir())
     assert len(run_directories) == 1
     csv_path = run_directories[0] / "pool_group_predictions.csv"

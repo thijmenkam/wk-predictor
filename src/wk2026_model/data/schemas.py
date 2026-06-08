@@ -46,6 +46,7 @@ class Fixture(BaseModel):
     team_a: str = Field(min_length=1)
     team_b: str = Field(min_length=1)
     matchday: int | None = Field(default=None, gt=0)
+    match_round: int | None = Field(default=None, gt=0)
     location: str | None = None
 
     @field_validator("match_id", "team_a", "team_b")
@@ -119,6 +120,9 @@ class PoolScoreRecommendation(BaseModel):
     goals_a: int = Field(ge=0)
     goals_b: int = Field(ge=0)
     reason: str
+    expected_pool_points: float = Field(ge=0)
+    score_probability: float = Field(ge=0, le=1)
+    strategy: str
 
 
 class GroupStanding(BaseModel):

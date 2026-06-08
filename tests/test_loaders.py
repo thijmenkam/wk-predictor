@@ -46,6 +46,7 @@ def test_load_fixtures_generates_when_file_is_missing(tmp_path: Path) -> None:
     assert len(fixtures) == 6
     assert {fixture.group for fixture in fixtures} == {"A"}
     assert all(fixture.matchday is None for fixture in fixtures)
+    assert all(fixture.match_round is None for fixture in fixtures)
 
 
 def test_load_fixtures_rejects_unknown_team(tmp_path: Path) -> None:
@@ -74,3 +75,16 @@ def test_validate_teams_accepts_small_dataset_in_non_strict_mode() -> None:
 def test_validate_teams_requires_48_teams_in_strict_mode() -> None:
     with pytest.raises(ValueError, match="exactly 48 teams"):
         validate_teams(_small_teams(), strict=True)
+
+
+def test_load_fixtures_accepts_round_alias(tmp_path: Path) -> None:
+    path = tmp_path / "fixtures.csv"
+    path.write_text(
+        "match_id,stage,group,team_a,team_b,matchday,round,location\n"
+        "A-1,group,A,Alpha,Bravo,,1,\n",
+        encoding="utf-8",
+    )
+
+    fixtures = load_fixtures(path, _small_teams())
+
+    assert fixtures[0].match_round == 1

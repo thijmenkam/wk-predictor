@@ -9,8 +9,9 @@ from typing import Any
 import pandas as pd
 from pydantic import BaseModel
 
-from wk2026_model.config import ModelConfig
+from wk2026_model.config import GroupStageScoringConfig, ModelConfig
 from wk2026_model.data.schemas import Fixture, Team
+from wk2026_model.models.poisson import score_grid
 from wk2026_model.simulation.match import predict_match, recommend_pool_score
 from wk2026_model.simulation.tournament import GroupStageSummary, TournamentSummary
 
@@ -49,6 +50,7 @@ GROUP_MATCH_PREDICTION_COLUMNS = [
     "match_id",
     "stage",
     "group",
+    "match_round",
     "team_a",
     "team_b",
     "elo_a",
@@ -65,6 +67,7 @@ GROUP_MATCH_PREDICTION_COLUMNS = [
 POOL_GROUP_PREDICTION_COLUMNS = [
     "match_id",
     "group",
+    "match_round",
     "team_a",
     "team_b",
     "elo_a",
@@ -77,6 +80,10 @@ POOL_GROUP_PREDICTION_COLUMNS = [
     "most_likely_score",
     "most_likely_goals_a",
     "most_likely_goals_b",
+    "strategy",
+    "expected_pool_points",
+    "most_likely_score_probability",
+    "recommended_score_probability",
     "recommended_score",
     "recommended_goals_a",
     "recommended_goals_b",
@@ -133,6 +140,9 @@ def _group_match_prediction_rows(
     fixtures: list[Fixture],
     teams: list[Team],
     config: ModelConfig,
+    *,
+    strategy: str = "most_likely_score",
+    scoring: GroupStageScoringConfig | None = None,
 ) -> list[dict[str, Any]]:
     """Bereken exportvelden voor alle groepswedstrijden zonder I/O uit te voeren."""
 
@@ -145,12 +155,26 @@ def _group_match_prediction_rows(
         team_b = teams_by_name[fixture.team_b]
         prediction = predict_match(team_a, team_b, config)
         goals_a, goals_b = prediction.most_likely_score
-        recommendation = recommend_pool_score(prediction)
+        recommendation = recommend_pool_score(
+            prediction,
+            strategy=strategy,
+            scoring=scoring or GroupStageScoringConfig(
+                correct_outcome_points=1.0,
+                exact_score_bonus_points=1.0,
+            ),
+            max_goals=config.max_goals,
+        )
+        probability_grid = score_grid(
+            prediction.lambda_a,
+            prediction.lambda_b,
+            config.max_goals,
+        )
         rows.append(
             {
                 "match_id": fixture.match_id,
                 "stage": fixture.stage,
                 "group": fixture.group,
+                "match_round": fixture.match_round,
                 "team_a": team_a.name,
                 "team_b": team_b.name,
                 "elo_a": team_a.elo,
@@ -163,6 +187,10 @@ def _group_match_prediction_rows(
                 "most_likely_score": f"{goals_a}-{goals_b}",
                 "most_likely_goals_a": goals_a,
                 "most_likely_goals_b": goals_b,
+                "strategy": recommendation.strategy,
+                "expected_pool_points": recommendation.expected_pool_points,
+                "most_likely_score_probability": probability_grid[(goals_a, goals_b)],
+                "recommended_score_probability": recommendation.score_probability,
                 "recommended_score": (f"{recommendation.goals_a}-{recommendation.goals_b}"),
                 "recommended_goals_a": recommendation.goals_a,
                 "recommended_goals_b": recommendation.goals_b,
@@ -192,12 +220,21 @@ def write_pool_group_predictions_csv(
     teams: list[Team],
     config: ModelConfig,
     path: str | Path,
+    *,
+    strategy: str = "most_likely_score",
+    scoring: GroupStageScoringConfig | None = None,
 ) -> Path:
     """Schrijf direct invulbare pouleadviezen voor alle groepswedstrijden."""
 
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    rows = _group_match_prediction_rows(fixtures, teams, config)
+    rows = _group_match_prediction_rows(
+        fixtures,
+        teams,
+        config,
+        strategy=strategy,
+        scoring=scoring,
+    )
     pd.DataFrame(rows, columns=POOL_GROUP_PREDICTION_COLUMNS).to_csv(output_path, index=False)
     return output_path
 
