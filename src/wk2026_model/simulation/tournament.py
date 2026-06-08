@@ -293,6 +293,16 @@ class KnockoutResult:
 
 
 @dataclass(frozen=True, slots=True)
+class TournamentOutcome:
+    """De vier eindposities van één gesimuleerd toernooi."""
+
+    champion: str
+    runner_up: str
+    third: str
+    fourth: str
+
+
+@dataclass(frozen=True, slots=True)
 class TournamentResult:
     """Eindklassering en bereikte rondes van één volledig toernooi."""
 
@@ -332,10 +342,20 @@ TournamentTeamSummary = TeamTournamentSummary
 
 @dataclass(frozen=True, slots=True)
 class TournamentSummary:
-    """Monte Carlo-samenvatting van het volledige toernooi."""
+    """Monte Carlo-samenvatting met optioneel de ruwe eindscenario's."""
 
     teams: list[TournamentTeamSummary]
     num_simulations: int
+    outcomes: list[TournamentOutcome] | None = None
+
+    @property
+    def team_summaries(self) -> list[TournamentTeamSummary]:
+        """Geef de geaggregeerde teamkansen onder de expliciete API-naam."""
+
+        return self.teams
+
+
+TournamentSummaryResult = TournamentSummary
 
 
 def build_qualified_slots(group_stage_result: GroupStageResult) -> dict[str, Team]:
@@ -543,8 +563,10 @@ def simulate_tournament(
     config: ModelConfig,
     num_simulations: int,
     rng: np.random.Generator,
+    *,
+    return_outcomes: bool = False,
 ) -> TournamentSummary:
-    """Simuleer het volledige toernooi herhaaldelijk met lichte dict-counters."""
+    """Simuleer het toernooi en bewaar desgewenst ieder eindscenario."""
 
     validate_teams(teams, strict=True)
     if num_simulations <= 0:
@@ -562,8 +584,18 @@ def simulate_tournament(
         "fourth",
     )
     counters: dict[str, defaultdict[str, int]] = {field: defaultdict(int) for field in fields}
+    outcomes: list[TournamentOutcome] | None = [] if return_outcomes else None
     for _ in range(num_simulations):
         result = _simulate_tournament_once_validated(teams, config, rng)
+        if outcomes is not None:
+            outcomes.append(
+                TournamentOutcome(
+                    champion=result.champion,
+                    runner_up=result.runner_up,
+                    third=result.third,
+                    fourth=result.fourth,
+                )
+            )
         for field in fields[:5]:
             for team_name in getattr(result, field):
                 counters[field][team_name] += 1
@@ -594,4 +626,8 @@ def simulate_tournament(
                 p_top4=champion + runner_up + third + fourth,
             )
         )
-    return TournamentSummary(teams=rows, num_simulations=num_simulations)
+    return TournamentSummary(
+        teams=rows,
+        num_simulations=num_simulations,
+        outcomes=outcomes,
+    )

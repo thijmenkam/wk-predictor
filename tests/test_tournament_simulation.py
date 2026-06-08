@@ -186,3 +186,22 @@ def test_simulate_tournament_returns_valid_summary_for_all_teams() -> None:
         assert row.p_top4 == pytest.approx(
             row.p_champion + row.p_runner_up + row.p_third + row.p_fourth
         )
+
+
+def test_simulate_tournament_can_return_raw_outcomes() -> None:
+    from wk2026_model.simulation.tournament import simulate_tournament
+
+    summary = simulate_tournament(
+        _teams(),
+        ModelConfig(),
+        3,
+        np.random.default_rng(42),
+        return_outcomes=True,
+    )
+
+    assert summary.outcomes is not None
+    assert len(summary.outcomes) == 3
+    assert all(
+        len({outcome.champion, outcome.runner_up, outcome.third, outcome.fourth}) == 4
+        for outcome in summary.outcomes
+    )

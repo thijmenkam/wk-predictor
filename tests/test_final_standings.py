@@ -140,6 +140,8 @@ def test_final_standings_export_contains_four_rows_and_exact_position_probabilit
     frame = pd.read_csv(output_path)
     assert list(frame["position"]) == ["gold", "silver", "bronze", "fourth"]
     assert len(frame) == 4
+    assert "expected_points_component_marginal" in frame.columns
+    assert set(frame["ev_method"]) == {"marginal"}
     expected_fields = {
         "gold": "p_champion",
         "silver": "p_runner_up",
@@ -172,3 +174,66 @@ def test_final_standings_candidates_export_contains_position_evs(tmp_path: Path)
         "ev_if_bronze",
         "ev_if_fourth",
     }.issubset(frame.columns)
+
+
+def test_score_final_standings_pick_against_fully_correct_outcome() -> None:
+    from wk2026_model.pool.final_standings import score_final_standings_pick_against_outcome
+    from wk2026_model.simulation.tournament import TournamentOutcome
+
+    pick = FinalStandingsPick("Spain", "France", "Argentina", "England")
+    outcome = TournamentOutcome("Spain", "France", "Argentina", "England")
+
+    assert score_final_standings_pick_against_outcome(pick, outcome, _scoring()) == pytest.approx(
+        14.4
+    )
+
+
+def test_score_final_standings_pick_with_all_top4_teams_misplaced() -> None:
+    from wk2026_model.pool.final_standings import score_final_standings_pick_against_outcome
+    from wk2026_model.simulation.tournament import TournamentOutcome
+
+    pick = FinalStandingsPick("Spain", "France", "Argentina", "England")
+    outcome = TournamentOutcome("France", "Argentina", "England", "Spain")
+
+    assert score_final_standings_pick_against_outcome(pick, outcome, _scoring()) == pytest.approx(
+        5.2
+    )
+
+
+def test_score_final_standings_pick_with_no_top4_teams() -> None:
+    from wk2026_model.pool.final_standings import score_final_standings_pick_against_outcome
+    from wk2026_model.simulation.tournament import TournamentOutcome
+
+    pick = FinalStandingsPick("Spain", "France", "Argentina", "England")
+    outcome = TournamentOutcome("Brazil", "Germany", "Portugal", "Netherlands")
+
+    assert score_final_standings_pick_against_outcome(pick, outcome, _scoring()) == 0.0
+
+
+def test_expected_final_standings_points_from_outcomes_averages_scores() -> None:
+    from wk2026_model.pool.final_standings import expected_final_standings_points_from_outcomes
+    from wk2026_model.simulation.tournament import TournamentOutcome
+
+    pick = FinalStandingsPick("Spain", "France", "Argentina", "England")
+    outcomes = [
+        TournamentOutcome("Spain", "France", "Argentina", "England"),
+        TournamentOutcome("Brazil", "Germany", "Portugal", "Netherlands"),
+    ]
+
+    assert expected_final_standings_points_from_outcomes(
+        pick, outcomes, _scoring()
+    ) == pytest.approx(7.2)
+
+
+def test_scenario_recommender_returns_four_distinct_teams() -> None:
+    from wk2026_model.pool.final_standings import recommend_final_standings_from_outcomes
+    from wk2026_model.simulation.tournament import TournamentOutcome
+
+    outcomes = [
+        TournamentOutcome("Gold Team", "Silver Team", "Bronze Team", "Fourth Team"),
+        TournamentOutcome("Gold Team", "Bronze Team", "Fourth Team", "Silver Team"),
+    ]
+    recommendation = recommend_final_standings_from_outcomes(outcomes, _clear_summary(), _scoring())
+
+    assert len(set(recommendation.as_pick().teams())) == 4
+    assert recommendation.strategy == "max_expected_final_standings_points_from_outcomes"
