@@ -15,7 +15,9 @@ from wk2026_model.simulation.match import predict_match
 from wk2026_model.simulation.tournament import (
     GroupStageSummary,
     TeamGroupStageSummary,
+    TournamentSummary,
     simulate_group_stage,
+    simulate_tournament,
 )
 
 app = typer.Typer(help="Lokaal WK 2026-voorspelmodel.", no_args_is_help=True)
@@ -84,8 +86,7 @@ def _print_group_stage_table(summary: GroupStageSummary) -> None:
     for group_id, rows in summary.by_group().items():
         typer.echo(f"Groep {group_id}")
         typer.echo(
-            f"{'Team':<20} {'Elo':>5} {'xPts':>6} {'1e%':>6} "
-            f"{'2e%':>6} {'3e%':>6} {'Door%':>7}"
+            f"{'Team':<20} {'Elo':>5} {'xPts':>6} {'1e%':>6} {'2e%':>6} {'3e%':>6} {'Door%':>7}"
         )
         for row in sorted(rows, key=lambda item: (-item.p_qualified, item.team)):
             typer.echo(
@@ -117,6 +118,33 @@ def _print_overall_qualification(summary: GroupStageSummary) -> None:
         typer.echo(
             f"{row.team:<20} {row.group:>5} {row.p_group_3rd:>7.1%} "
             f"{row.p_qualified_as_third:>13.1%}"
+        )
+
+
+def _print_tournament_summary(summary: TournamentSummary, top: int) -> None:
+    """Toon kampioens- en top-vierkansen zonder formatting in de simulatiekern."""
+
+    typer.echo("Kampioenskansen")
+    typer.echo(
+        f"{'Team':<20} {'Elo':>5} {'R32%':>7} {'QF%':>7} {'SF%':>7} {'Final%':>7} {'Win%':>7}"
+    )
+    champion_rows = sorted(summary.teams, key=lambda row: (-row.p_champion, row.team))[:top]
+    for row in champion_rows:
+        typer.echo(
+            f"{row.team:<20} {row.elo:>5.0f} {row.p_round_of_32:>7.1%} "
+            f"{row.p_quarter_final:>7.1%} {row.p_semi_final:>7.1%} "
+            f"{row.p_final:>7.1%} {row.p_champion:>7.1%}"
+        )
+
+    typer.echo("\nTop 4 kansen")
+    typer.echo(
+        f"{'Team':<20} {'Top4%':>7} {'Goud%':>7} {'Zilver%':>8} {'Brons%':>7} {'Vierde%':>8}"
+    )
+    top_four_rows = sorted(summary.teams, key=lambda row: (-row.p_top4, row.team))[:top]
+    for row in top_four_rows:
+        typer.echo(
+            f"{row.team:<20} {row.p_top4:>7.1%} {row.p_champion:>7.1%} "
+            f"{row.p_runner_up:>8.1%} {row.p_third:>7.1%} {row.p_fourth:>8.1%}"
         )
 
 
@@ -280,6 +308,46 @@ def simulate_group_stage_command(
     typer.echo(f"Volledige groepsfase: {simulation_count:,} simulaties\n")
     _print_group_stage_table(summary)
     _print_overall_qualification(summary)
+
+
+@app.command("simulate-tournament")
+def simulate_tournament_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Pad naar de YAML-configuratie."),
+    ] = DEFAULT_CONFIG_PATH,
+    num_simulations: Annotated[
+        int | None,
+        typer.Option(
+            "--num-simulations",
+            min=1,
+            help="Aantal Monte Carlo-simulaties; standaard de modelconfiguratie.",
+        ),
+    ] = None,
+    top: Annotated[
+        int,
+        typer.Option("--top", min=1, help="Aantal teams per ranglijst."),
+    ] = 20,
+) -> None:
+    """Simuleer groepsfase, seeded knock-outbracket en eindklassering."""
+
+    config = _config(config_path)
+    try:
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        validate_teams(teams, strict=True)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Volledig toernooi kon niet worden geladen: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    simulation_count = num_simulations or config.model.num_simulations
+    rng = np.random.default_rng(config.model.random_seed)
+    summary = simulate_tournament(teams, config.model, simulation_count, rng)
+    typer.echo(f"Volledig toernooi: {simulation_count:,} simulaties")
+    typer.echo(
+        "Let op: knock-out bracket gebruikt seeded placeholder mapping, "
+        "niet officiele FIFA mapping.\n"
+    )
+    _print_tournament_summary(summary, min(top, len(summary.teams)))
 
 
 if __name__ == "__main__":
