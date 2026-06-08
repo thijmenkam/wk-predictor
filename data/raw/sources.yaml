@@ -1,20 +1,20 @@
 elo:
-  primary_source: "World Football Elo Ratings"
+  primary_source: "Project prototype; verify against World Football Elo Ratings"
   url: "https://eloratings.net/"
-  retrieved_at: "TODO"
-  notes: "Manually copied ratings. Verify before serious predictions. The current prototype seed has not yet been source-verified."
+  retrieved_at: "2026-06-08"
+  notes: "Prototype ratings imported on this date. TODO: manually verify every rating against the primary source before serious predictions."
 
 fixtures:
-  primary_source: "FIFA World Cup 2026 scores and fixtures"
+  primary_source: "Project prototype; verify against FIFA World Cup 2026 scores and fixtures"
   url: "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures"
-  retrieved_at: "TODO"
-  notes: "Official source of truth for groups, fixtures, stadiums and kickoff times."
+  retrieved_at: "2026-06-08"
+  notes: "Prototype groups imported on this date. TODO: manually verify groups against FIFA; v0.1 fixtures remain generated round-robin combinations."
 
 fifa_ranking:
   primary_source: "FIFA/Coca-Cola Men's World Ranking"
   url: "https://inside.fifa.com/fifa-world-ranking/men"
   retrieved_at: "TODO"
-  notes: "Optional. Use as fallback or feature, not as primary strength rating."
+  notes: "Optional and empty in v0.1. Use as fallback or feature, not as primary strength rating."
 
 historical_results:
   primary_source: "martj42/international_results"
