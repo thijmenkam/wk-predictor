@@ -67,3 +67,32 @@ def test_simulate_tournament_command_reports_placeholder_and_rankings() -> None:
     assert "seeded placeholder mapping" in result.stdout
     assert "Kampioenskansen" in result.stdout
     assert "Top 4 kansen" in result.stdout
+
+
+def test_simulate_tournament_export_writes_all_run_files(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "simulate-tournament",
+            "--num-simulations",
+            "2",
+            "--seed",
+            "42",
+            "--export",
+            "--output-dir",
+            str(tmp_path),
+            "--top",
+            "1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Export geschreven naar:" in result.stdout
+    run_directories = list(tmp_path.iterdir())
+    assert len(run_directories) == 1
+    assert {path.name for path in run_directories[0].iterdir()} == {
+        "run_metadata.json",
+        "tournament_summary.csv",
+        "group_stage_summary.csv",
+        "group_match_predictions.csv",
+    }

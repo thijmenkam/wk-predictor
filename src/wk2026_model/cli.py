@@ -1,6 +1,7 @@
 """Typer-command-line-interface voor data-inspectie en voorspellingen."""
 
 from collections import defaultdict
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -9,7 +10,14 @@ import typer
 
 from wk2026_model.config import ProjectConfig, load_config
 from wk2026_model.data.loaders import load_fixtures, load_teams, validate_teams
-from wk2026_model.data.schemas import GROUP_IDS, Team
+from wk2026_model.data.schemas import GROUP_IDS, Fixture, Team
+from wk2026_model.outputs.export import (
+    create_run_dir,
+    write_group_match_predictions_csv,
+    write_group_stage_summary_csv,
+    write_run_metadata_json,
+    write_tournament_summary_csv,
+)
 from wk2026_model.simulation.group import simulate_group_once
 from wk2026_model.simulation.match import predict_match
 from wk2026_model.simulation.tournament import (
@@ -22,6 +30,12 @@ from wk2026_model.simulation.tournament import (
 
 app = typer.Typer(help="Lokaal WK 2026-voorspelmodel.", no_args_is_help=True)
 DEFAULT_CONFIG_PATH = Path("configs/base.yaml")
+DEFAULT_OUTPUT_DIR = Path("outputs/runs")
+RUN_LIMITATIONS = [
+    "Knock-out bracket uses seeded placeholder, not official FIFA mapping",
+    "Expected goals are Elo-derived, not real xG",
+    "No player/topscorer model yet",
+]
 
 
 def _demo_teams() -> list[Team]:
@@ -277,6 +291,64 @@ def simulate_group_command(
         )
 
 
+def _load_export_fixtures(config: ProjectConfig, teams: list[Team]) -> list[Fixture]:
+    try:
+        return load_fixtures(
+            config.data.fixtures_path,
+            teams,
+            allow_generated=config.data.allow_generated_fixtures,
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Fixtures konden niet worden geladen voor export: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+
+def _export_run(
+    *,
+    run_type: str,
+    config: ProjectConfig,
+    teams: list[Team],
+    fixtures: list[Fixture],
+    num_simulations: int,
+    seed: int,
+    output_dir: Path,
+    group_stage_summary: GroupStageSummary,
+    tournament_summary: TournamentSummary | None = None,
+) -> Path:
+    created_at = datetime.now(UTC)
+    run_path = create_run_dir(output_dir, run_type, seed, created_at=created_at)
+    write_run_metadata_json(
+        run_path / "run_metadata.json",
+        run_type=run_type,
+        created_at=created_at,
+        num_simulations=num_simulations,
+        seed=seed,
+        model_config=config.model,
+        teams_path=config.data.teams_path,
+        fixtures_path=config.data.fixtures_path,
+        fixtures_generated=not _fixture_file_has_data(config.data.fixtures_path),
+        sources_path=config.data.sources_path,
+        limitations=RUN_LIMITATIONS,
+    )
+    write_group_stage_summary_csv(group_stage_summary, run_path / "group_stage_summary.csv")
+    write_group_match_predictions_csv(
+        fixtures,
+        teams,
+        config.model,
+        run_path / "group_match_predictions.csv",
+    )
+    if tournament_summary is not None:
+        write_tournament_summary_csv(tournament_summary, run_path / "tournament_summary.csv")
+    return run_path
+
+
+def _print_export_result(run_path: Path, filenames: list[str]) -> None:
+    typer.echo(f"\nExport geschreven naar:\n{run_path}")
+    typer.echo("Met bestanden:")
+    for filename in filenames:
+        typer.echo(f"- {filename}")
+
+
 @app.command("simulate-group-stage")
 def simulate_group_stage_command(
     config_path: Annotated[
@@ -291,6 +363,22 @@ def simulate_group_stage_command(
             help="Aantal Monte Carlo-simulaties; standaard de modelconfiguratie.",
         ),
     ] = None,
+    seed: Annotated[
+        int | None,
+        typer.Option(
+            "--seed",
+            min=0,
+            help="Vaste random seed; standaard de modelconfiguratie.",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Basismap voor simulatieruns."),
+    ] = DEFAULT_OUTPUT_DIR,
+    export: Annotated[
+        bool,
+        typer.Option("--export/--no-export", help="Schrijf CSV- en JSON-exportbestanden."),
+    ] = False,
 ) -> None:
     """Simuleer alle twaalf groepen en selecteer exact de beste acht nummers drie."""
 
@@ -303,11 +391,33 @@ def simulate_group_stage_command(
         raise typer.Exit(code=1) from exc
 
     simulation_count = num_simulations or config.model.num_simulations
-    rng = np.random.default_rng(config.model.random_seed)
-    summary = simulate_group_stage(teams, config.model, simulation_count, rng)
+    run_seed = config.model.random_seed if seed is None else seed
+    summary = simulate_group_stage(
+        teams,
+        config.model,
+        simulation_count,
+        np.random.default_rng(run_seed),
+    )
     typer.echo(f"Volledige groepsfase: {simulation_count:,} simulaties\n")
     _print_group_stage_table(summary)
     _print_overall_qualification(summary)
+
+    if export:
+        fixtures = _load_export_fixtures(config, teams)
+        run_path = _export_run(
+            run_type="group-stage",
+            config=config,
+            teams=teams,
+            fixtures=fixtures,
+            num_simulations=simulation_count,
+            seed=run_seed,
+            output_dir=output_dir,
+            group_stage_summary=summary,
+        )
+        _print_export_result(
+            run_path,
+            ["run_metadata.json", "group_stage_summary.csv", "group_match_predictions.csv"],
+        )
 
 
 @app.command("simulate-tournament")
@@ -324,6 +434,22 @@ def simulate_tournament_command(
             help="Aantal Monte Carlo-simulaties; standaard de modelconfiguratie.",
         ),
     ] = None,
+    seed: Annotated[
+        int | None,
+        typer.Option(
+            "--seed",
+            min=0,
+            help="Vaste random seed; standaard de modelconfiguratie.",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Basismap voor simulatieruns."),
+    ] = DEFAULT_OUTPUT_DIR,
+    export: Annotated[
+        bool,
+        typer.Option("--export/--no-export", help="Schrijf CSV- en JSON-exportbestanden."),
+    ] = False,
     top: Annotated[
         int,
         typer.Option("--top", min=1, help="Aantal teams per ranglijst."),
@@ -340,14 +466,48 @@ def simulate_tournament_command(
         raise typer.Exit(code=1) from exc
 
     simulation_count = num_simulations or config.model.num_simulations
-    rng = np.random.default_rng(config.model.random_seed)
-    summary = simulate_tournament(teams, config.model, simulation_count, rng)
+    run_seed = config.model.random_seed if seed is None else seed
+    summary = simulate_tournament(
+        teams,
+        config.model,
+        simulation_count,
+        np.random.default_rng(run_seed),
+    )
     typer.echo(f"Volledig toernooi: {simulation_count:,} simulaties")
     typer.echo(
         "Let op: knock-out bracket gebruikt seeded placeholder mapping, "
         "niet officiele FIFA mapping.\n"
     )
     _print_tournament_summary(summary, min(top, len(summary.teams)))
+
+    if export:
+        fixtures = _load_export_fixtures(config, teams)
+        group_stage_summary = simulate_group_stage(
+            teams,
+            config.model,
+            simulation_count,
+            np.random.default_rng(run_seed),
+        )
+        run_path = _export_run(
+            run_type="tournament",
+            config=config,
+            teams=teams,
+            fixtures=fixtures,
+            num_simulations=simulation_count,
+            seed=run_seed,
+            output_dir=output_dir,
+            group_stage_summary=group_stage_summary,
+            tournament_summary=summary,
+        )
+        _print_export_result(
+            run_path,
+            [
+                "run_metadata.json",
+                "tournament_summary.csv",
+                "group_stage_summary.csv",
+                "group_match_predictions.csv",
+            ],
+        )
 
 
 if __name__ == "__main__":
