@@ -95,4 +95,28 @@ def test_simulate_tournament_export_writes_all_run_files(tmp_path: Path) -> None
         "tournament_summary.csv",
         "group_stage_summary.csv",
         "group_match_predictions.csv",
+        "pool_group_predictions.csv",
     }
+
+
+def test_export_pool_predictions_command_writes_csv(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "export-pool-predictions",
+            "--seed",
+            "42",
+            "--output-dir",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Pouleadvies-CSV geschreven naar:" in result.stdout
+    assert "Top 10 wedstrijden met hoogste draw probability" in result.stdout
+    assert "Top 10 grootste favorieten" in result.stdout
+    run_directories = list(tmp_path.iterdir())
+    assert len(run_directories) == 1
+    csv_path = run_directories[0] / "pool_group_predictions.csv"
+    assert csv_path.exists()
+    assert "pool-predictions-seed42" in run_directories[0].name

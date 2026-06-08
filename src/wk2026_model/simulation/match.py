@@ -3,7 +3,7 @@
 import numpy as np
 
 from wk2026_model.config import ModelConfig
-from wk2026_model.data.schemas import MatchPrediction, Team
+from wk2026_model.data.schemas import MatchPrediction, PoolScoreRecommendation, Team
 from wk2026_model.models.elo import lambdas_from_elo
 from wk2026_model.models.poisson import most_likely_score, score_grid
 
@@ -48,3 +48,20 @@ def simulate_match(
     """Trek een wedstrijdscore met een geïnjecteerde random-generator."""
 
     return int(rng.poisson(lambda_a)), int(rng.poisson(lambda_b))
+
+
+def recommend_pool_score(
+    prediction: MatchPrediction,
+    strategy: str = "most_likely_score",
+) -> PoolScoreRecommendation:
+    """Kies een poulescore via een expliciete, later uitbreidbare strategie."""
+
+    if strategy != "most_likely_score":
+        raise ValueError(f"unsupported pool score recommendation strategy: {strategy}")
+
+    goals_a, goals_b = prediction.most_likely_score
+    return PoolScoreRecommendation(
+        goals_a=goals_a,
+        goals_b=goals_b,
+        reason="Most likely exact score under independent Poisson model.",
+    )

@@ -163,6 +163,20 @@ geen demo-fallback gebruikt. De uitvoer bevat eerst per groep een tabel met Elo,
 positiepercentages en kwalificatiekans. Daarna volgen de vijftien hoogste kwalificatiekansen over
 alle teams en de twaalf hoogste kansen om als nummer drie te kwalificeren.
 
+### Pouleadviezen exporteren
+
+```bash
+uv run wk2026 export-pool-predictions --seed 42
+```
+
+Dit command draait geen Monte Carlo-simulatie. Het berekent de 72 groepswedstrijdvoorspellingen,
+schrijft `pool_group_predictions.csv` naar een herkenbare runmap onder `outputs/runs/` en toont
+de tien hoogste gelijkspelkansen en de tien grootste favorieten. Het huidige pouleadvies gebruikt
+de meest waarschijnlijke exacte score uit het onafhankelijke Poisson-model.
+
+Bij `simulate-tournament --export` wordt hetzelfde pouleadviesbestand naast de bestaande
+samenvattingen en wedstrijdvoorspellingen geschreven.
+
 ### Volledig toernooi simuleren
 
 ```bash

@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from wk2026_model.config import ModelConfig
 from wk2026_model.data.schemas import Fixture, Team
-from wk2026_model.simulation.match import predict_match
+from wk2026_model.simulation.match import predict_match, recommend_pool_score
 from wk2026_model.simulation.tournament import GroupStageSummary, TournamentSummary
 
 TOURNAMENT_SUMMARY_COLUMNS = [
@@ -62,6 +62,26 @@ GROUP_MATCH_PREDICTION_COLUMNS = [
     "most_likely_goals_a",
     "most_likely_goals_b",
 ]
+POOL_GROUP_PREDICTION_COLUMNS = [
+    "match_id",
+    "group",
+    "team_a",
+    "team_b",
+    "elo_a",
+    "elo_b",
+    "lambda_a",
+    "lambda_b",
+    "p_win_a",
+    "p_draw",
+    "p_win_b",
+    "most_likely_score",
+    "most_likely_goals_a",
+    "most_likely_goals_b",
+    "recommended_score",
+    "recommended_goals_a",
+    "recommended_goals_b",
+    "recommendation_reason",
+]
 
 
 def create_run_dir(
@@ -109,16 +129,13 @@ def write_group_stage_summary_csv(summary: GroupStageSummary, path: str | Path) 
     return output_path
 
 
-def write_group_match_predictions_csv(
+def _group_match_prediction_rows(
     fixtures: list[Fixture],
     teams: list[Team],
     config: ModelConfig,
-    path: str | Path,
-) -> Path:
-    """Voorspel en exporteer alle aangeleverde groepswedstrijden."""
+) -> list[dict[str, Any]]:
+    """Bereken exportvelden voor alle groepswedstrijden zonder I/O uit te voeren."""
 
-    output_path = Path(path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     teams_by_name = {team.name: team for team in teams}
     rows: list[dict[str, Any]] = []
     for fixture in fixtures:
@@ -128,6 +145,7 @@ def write_group_match_predictions_csv(
         team_b = teams_by_name[fixture.team_b]
         prediction = predict_match(team_a, team_b, config)
         goals_a, goals_b = prediction.most_likely_score
+        recommendation = recommend_pool_score(prediction)
         rows.append(
             {
                 "match_id": fixture.match_id,
@@ -145,9 +163,42 @@ def write_group_match_predictions_csv(
                 "most_likely_score": f"{goals_a}-{goals_b}",
                 "most_likely_goals_a": goals_a,
                 "most_likely_goals_b": goals_b,
+                "recommended_score": (f"{recommendation.goals_a}-{recommendation.goals_b}"),
+                "recommended_goals_a": recommendation.goals_a,
+                "recommended_goals_b": recommendation.goals_b,
+                "recommendation_reason": recommendation.reason,
             }
         )
+    return rows
+
+
+def write_group_match_predictions_csv(
+    fixtures: list[Fixture],
+    teams: list[Team],
+    config: ModelConfig,
+    path: str | Path,
+) -> Path:
+    """Voorspel en exporteer alle aangeleverde groepswedstrijden."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    rows = _group_match_prediction_rows(fixtures, teams, config)
     pd.DataFrame(rows, columns=GROUP_MATCH_PREDICTION_COLUMNS).to_csv(output_path, index=False)
+    return output_path
+
+
+def write_pool_group_predictions_csv(
+    fixtures: list[Fixture],
+    teams: list[Team],
+    config: ModelConfig,
+    path: str | Path,
+) -> Path:
+    """Schrijf direct invulbare pouleadviezen voor alle groepswedstrijden."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    rows = _group_match_prediction_rows(fixtures, teams, config)
+    pd.DataFrame(rows, columns=POOL_GROUP_PREDICTION_COLUMNS).to_csv(output_path, index=False)
     return output_path
 
 
