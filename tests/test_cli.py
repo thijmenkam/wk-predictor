@@ -135,6 +135,8 @@ def test_recommend_final_standings_command_exports_recommendation(tmp_path: Path
 
     assert result.exit_code == 0
     assert "Aantal simulaties: 2" in result.stdout
+    assert "EV method: scenario" in result.stdout
+    assert "Outcomes: 2" in result.stdout
     assert "Aanbevolen final standings" in result.stdout
     assert "Expected points:" in result.stdout
     assert "seeded placeholder" in result.stdout
@@ -142,9 +144,30 @@ def test_recommend_final_standings_command_exports_recommendation(tmp_path: Path
     assert {path.name for path in run_path.iterdir()} == {
         "final_standings_recommendation.csv",
         "final_standings_candidates.csv",
+        "final_standings_metadata.json",
     }
     assert len(pd.read_csv(run_path / "final_standings_recommendation.csv")) == 4
     assert len(pd.read_csv(run_path / "final_standings_candidates.csv")) == 8
+
+
+def test_recommend_final_standings_command_supports_marginal_ev() -> None:
+    result = runner.invoke(
+        app,
+        [
+            "recommend-final-standings",
+            "--num-simulations",
+            "2",
+            "--seed",
+            "42",
+            "--ev-method",
+            "marginal",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "EV method: marginal" in result.stdout
+    assert "Outcomes: 0" in result.stdout
+    assert "max_expected_final_standings_points" in result.stdout
 
 
 def test_export_pool_predictions_command_writes_csv(tmp_path: Path) -> None:

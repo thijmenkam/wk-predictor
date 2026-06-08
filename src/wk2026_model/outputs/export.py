@@ -36,7 +36,8 @@ FINAL_STANDINGS_RECOMMENDATION_COLUMNS = [
     "elo",
     "p_top4",
     "p_exact_position",
-    "expected_points_component",
+    "expected_points_component_marginal",
+    "ev_method",
 ]
 FINAL_STANDINGS_CANDIDATE_COLUMNS = [
     "team",
@@ -173,8 +174,10 @@ def write_final_standings_recommendation_csv(
     tournament_summary: list[TournamentTeamSummary],
     scoring: KnockoutStageScoringConfig,
     path: str | Path,
+    *,
+    ev_method: str = "marginal",
 ) -> Path:
-    """Schrijf de vier aanbevolen posities en hun afzonderlijke EV-componenten."""
+    """Schrijf de aanbevolen posities plus hun marginale EV-componenten."""
 
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -190,9 +193,10 @@ def write_final_standings_recommendation_csv(
                 "elo": summary.elo,
                 "p_top4": summary.p_top4,
                 "p_exact_position": getattr(summary, EXACT_PROBABILITY_FIELDS[position]),
-                "expected_points_component": expected_points_for_team_at_position(
+                "expected_points_component_marginal": expected_points_for_team_at_position(
                     summary, position, scoring
                 ),
+                "ev_method": ev_method,
             }
         )
     pd.DataFrame(rows, columns=FINAL_STANDINGS_RECOMMENDATION_COLUMNS).to_csv(
@@ -348,6 +352,35 @@ def write_pool_group_predictions_csv(
         scoring=scoring,
     )
     pd.DataFrame(rows, columns=POOL_GROUP_PREDICTION_COLUMNS).to_csv(output_path, index=False)
+    return output_path
+
+
+def write_final_standings_metadata_json(
+    path: str | Path,
+    *,
+    num_simulations: int,
+    seed: int,
+    ev_method: str,
+    candidate_pool_size: int,
+    strategy: str,
+    limitations: list[str],
+) -> Path:
+    """Schrijf reproduceerbare metadata voor een final-standingsadvies."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    metadata = {
+        "num_simulations": num_simulations,
+        "seed": seed,
+        "ev_method": ev_method,
+        "candidate_pool_size": candidate_pool_size,
+        "strategy": strategy,
+        "limitations": limitations,
+    }
+    output_path.write_text(
+        json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
     return output_path
 
 

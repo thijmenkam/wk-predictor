@@ -5,7 +5,7 @@ from itertools import permutations
 from typing import cast
 
 from wk2026_model.config import KnockoutStageScoringConfig
-from wk2026_model.simulation.tournament import TournamentTeamSummary
+from wk2026_model.simulation.tournament import TournamentOutcome, TournamentTeamSummary
 
 POSITIONS = ("gold", "silver", "bronze", "fourth")
 EXACT_PROBABILITY_FIELDS = {
@@ -15,9 +15,14 @@ EXACT_PROBABILITY_FIELDS = {
     "fourth": "p_fourth",
 }
 FINAL_STANDINGS_STRATEGY = "max_expected_final_standings_points"
+SCENARIO_FINAL_STANDINGS_STRATEGY = "max_expected_final_standings_points_from_outcomes"
 MARGINAL_PROBABILITY_NOTE = (
     "Expected value uses marginal team probabilities and does not model correlations "
     "between final positions."
+)
+SCENARIO_OUTCOME_NOTE = (
+    "Expected value is scored over raw simulated tournament outcomes; the knockout "
+    "bracket still uses a seeded placeholder rather than the official FIFA mapping."
 )
 
 
@@ -65,6 +70,38 @@ class FinalStandingsRecommendation:
             bronze=self.bronze,
             fourth=self.fourth,
         )
+
+
+def score_final_standings_pick_against_outcome(
+    pick: FinalStandingsPick,
+    outcome: TournamentOutcome,
+    scoring: KnockoutStageScoringConfig,
+) -> float:
+    """Score één final-standingspick tegen één gesimuleerd scenario."""
+
+    actual_teams = (outcome.champion, outcome.runner_up, outcome.third, outcome.fourth)
+    actual_top4 = set(actual_teams)
+    points = 0.0
+    for predicted_team, actual_team in zip(pick.teams(), actual_teams, strict=True):
+        if predicted_team in actual_top4:
+            points += scoring.correct_semifinalist_points
+        if predicted_team == actual_team:
+            points += scoring.correct_final_placement_bonus_points
+    return points
+
+
+def expected_final_standings_points_from_outcomes(
+    pick: FinalStandingsPick,
+    outcomes: list[TournamentOutcome],
+    scoring: KnockoutStageScoringConfig,
+) -> float:
+    """Bereken de gemiddelde pickscore over ruwe toernooiscenario's."""
+
+    if not outcomes:
+        raise ValueError("at least one tournament outcome is required")
+    return sum(
+        score_final_standings_pick_against_outcome(pick, outcome, scoring) for outcome in outcomes
+    ) / len(outcomes)
 
 
 def _summary_index(
@@ -182,6 +219,73 @@ def recommend_final_standings(
         candidate_pool_size=len(candidates),
         strategy=FINAL_STANDINGS_STRATEGY,
         notes=MARGINAL_PROBABILITY_NOTE,
+    )
+
+
+def recommend_final_standings_from_outcomes(
+    outcomes: list[TournamentOutcome],
+    team_summaries: list[TournamentTeamSummary],
+    scoring: KnockoutStageScoringConfig,
+    candidate_pool_size: int = 16,
+) -> FinalStandingsRecommendation:
+    """Optimaliseer de gemiddelde score over de gesimuleerde eindscenario's."""
+
+    if not outcomes:
+        raise ValueError("at least one tournament outcome is required")
+    summary_by_team = _summary_index(team_summaries)
+    candidates = select_final_standings_candidates(team_summaries, candidate_pool_size)
+    candidate_names = sorted(row.team for row in candidates)
+
+    # De score is additief per team/positie. Deze uit raw outcomes berekende
+    # componenten maken de brute-forcezoektocht ook voor 50k scenario's snel.
+    scenario_components: dict[tuple[str, str], float] = {}
+    for team in candidate_names:
+        for position_index, position in enumerate(POSITIONS):
+            component = 0.0
+            for outcome in outcomes:
+                actual_teams = (
+                    outcome.champion,
+                    outcome.runner_up,
+                    outcome.third,
+                    outcome.fourth,
+                )
+                if team in actual_teams:
+                    component += scoring.correct_semifinalist_points
+                if team == actual_teams[position_index]:
+                    component += scoring.correct_final_placement_bonus_points
+            scenario_components[(team, position)] = component / len(outcomes)
+
+    best_pick: FinalStandingsPick | None = None
+    best_key: tuple[float, float, float, float] | None = None
+    for gold, silver, bronze, fourth in permutations(candidate_names, 4):
+        pick = FinalStandingsPick(gold=gold, silver=silver, bronze=bronze, fourth=fourth)
+        scenario_ev = sum(
+            scenario_components[(team, position)]
+            for position, team in zip(POSITIONS, pick.teams(), strict=True)
+        )
+        marginal_ev = expected_final_standings_points_for_pick(pick, summary_by_team, scoring)
+        selected_rows = [summary_by_team[team] for team in pick.teams()]
+        key = (
+            scenario_ev,
+            marginal_ev,
+            sum(row.p_top4 for row in selected_rows),
+            sum(row.elo for row in selected_rows),
+        )
+        if best_key is None or key > best_key:
+            best_pick = pick
+            best_key = key
+
+    if best_pick is None or best_key is None:  # pragma: no cover
+        raise RuntimeError("no final standings permutations were evaluated")
+    return FinalStandingsRecommendation(
+        gold=best_pick.gold,
+        silver=best_pick.silver,
+        bronze=best_pick.bronze,
+        fourth=best_pick.fourth,
+        expected_pool_points=best_key[0],
+        candidate_pool_size=len(candidates),
+        strategy=SCENARIO_FINAL_STANDINGS_STRATEGY,
+        notes=SCENARIO_OUTCOME_NOTE,
     )
 
 

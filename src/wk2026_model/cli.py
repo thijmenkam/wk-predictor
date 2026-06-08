@@ -21,6 +21,7 @@ from wk2026_model.data.schemas import GROUP_IDS, Fixture, Team
 from wk2026_model.outputs.export import (
     create_run_dir,
     write_final_standings_candidates_csv,
+    write_final_standings_metadata_json,
     write_final_standings_recommendation_csv,
     write_group_match_predictions_csv,
     write_group_stage_summary_csv,
@@ -31,8 +32,10 @@ from wk2026_model.outputs.export import (
 from wk2026_model.pool.final_standings import (
     POSITIONS,
     FinalStandingsRecommendation,
+    expected_final_standings_points_for_pick,
     expected_points_for_team_at_position,
     recommend_final_standings,
+    recommend_final_standings_from_outcomes,
     select_final_standings_candidates,
 )
 from wk2026_model.simulation.group import simulate_group_once
@@ -49,6 +52,13 @@ app = typer.Typer(help="Lokaal WK 2026-voorspelmodel.", no_args_is_help=True)
 DEFAULT_CONFIG_PATH = Path("configs/base.yaml")
 DEFAULT_OUTPUT_DIR = Path("outputs/runs")
 DEFAULT_POOL_SCORING_PATH = Path("configs/pool_scoring.yaml")
+
+
+class FinalStandingsEvMethod(StrEnum):
+    """Beschikbare EV-methoden voor de final standings."""
+
+    MARGINAL = "marginal"
+    SCENARIO = "scenario"
 
 
 class PoolScoreStrategy(StrEnum):
@@ -745,6 +755,13 @@ def recommend_final_standings_command(
             help="Aantal teams in de brute-forcezoekruimte.",
         ),
     ] = 16,
+    ev_method: Annotated[
+        FinalStandingsEvMethod,
+        typer.Option(
+            "--ev-method",
+            help="Gebruik marginale kansen of score ruwe toernooiscenario's.",
+        ),
+    ] = FinalStandingsEvMethod.SCENARIO,
     scoring_config: Annotated[
         Path,
         typer.Option("--scoring-config", help="Pad naar de pool scoring-YAML."),
@@ -755,7 +772,9 @@ def recommend_final_standings_command(
     ] = DEFAULT_OUTPUT_DIR,
     export: Annotated[
         bool,
-        typer.Option("--export/--no-export", help="Schrijf de twee final-standings-CSV's."),
+        typer.Option(
+            "--export/--no-export", help="Schrijf final-standings-CSV's en metadata-JSON."
+        ),
     ] = False,
 ) -> None:
     """Optimaliseer goud, zilver, brons en vierde op verwachte poulepunten."""
@@ -776,16 +795,35 @@ def recommend_final_standings_command(
         config.model,
         simulation_count,
         np.random.default_rng(run_seed),
+        return_outcomes=ev_method is FinalStandingsEvMethod.SCENARIO,
     )
-    recommendation = recommend_final_standings(
-        summary.teams,
+    if ev_method is FinalStandingsEvMethod.SCENARIO:
+        if summary.outcomes is None:  # pragma: no cover - guarded by return_outcomes
+            raise RuntimeError("scenario EV requires raw tournament outcomes")
+        recommendation = recommend_final_standings_from_outcomes(
+            summary.outcomes,
+            summary.teams,
+            scoring.knockout_stage,
+            candidate_pool_size,
+        )
+    else:
+        recommendation = recommend_final_standings(
+            summary.teams,
+            scoring.knockout_stage,
+            candidate_pool_size,
+        )
+    marginal_ev = expected_final_standings_points_for_pick(
+        recommendation.as_pick(),
+        {row.team: row for row in summary.teams},
         scoring.knockout_stage,
-        candidate_pool_size,
     )
 
     typer.echo(f"Aantal simulaties: {simulation_count:,}")
+    typer.echo(f"EV method: {ev_method.value}")
+    typer.echo(f"Outcomes: {len(summary.outcomes) if summary.outcomes is not None else 0:,}")
     _print_knockout_scoring_summary(scoring)
     _print_final_standings_recommendation(recommendation)
+    typer.echo(f"Marginal EV for same pick: {marginal_ev:.2f}")
     _print_final_standings_candidates(summary, scoring, recommendation.candidate_pool_size)
     typer.echo(
         "\nLet op: knock-out bracket gebruikt seeded placeholder, niet officiële FIFA mapping."
@@ -800,6 +838,7 @@ def recommend_final_standings_command(
             summary.teams,
             scoring.knockout_stage,
             run_path / "final_standings_recommendation.csv",
+            ev_method=ev_method.value,
         )
         write_final_standings_candidates_csv(
             summary.teams,
@@ -807,11 +846,21 @@ def recommend_final_standings_command(
             run_path / "final_standings_candidates.csv",
             candidate_pool_size=recommendation.candidate_pool_size,
         )
+        write_final_standings_metadata_json(
+            run_path / "final_standings_metadata.json",
+            num_simulations=simulation_count,
+            seed=run_seed,
+            ev_method=ev_method.value,
+            candidate_pool_size=recommendation.candidate_pool_size,
+            strategy=recommendation.strategy,
+            limitations=RUN_LIMITATIONS,
+        )
         _print_export_result(
             run_path,
             [
                 "final_standings_recommendation.csv",
                 "final_standings_candidates.csv",
+                "final_standings_metadata.json",
             ],
         )
 
