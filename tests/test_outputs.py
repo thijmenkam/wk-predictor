@@ -11,9 +11,11 @@ from wk2026_model.outputs.export import (
     create_run_dir,
     write_group_match_predictions_csv,
     write_group_stage_summary_csv,
+    write_pool_group_predictions_csv,
     write_run_metadata_json,
     write_tournament_summary_csv,
 )
+from wk2026_model.simulation.match import predict_match, recommend_pool_score
 from wk2026_model.simulation.tournament import simulate_group_stage, simulate_tournament
 
 TEAMS_PATH = Path("data/raw/teams.csv")
@@ -88,6 +90,40 @@ def test_group_match_predictions_export_contains_72_matches(tmp_path: Path) -> N
     predictions = pd.read_csv(output_path)
     assert len(predictions) == 72
     assert predictions["match_id"].nunique() == 72
+
+
+def test_pool_group_predictions_export_contains_72_recommendations(tmp_path: Path) -> None:
+    teams = load_teams(TEAMS_PATH)
+    fixtures = load_fixtures(FIXTURES_PATH, teams, allow_generated=True)
+
+    output_path = write_pool_group_predictions_csv(
+        fixtures,
+        teams,
+        ModelConfig(),
+        tmp_path / "pool_group_predictions.csv",
+    )
+
+    predictions = pd.read_csv(output_path)
+    assert len(predictions) == 72
+    assert predictions["match_id"].nunique() == 72
+    assert pd.api.types.is_integer_dtype(predictions["recommended_goals_a"])
+    assert pd.api.types.is_integer_dtype(predictions["recommended_goals_b"])
+    assert (
+        predictions["recommended_score"]
+        == predictions["recommended_goals_a"].astype(str)
+        + "-"
+        + predictions["recommended_goals_b"].astype(str)
+    ).all()
+
+
+def test_recommend_pool_score_uses_most_likely_score_strategy() -> None:
+    teams = load_teams(TEAMS_PATH)
+    prediction = predict_match(teams[0], teams[1], ModelConfig())
+
+    recommendation = recommend_pool_score(prediction)
+
+    assert (recommendation.goals_a, recommendation.goals_b) == prediction.most_likely_score
+    assert recommendation.reason == "Most likely exact score under independent Poisson model."
 
 
 def test_same_seed_produces_same_tournament_summary() -> None:

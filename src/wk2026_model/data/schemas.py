@@ -113,6 +113,14 @@ class MatchPrediction(BaseModel):
     most_likely_score: tuple[int, int]
 
 
+class PoolScoreRecommendation(BaseModel):
+    """Aanbevolen invulscore voor een groepswedstrijd in een poule."""
+
+    goals_a: int = Field(ge=0)
+    goals_b: int = Field(ge=0)
+    reason: str
+
+
 class GroupStanding(BaseModel):
     """Eén rij in een groepsstand."""
 

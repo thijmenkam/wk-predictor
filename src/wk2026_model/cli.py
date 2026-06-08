@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 import numpy as np
+import pandas as pd
 import typer
 
 from wk2026_model.config import ProjectConfig, load_config
@@ -15,6 +16,7 @@ from wk2026_model.outputs.export import (
     create_run_dir,
     write_group_match_predictions_csv,
     write_group_stage_summary_csv,
+    write_pool_group_predictions_csv,
     write_run_metadata_json,
     write_tournament_summary_csv,
 )
@@ -337,6 +339,12 @@ def _export_run(
         config.model,
         run_path / "group_match_predictions.csv",
     )
+    write_pool_group_predictions_csv(
+        fixtures,
+        teams,
+        config.model,
+        run_path / "pool_group_predictions.csv",
+    )
     if tournament_summary is not None:
         write_tournament_summary_csv(tournament_summary, run_path / "tournament_summary.csv")
     return run_path
@@ -347,6 +355,84 @@ def _print_export_result(run_path: Path, filenames: list[str]) -> None:
     typer.echo("Met bestanden:")
     for filename in filenames:
         typer.echo(f"- {filename}")
+
+
+def _print_pool_prediction_highlights(csv_path: Path) -> None:
+    """Toon wedstrijden met de grootste gelijkspelkans en sterkste favorieten."""
+
+    predictions = pd.read_csv(csv_path)
+
+    typer.echo("\nTop 10 wedstrijden met hoogste draw probability")
+    for row in (
+        predictions.sort_values(["p_draw", "match_id"], ascending=[False, True])
+        .head(10)
+        .itertuples()
+    ):
+        typer.echo(
+            f"{row.match_id}: {row.team_a} - {row.team_b} "
+            f"({row.p_draw:.1%}, advies {row.recommended_score})"
+        )
+
+    favorites = predictions.assign(
+        favorite_probability=predictions[["p_win_a", "p_win_b"]].max(axis=1),
+        favorite_team=predictions["team_a"].where(
+            predictions["p_win_a"] >= predictions["p_win_b"],
+            predictions["team_b"],
+        ),
+    )
+    typer.echo("\nTop 10 grootste favorieten")
+    for row in (
+        favorites.sort_values(["favorite_probability", "match_id"], ascending=[False, True])
+        .head(10)
+        .itertuples()
+    ):
+        typer.echo(
+            f"{row.match_id}: {row.favorite_team} tegen "
+            f"{row.team_b if row.favorite_team == row.team_a else row.team_a} "
+            f"({row.favorite_probability:.1%}, advies {row.recommended_score})"
+        )
+
+
+@app.command("export-pool-predictions")
+def export_pool_predictions_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Pad naar de YAML-configuratie."),
+    ] = DEFAULT_CONFIG_PATH,
+    seed: Annotated[
+        int | None,
+        typer.Option(
+            "--seed",
+            min=0,
+            help="Seed in de herkenbare runnaam; standaard de modelconfiguratie.",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Basismap voor exportruns."),
+    ] = DEFAULT_OUTPUT_DIR,
+) -> None:
+    """Exporteer pouleadviezen voor 72 groepswedstrijden zonder Monte Carlo."""
+
+    config = _config(config_path)
+    try:
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        validate_teams(teams, strict=True)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Poulevoorspellingen konden niet worden geladen: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    fixtures = _load_export_fixtures(config, teams)
+    run_seed = config.model.random_seed if seed is None else seed
+    run_path = create_run_dir(output_dir, "pool-predictions", run_seed)
+    csv_path = write_pool_group_predictions_csv(
+        fixtures,
+        teams,
+        config.model,
+        run_path / "pool_group_predictions.csv",
+    )
+    typer.echo(f"Pouleadvies-CSV geschreven naar:\n{csv_path}")
+    _print_pool_prediction_highlights(csv_path)
 
 
 @app.command("simulate-group-stage")
@@ -416,7 +502,12 @@ def simulate_group_stage_command(
         )
         _print_export_result(
             run_path,
-            ["run_metadata.json", "group_stage_summary.csv", "group_match_predictions.csv"],
+            [
+                "run_metadata.json",
+                "group_stage_summary.csv",
+                "group_match_predictions.csv",
+                "pool_group_predictions.csv",
+            ],
         )
 
 
@@ -506,6 +597,7 @@ def simulate_tournament_command(
                 "tournament_summary.csv",
                 "group_stage_summary.csv",
                 "group_match_predictions.csv",
+                "pool_group_predictions.csv",
             ],
         )
 
