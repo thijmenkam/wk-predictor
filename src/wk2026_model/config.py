@@ -12,6 +12,7 @@ class DataConfig(BaseModel):
 
     teams_path: Path = Path("data/raw/teams.csv")
     fixtures_path: Path = Path("data/raw/fixtures.csv")
+    sources_path: Path = Path("data/raw/sources.yaml")
     allow_generated_fixtures: bool = True
 
 
