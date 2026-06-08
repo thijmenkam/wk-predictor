@@ -37,6 +37,38 @@ class Team(BaseModel):
         return value
 
 
+class Player(BaseModel):
+    """Handmatige baseline-invoer voor een kandidaat-topscorer."""
+
+    name: str
+    team: str
+    position: str
+    starter_probability: float = Field(ge=0, le=1)
+    expected_minutes_share: float = Field(ge=0, le=1)
+    team_goal_share: float = Field(ge=0, le=1)
+    penalty_taker_probability: float = Field(ge=0, le=1)
+    notes: str | None = None
+
+    @field_validator("name", "team", "position")
+    @classmethod
+    def required_player_text_must_not_be_blank(cls, value: str) -> str:
+        """Normaliseer verplichte spelertekst en weiger lege waarden."""
+
+        value = value.strip()
+        if not value:
+            raise ValueError("player name, team, and position must not be empty")
+        return value
+
+    @field_validator("notes")
+    @classmethod
+    def empty_player_notes_become_none(cls, value: str | None) -> str | None:
+        """Normaliseer lege notities naar ``None``."""
+
+        if value is None:
+            return None
+        return value.strip() or None
+
+
 class Fixture(BaseModel):
     """Een geplande of gegenereerde wedstrijd tussen twee teams."""
 

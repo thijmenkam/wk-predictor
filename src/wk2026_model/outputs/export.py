@@ -4,7 +4,7 @@ import json
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from pydantic import BaseModel
@@ -29,6 +29,12 @@ from wk2026_model.simulation.tournament import (
     TournamentSummary,
     TournamentTeamSummary,
 )
+
+if TYPE_CHECKING:
+    from wk2026_model.simulation.scorers import (
+        PlayerScorerSummary,
+        TopScorerRecommendation,
+    )
 
 FINAL_STANDINGS_RECOMMENDATION_COLUMNS = [
     "position",
@@ -433,3 +439,90 @@ def export_records_csv(records: list[BaseModel], path: str | Path) -> None:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(record.model_dump() for record in records).to_csv(output_path, index=False)
+
+
+def write_top_scorer_recommendation_csv(
+    recommendation: "TopScorerRecommendation",
+    path: str | Path,
+) -> Path:
+    """Schrijf de gerangschikte topscorerkeuzes en hun EV naar CSV."""
+
+    from wk2026_model.simulation.scorers import TopScorerRecommendation
+
+    if not isinstance(recommendation, TopScorerRecommendation):
+        raise TypeError("recommendation must be a TopScorerRecommendation")
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    rows = [
+        {
+            "rank": rank,
+            "player": row.player,
+            "team": row.team,
+            "expected_goals": row.expected_goals,
+            "p_top_scorer": row.p_top_scorer,
+            "p_top_3_goals": row.p_top_3_goals,
+            "recommended_score_value": row.recommended_score_value,
+        }
+        for rank, row in enumerate(recommendation.players, start=1)
+    ]
+    pd.DataFrame(rows).to_csv(output_path, index=False)
+    return output_path
+
+
+def write_top_scorer_candidates_csv(
+    summaries: list["PlayerScorerSummary"],
+    path: str | Path,
+) -> Path:
+    """Schrijf alle spelerkandidaten, baseline-inputs en simulatie-uitkomsten."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    rows = sorted(
+        summaries,
+        key=lambda row: (
+            -row.recommended_score_value,
+            -row.expected_goals,
+            -row.p_top_scorer,
+            -row.team_elo,
+            row.player,
+        ),
+    )
+    columns = [
+        "player",
+        "team",
+        "position",
+        "expected_goals",
+        "p_top_scorer",
+        "p_top_3_goals",
+        "starter_probability",
+        "expected_minutes_share",
+        "team_goal_share",
+        "penalty_taker_probability",
+        "recommended_score_value",
+    ]
+    pd.DataFrame(asdict(row) for row in rows).loc[:, columns].to_csv(output_path, index=False)
+    return output_path
+
+
+def write_top_scorer_metadata_json(
+    path: str | Path,
+    *,
+    num_simulations: int,
+    seed: int,
+    players_path: str | Path,
+    scoring_config: str | Path,
+    limitations: list[str],
+) -> Path:
+    """Schrijf reproduceerbare metadata voor een topscorerrun."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "num_simulations": num_simulations,
+        "seed": seed,
+        "players_path": str(players_path),
+        "scoring_config": str(scoring_config),
+        "limitations": limitations,
+    }
+    output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return output_path

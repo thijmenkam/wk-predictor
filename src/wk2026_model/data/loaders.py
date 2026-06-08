@@ -7,10 +7,20 @@ from typing import Any
 import pandas as pd
 from pydantic import ValidationError
 
-from wk2026_model.data.schemas import GROUP_IDS, Fixture, Team
+from wk2026_model.data.schemas import GROUP_IDS, Fixture, Player, Team
 from wk2026_model.simulation.group import round_robin_fixtures
 
 TEAM_COLUMNS = {"team", "group", "elo", "is_host", "fifa_ranking"}
+PLAYER_COLUMNS = {
+    "player",
+    "team",
+    "position",
+    "starter_probability",
+    "expected_minutes_share",
+    "team_goal_share",
+    "penalty_taker_probability",
+    "notes",
+}
 FIXTURE_COLUMNS = {
     "match_id",
     "stage",
@@ -82,6 +92,45 @@ def load_teams(path: Path | str) -> list[Team]:
         except (TypeError, ValueError, ValidationError) as exc:
             raise ValueError(f"invalid team data in {source} at row {row_number}: {exc}") from exc
     return teams
+
+
+def load_players(path: Path | str, teams: list[Team]) -> list[Player]:
+    """Laad spelers en valideer teamreferenties en unieke namen."""
+
+    source = Path(path)
+    frame = pd.read_csv(source, dtype={"player": "string", "team": "string", "position": "string"})
+    _require_columns(frame, PLAYER_COLUMNS, source)
+    known_teams = {team.name for team in teams}
+    players: list[Player] = []
+    for row_number, row in enumerate(frame.to_dict(orient="records"), start=2):
+        try:
+            player = Player(
+                name=row["player"],
+                team=row["team"],
+                position=row["position"],
+                starter_probability=row["starter_probability"],
+                expected_minutes_share=row["expected_minutes_share"],
+                team_goal_share=row["team_goal_share"],
+                penalty_taker_probability=row["penalty_taker_probability"],
+                notes=_optional_str(row["notes"]),
+            )
+        except (TypeError, ValueError, ValidationError) as exc:
+            raise ValueError(f"invalid player data in {source} at row {row_number}: {exc}") from exc
+        if player.team not in known_teams:
+            raise ValueError(
+                f"unknown team {player.team!r} for player {player.name!r} "
+                f"in {source} at row {row_number}"
+            )
+        players.append(player)
+
+    duplicate_names = sorted(
+        name
+        for name, count in Counter(player.name.casefold() for player in players).items()
+        if count > 1
+    )
+    if duplicate_names:
+        raise ValueError(f"duplicate player names in {source}: {', '.join(duplicate_names)}")
+    return players
 
 
 def validate_teams(teams: list[Team], strict: bool = True) -> None:
