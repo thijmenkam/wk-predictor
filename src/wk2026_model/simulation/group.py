@@ -26,6 +26,9 @@ def round_robin_fixtures(group_id: str, teams: list[Team]) -> list[Fixture]:
             team_a=team_a.name,
             team_b=team_b.name,
             group=normalized_group,
+            match_round=None,
+            location=None,
+            kickoff_at=None,
         )
         for index, (team_a, team_b) in enumerate(combinations(teams, 2), start=1)
     ]

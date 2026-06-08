@@ -43,24 +43,27 @@ De loader kan kleine datasets niet-strikt valideren voor tests en prototypes.
 | `team_a` | tekst | Eerste team, exact gelijk aan een naam uit `teams.csv`. |
 | `team_b` | tekst | Tweede team, exact gelijk aan een naam uit `teams.csv`. |
 | `matchday` | positief integer of leeg | Optionele speeldag. |
-| `match_round` | positief integer of leeg | Optionele poule-/fixture-ronde; `round` wordt als alias geaccepteerd. |
-| `location` | tekst of leeg | Optionele speelplaats of stadionnaam. |
+| `match_round` | `1`, `2`, `3` of leeg | Officiële groepsronde voor de Tipset-workflow. |
+| `location` | tekst of leeg | Optionele speelplaats, stad of stadionnaam. |
+| `kickoff_at` | ISO datetime of leeg | Optionele officiële aftraptijd, bijvoorbeeld `2026-06-11T19:00:00Z`. |
 
-Officiële groepen, fixtures, locaties, wedstrijdvolgorde en later ook aftraptijden moeten tegen de
-FIFA World Cup 2026 scores/fixtures en match schedule worden gecontroleerd. FIFA is hiervoor de
-bron van waarheid.
+`fixtures.csv` kan handmatig met officiële FIFA-fixtures worden gevuld. Daarbij is `match_round`
+nodig om de Tipset-workflow voor groepsrondes 1, 2 en 3 te ondersteunen. Officiële groepen,
+fixtures, locaties, wedstrijdvolgorde en aftraptijden moeten tegen de FIFA World Cup 2026
+scores/fixtures en het match schedule worden gecontroleerd. FIFA is hiervoor de bron van waarheid.
 
 ## Generated fixtures
 
 Als `fixtures.csv` ontbreekt of geen datarijen bevat, genereert de loader iedere unieke combinatie
 binnen elke aanwezige groep. Vier teams leveren zes wedstrijden op, met IDs als `A-1` tot en met
 `A-6`. Deze fixtures bevatten uitsluitend round-robincombinaties: de volgorde is **niet** de
-officiële wedstrijdvolgorde en `matchday`, `match_round` en `location` blijven leeg.
+officiële wedstrijdvolgorde en `matchday`, `match_round`, `location` en `kickoff_at` blijven leeg.
 
 Tipset vraagt initieel alleen voorspellingen voor groepsfase ronde 1 en laat ronde 2 en 3 later
 wijzigen. Gegenereerde fixtures kennen die officiële rondes niet. TODO: vul `match_round` met de
 officiële FIFA-fixturevolgorde voordat serieuze poule-invoer wordt gedaan; scraping of automatische
-fixture-sync valt buiten v0.1.
+fixture-sync valt buiten v0.1. Controleer daarom vóór serieus invullen altijd
+`data/raw/fixtures.csv` handmatig tegen het officiële FIFA-wedstrijdschema.
 
 ## Data provenance
 

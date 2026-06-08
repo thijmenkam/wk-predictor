@@ -206,6 +206,9 @@ def validate_data_command(
     typer.echo(f"Teams: {len(teams)}")
     typer.echo(f"Groepen: {len(groups)}")
     typer.echo(f"Fixtures: {len(fixtures)}")
+    fixtures_with_round = sum(fixture.match_round is not None for fixture in fixtures)
+    typer.echo(f"Officiële match rounds aanwezig: {'ja' if fixtures_with_round else 'nee'}")
+    typer.echo(f"Fixtures met match_round gevuld: {fixtures_with_round}")
 
     try:
         validate_teams(teams, strict=True)
@@ -217,6 +220,8 @@ def validate_data_command(
     fixture_path = config.data.fixtures_path
     if not _fixture_file_has_data(fixture_path):
         typer.echo("Waarschuwing: fixtures zijn gegenereerde combinaties, geen officiële volgorde.")
+    elif fixtures_with_round < len(fixtures):
+        typer.echo("Waarschuwing: match_round ontbreekt voor één of meer fixtures.")
 
 
 @app.command("list-groups")
@@ -379,21 +384,14 @@ def _print_pool_prediction_highlights(csv_path: Path) -> None:
     """Toon verschillen en de hoogste en laagste verwachte poulepunten."""
 
     predictions = pd.read_csv(csv_path)
-    changed = predictions[
-        predictions["recommended_score"] != predictions["most_likely_score"]
-    ]
-    typer.echo(
-        f"\nAanbevolen scores gewijzigd versus most_likely_score: "
-        f"{len(changed)} van {len(predictions)}"
-    )
+    changed = predictions[predictions["recommended_score"] != predictions["most_likely_score"]]
+    typer.echo(f"\nGewijzigd versus most_likely_score: {len(changed)} van {len(predictions)}")
 
     typer.echo("\nTop 10 gewijzigde aanbevelingen")
     if changed.empty:
         typer.echo("(geen verschillen)")
     for row in (
-        changed.sort_values(
-            ["expected_pool_points", "match_id"], ascending=[False, True]
-        )
+        changed.sort_values(["expected_pool_points", "match_id"], ascending=[False, True])
         .head(10)
         .itertuples()
     ):
@@ -460,6 +458,21 @@ def export_pool_predictions_command(
         Path,
         typer.Option("--scoring-config", help="Pad naar de poule-puntentelling."),
     ] = DEFAULT_POOL_SCORING_PATH,
+    match_round: Annotated[
+        int | None,
+        typer.Option("--match-round", min=1, max=3, help="Filter op groepsronde 1, 2 of 3."),
+    ] = None,
+    group: Annotated[
+        str | None,
+        typer.Option("--group", help="Filter op groep A tot en met L."),
+    ] = None,
+    all_rounds: Annotated[
+        bool,
+        typer.Option(
+            "--all-rounds/--round-one-only",
+            help="Exporteer alle rondes of alleen ronde 1 als ronde-informatie aanwezig is.",
+        ),
+    ] = False,
     seed: Annotated[
         int | None,
         typer.Option(
@@ -473,7 +486,16 @@ def export_pool_predictions_command(
         typer.Option("--output-dir", help="Basismap voor exportruns."),
     ] = DEFAULT_OUTPUT_DIR,
 ) -> None:
-    """Exporteer pouleadviezen voor 72 groepswedstrijden zonder Monte Carlo."""
+    """Exporteer Tipset-pouleadviezen, standaard voor ronde 1 indien beschikbaar."""
+
+    if match_round is not None and all_rounds:
+        typer.echo("--match-round kan niet samen met --all-rounds worden gebruikt.", err=True)
+        raise typer.Exit(code=2)
+
+    normalized_group = group.strip().upper() if group is not None else None
+    if normalized_group is not None and normalized_group not in GROUP_IDS:
+        typer.echo("--group moet een letter van A tot en met L zijn.", err=True)
+        raise typer.Exit(code=2)
 
     config = _config(config_path)
     try:
@@ -485,18 +507,58 @@ def export_pool_predictions_command(
         raise typer.Exit(code=1) from exc
 
     fixtures = _load_export_fixtures(config, teams)
+    fixtures_with_round = sum(fixture.match_round is not None for fixture in fixtures)
+    official_rounds_present = fixtures_with_round > 0
+    effective_round = match_round
+    if effective_round is None and official_rounds_present and not all_rounds:
+        effective_round = 1
+
+    filtered_fixtures = fixtures
+    if effective_round is not None and official_rounds_present:
+        filtered_fixtures = [
+            fixture for fixture in filtered_fixtures if fixture.match_round == effective_round
+        ]
+    if normalized_group is not None:
+        filtered_fixtures = [
+            fixture for fixture in filtered_fixtures if fixture.group == normalized_group
+        ]
+
     run_seed = config.model.random_seed if seed is None else seed
     run_path = create_run_dir(output_dir, "pool-predictions", run_seed)
+    filename = (
+        f"pool_group_round{effective_round}_predictions.csv"
+        if effective_round is not None and official_rounds_present
+        else "pool_group_predictions.csv"
+    )
     csv_path = write_pool_group_predictions_csv(
-        fixtures,
+        filtered_fixtures,
         teams,
         config.model,
-        run_path / "pool_group_predictions.csv",
+        run_path / filename,
         strategy=strategy.value,
         scoring=scoring.group_stage,
     )
-    typer.echo(f"Pouleadvies-CSV geschreven naar:\n{csv_path}")
+
+    filter_parts: list[str] = []
+    if effective_round is not None and official_rounds_present:
+        filter_parts.append(f"match_round={effective_round}")
+    if normalized_group is not None:
+        filter_parts.append(f"group={normalized_group}")
+    filter_description = ", ".join(filter_parts) if filter_parts else "geen"
+
+    typer.echo(f"Export: {csv_path.name}")
+    typer.echo(f"Wedstrijden: {len(filtered_fixtures)}")
+    typer.echo(f"Filter: {filter_description}")
     typer.echo(f"Strategie: {strategy.value}")
+    typer.echo(
+        f"Officiële ronde-informatie: {'aanwezig' if official_rounds_present else 'ontbreekt'}"
+    )
+    if not official_rounds_present:
+        typer.echo(
+            "Waarschuwing: Fixtures hebben nog geen officiële match_round. "
+            "Export bevat alle gegenereerde groepswedstrijden."
+        )
+    typer.echo(f"Output: {csv_path}")
     typer.echo(f"Scoringconfig: {scoring_config}")
     _print_pool_scoring_summary(scoring)
     _print_pool_prediction_highlights(csv_path)

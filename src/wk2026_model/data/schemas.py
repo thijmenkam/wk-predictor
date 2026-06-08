@@ -46,8 +46,9 @@ class Fixture(BaseModel):
     team_a: str = Field(min_length=1)
     team_b: str = Field(min_length=1)
     matchday: int | None = Field(default=None, gt=0)
-    match_round: int | None = Field(default=None, gt=0)
+    match_round: int | None = Field(default=None, ge=1, le=3)
     location: str | None = None
+    kickoff_at: str | None = None
 
     @field_validator("match_id", "team_a", "team_b")
     @classmethod
@@ -81,10 +82,10 @@ class Fixture(BaseModel):
             raise ValueError("group must be one of A through L")
         return value
 
-    @field_validator("location")
+    @field_validator("location", "kickoff_at")
     @classmethod
-    def empty_location_becomes_none(cls, value: str | None) -> str | None:
-        """Normaliseer een lege locatie naar ``None``."""
+    def empty_optional_text_becomes_none(cls, value: str | None) -> str | None:
+        """Normaliseer lege optionele tekstvelden naar ``None``."""
 
         if value is None:
             return None

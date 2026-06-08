@@ -51,6 +51,9 @@ GROUP_MATCH_PREDICTION_COLUMNS = [
     "stage",
     "group",
     "match_round",
+    "matchday",
+    "kickoff_at",
+    "location",
     "team_a",
     "team_b",
     "elo_a",
@@ -66,8 +69,12 @@ GROUP_MATCH_PREDICTION_COLUMNS = [
 ]
 POOL_GROUP_PREDICTION_COLUMNS = [
     "match_id",
+    "stage",
     "group",
     "match_round",
+    "matchday",
+    "kickoff_at",
+    "location",
     "team_a",
     "team_b",
     "elo_a",
@@ -80,13 +87,13 @@ POOL_GROUP_PREDICTION_COLUMNS = [
     "most_likely_score",
     "most_likely_goals_a",
     "most_likely_goals_b",
+    "recommended_score",
+    "recommended_goals_a",
+    "recommended_goals_b",
     "strategy",
     "expected_pool_points",
     "most_likely_score_probability",
     "recommended_score_probability",
-    "recommended_score",
-    "recommended_goals_a",
-    "recommended_goals_b",
     "recommendation_reason",
 ]
 
@@ -158,7 +165,8 @@ def _group_match_prediction_rows(
         recommendation = recommend_pool_score(
             prediction,
             strategy=strategy,
-            scoring=scoring or GroupStageScoringConfig(
+            scoring=scoring
+            or GroupStageScoringConfig(
                 correct_outcome_points=1.0,
                 exact_score_bonus_points=1.0,
             ),
@@ -175,6 +183,9 @@ def _group_match_prediction_rows(
                 "stage": fixture.stage,
                 "group": fixture.group,
                 "match_round": fixture.match_round,
+                "matchday": fixture.matchday,
+                "kickoff_at": fixture.kickoff_at,
+                "location": fixture.location,
                 "team_a": team_a.name,
                 "team_b": team_b.name,
                 "elo_a": team_a.elo,
