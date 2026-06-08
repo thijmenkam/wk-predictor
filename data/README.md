@@ -3,14 +3,14 @@
 ## Overview
 
 Deze map bevat de minimale, lokaal leesbare invoer voor versie 0.1. De applicatie downloadt,
-scrapet of synchroniseert geen gegevens. Alle brondata wordt handmatig gecontroleerd en als CSV
-opgeslagen voordat het model wordt uitgevoerd.
+scrapet of synchroniseert geen gegevens. Alle brondata wordt als CSV opgeslagen en moet
+handmatig worden gecontroleerd voordat het model voor serieuze voorspellingen wordt uitgevoerd.
 
-De huidige `teams.csv` is bewust slechts een kleine voorbeeldset met de vier teams die al in het
-projectprototype stonden. De groepsindeling, teamstatus en Elo-waarden zijn **niet** als officiële
-WK 2026-data geverifieerd. Vervang deze seed door 48 door FIFA bevestigde teams in groepen A tot
-en met L en vul de peildatum in `raw/sources.yaml` in voordat serieuze voorspellingen worden
-gemaakt. TODO: voer die handmatige verificatie uit zodra de projectdataset wordt samengesteld.
+De huidige `teams.csv` bevat de volledige seed dataset voor WK 2026 v0.1: 48 teams in groepen A
+tot en met L, overgenomen uit het projectprototype. Deze groepsindeling, teamstatus en Elo-waarden
+zijn **nog niet handmatig tegen officiële FIFA-data en de vermelde Elo-bron gecontroleerd**. Gebruik
+de seed daarom alleen voor prototype- en modelontwikkeling totdat die verificatie is uitgevoerd en
+de bronpeildata in `raw/sources.yaml` als officieel gecontroleerd zijn vastgelegd.
 
 ## Required files
 
@@ -70,9 +70,10 @@ officiële wedstrijdvolgorde en `matchday` en `location` blijven leeg.
 
 ## Current limitations
 
-- De meegeleverde seed bevat vier prototype-teams en is geen complete, officieel geverifieerde
-  WK-deelnemerslijst.
-- `retrieved_at` staat op `TODO` totdat ratings en toernooidata handmatig zijn geverifieerd.
+- De volledige seed met 48 teams en 12 groepen komt uit het projectprototype en is nog niet
+  handmatig tegen officiële FIFA-data of de primaire Elo-bron geverifieerd.
+- De peildatum bij prototypegegevens registreert alleen de import in deze repository; openstaande
+  bronverificaties blijven als `TODO` in `raw/sources.yaml` benoemd.
 - Gegenereerde fixtures kennen geen officiële volgorde, speeldag, locatie of aftraptijd.
 - Er is geen scraping, API-integratie, automatische bron-sync, xG- of oddsdata.
 - De data-laag implementeert nog geen knock-outbracket of beste-nummers-drie-mapping.
