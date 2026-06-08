@@ -40,3 +40,17 @@ def test_validate_data_accepts_small_temporary_dataset(tmp_path: Path) -> None:
     assert "Groepen: 1" in result.stdout
     assert "Fixtures: 6" in result.stdout
     assert "niet WK-compleet" in result.stdout
+
+
+def test_simulate_group_stage_command_reports_all_groups() -> None:
+    result = runner.invoke(
+        app,
+        ["simulate-group-stage", "--num-simulations", "5"],
+    )
+
+    assert result.exit_code == 0
+    assert "Volledige groepsfase: 5 simulaties" in result.stdout
+    assert "Groep A" in result.stdout
+    assert "Groep L" in result.stdout
+    assert "Top 15 kwalificatiekansen" in result.stdout
+    assert "Top 12 kwalificatiekansen als nummer drie" in result.stdout
