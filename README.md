@@ -7,7 +7,7 @@ Carlo-simulaties, CSV-gedreven team- en fixturedata en een command-line-interfac
 Het toernooi-uitgangspunt is 48 teams in 12 groepen van vier. In elke volledige
 groepsfasesimulatie worden alle 72 groepswedstrijden gesimuleerd. De beste twee teams per groep
 kwalificeren zich rechtstreeks en de beste acht van de twaalf nummers drie gaan eveneens door.
-De knock-outfase en de exacte Round of 32-bracketmapping vallen nog buiten de huidige scope.
+De knock-outfase is beschikbaar met een seeded placeholder-bracket; alleen de exacte officiële Round of 32-mapping valt nog buiten de huidige scope.
 
 ## Huidige mogelijkheden
 
@@ -18,6 +18,8 @@ De knock-outfase en de exacte Round of 32-bracketmapping vallen nog buiten de hu
 - Gelijktijdig simuleren van de volledige groepsfase over alle twaalf groepen.
 - Exact selecteren van de acht beste nummers drie binnen iedere Monte Carlo-run.
 - Rapporteren van positie-, kwalificatie-, punten- en doelgemiddelden per team.
+- Simuleren van Round of 32 tot en met finale en troostfinale.
+- Aggregeren van kansen op iedere knock-outronde, goud, zilver, brons en vierde plaats.
 
 ## Groepsfase en kwalificatie
 
@@ -58,10 +60,11 @@ standaardconfiguratie gebruikt 50.000 simulaties en een vaste seed voor reproduc
 
 1. **Gereed:** verwachte goals en een aanbevolen exacte score per wedstrijd bepalen.
 2. **Gereed:** de volledige groepsfase simuleren en de beste acht nummers drie exact selecteren.
-3. De Round of 32 en verdere knock-outfase data-driven toevoegen.
-4. Goud, zilver, brons en vierde plaats voorspellen.
-5. Een top drie van topscorers voorspellen.
-6. Later geavanceerdere methoden toevoegen, zoals xG, Dixon-Coles en odds-integratie.
+3. **Gereed met placeholder:** de Round of 32 en verdere knock-outfase data-driven simuleren.
+4. **Gereed:** goud, zilver, brons en vierde plaats voorspellen.
+5. **TODO:** vervang de seeded placeholder vóór serieuze voorspellingen door de officiële FIFA Round of 32-slotmapping.
+6. Een top drie van topscorers voorspellen.
+7. Later geavanceerdere methoden toevoegen, zoals xG, Dixon-Coles en odds-integratie.
 
 De huidige versie bevat eenvoudige Elo/Poisson-logica, volledige groepsfasesimulatie en een
 minimale data-infrastructuur. Zie [`data/README.md`](data/README.md) voor schema's, herkomst en
@@ -160,6 +163,23 @@ geen demo-fallback gebruikt. De uitvoer bevat eerst per groep een tabel met Elo,
 positiepercentages en kwalificatiekans. Daarna volgen de vijftien hoogste kwalificatiekansen over
 alle teams en de twaalf hoogste kansen om als nummer drie te kwalificeren.
 
+### Volledig toernooi simuleren
+
+```bash
+uv run wk2026 simulate-tournament --num-simulations 1000 --top 20
+```
+
+De knock-outfase gebruikt in deze eerste versie een **seeded placeholder bracket**. De 32
+gekwalificeerde teams worden deterministisch gesorteerd op groepspositie, punten, doelsaldo,
+goals voor, Elo en teamnaam. Vervolgens speelt seed 1 tegen 32, seed 2 tegen 31, enzovoort.
+De declaratieve beschrijving staat in `configs/bracket_placeholder.yaml`.
+
+> Placeholder bracket. Replace with official FIFA Round of 32 slot mapping before serious predictions.
+
+Na de Round of 32 gaan winnaars in bracketvolgorde door. Een gelijke stand na negentig minuten
+wordt voorlopig beslist met een tussen 40% en 60% begrensde, Elo-gecorrigeerde penaltyloting;
+extra tijd komt later. De CLI toont kampioenskansen en kansen op een top-vierklassering.
+
 Voorbeeld (waarden hangen af van data, configuratie, seed en aantal simulaties):
 
 ```text
@@ -177,7 +197,8 @@ South Africa          1572   3.29  14.5%  22.6%  25.2%   53.7%
 
 De huidige implementatie bevat nog geen:
 
-- knock-outbracket of Round of 32;
+- officiële FIFA Round of 32-slotmapping (momenteel seeded placeholder);
+- complexe modellering van extra tijd;
 - officiële wedstrijdvolgorde, locaties of speeldagen;
 - fair-play- of FIFA-ranking-tie-breakers;
 - topscorermodellen;

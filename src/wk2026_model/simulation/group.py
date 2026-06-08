@@ -6,7 +6,8 @@ import numpy as np
 
 from wk2026_model.config import ModelConfig
 from wk2026_model.data.schemas import GROUP_IDS, Fixture, GroupStanding, Team
-from wk2026_model.simulation.match import predict_match, simulate_match
+from wk2026_model.models.elo import lambdas_from_elo
+from wk2026_model.simulation.match import simulate_match
 
 
 def round_robin_fixtures(group_id: str, teams: list[Team]) -> list[Fixture]:
@@ -58,8 +59,13 @@ def simulate_group_once(
     }
 
     for team_a, team_b in combinations(teams, 2):
-        prediction = predict_match(team_a, team_b, config)
-        goals_a, goals_b = simulate_match(prediction.lambda_a, prediction.lambda_b, rng)
+        lambda_a, lambda_b = lambdas_from_elo(
+            team_a.elo,
+            team_b.elo,
+            config.average_match_goals,
+            config.elo_goal_coefficient,
+        )
+        goals_a, goals_b = simulate_match(lambda_a, lambda_b, rng)
         row_a = standings[team_a.name]
         row_b = standings[team_b.name]
 

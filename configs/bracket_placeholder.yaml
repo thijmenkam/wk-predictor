@@ -1,0 +1,28 @@
+# Placeholder bracket. Replace with official FIFA Round of 32 slot mapping before serious predictions.
+bracket: seeded_placeholder
+round_of_32:
+  strategy: highest_seed_vs_lowest_seed
+  seed_order:
+    - group_finish_position_asc
+    - group_points_desc
+    - goal_difference_desc
+    - goals_for_desc
+    - elo_desc
+    - team_name_asc
+  pairings:
+    - [1, 32]
+    - [2, 31]
+    - [3, 30]
+    - [4, 29]
+    - [5, 28]
+    - [6, 27]
+    - [7, 26]
+    - [8, 25]
+    - [9, 24]
+    - [10, 23]
+    - [11, 22]
+    - [12, 21]
+    - [13, 20]
+    - [14, 19]
+    - [15, 18]
+    - [16, 17]

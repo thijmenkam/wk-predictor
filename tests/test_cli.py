@@ -54,3 +54,16 @@ def test_simulate_group_stage_command_reports_all_groups() -> None:
     assert "Groep L" in result.stdout
     assert "Top 15 kwalificatiekansen" in result.stdout
     assert "Top 12 kwalificatiekansen als nummer drie" in result.stdout
+
+
+def test_simulate_tournament_command_reports_placeholder_and_rankings() -> None:
+    result = runner.invoke(
+        app,
+        ["simulate-tournament", "--num-simulations", "2", "--top", "3"],
+    )
+
+    assert result.exit_code == 0
+    assert "Volledig toernooi: 2 simulaties" in result.stdout
+    assert "seeded placeholder mapping" in result.stdout
+    assert "Kampioenskansen" in result.stdout
+    assert "Top 4 kansen" in result.stdout
