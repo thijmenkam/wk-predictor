@@ -20,11 +20,20 @@ from wk2026_model.data.loaders import load_fixtures, load_teams, validate_teams
 from wk2026_model.data.schemas import GROUP_IDS, Fixture, Team
 from wk2026_model.outputs.export import (
     create_run_dir,
+    write_final_standings_candidates_csv,
+    write_final_standings_recommendation_csv,
     write_group_match_predictions_csv,
     write_group_stage_summary_csv,
     write_pool_group_predictions_csv,
     write_run_metadata_json,
     write_tournament_summary_csv,
+)
+from wk2026_model.pool.final_standings import (
+    POSITIONS,
+    FinalStandingsRecommendation,
+    expected_points_for_team_at_position,
+    recommend_final_standings,
+    select_final_standings_candidates,
 )
 from wk2026_model.simulation.group import simulate_group_once
 from wk2026_model.simulation.match import predict_match
@@ -177,6 +186,57 @@ def _print_tournament_summary(summary: TournamentSummary, top: int) -> None:
         typer.echo(
             f"{row.team:<20} {row.p_top4:>7.1%} {row.p_champion:>7.1%} "
             f"{row.p_runner_up:>8.1%} {row.p_third:>7.1%} {row.p_fourth:>8.1%}"
+        )
+
+
+def _print_knockout_scoring_summary(scoring: PoolScoringConfig) -> None:
+    """Toon de final-standingscomponenten van de knock-outpuntentelling."""
+
+    typer.echo("Scoring final standings")
+    typer.echo(
+        f"- Correcte halvefinalist: {scoring.knockout_stage.correct_semifinalist_points:g} punten"
+    )
+    typer.echo(
+        "- Bonus exacte eindpositie: "
+        f"{scoring.knockout_stage.correct_final_placement_bonus_points:g} punten"
+    )
+    exact_position_total = (
+        scoring.knockout_stage.correct_semifinalist_points
+        + scoring.knockout_stage.correct_final_placement_bonus_points
+    )
+    typer.echo(f"- Exact correcte positie totaal: {exact_position_total:g} punten")
+
+
+def _print_final_standings_recommendation(
+    recommendation: FinalStandingsRecommendation,
+) -> None:
+    typer.echo("\nAanbevolen final standings")
+    for position in POSITIONS:
+        typer.echo(f"{position.title()}: {getattr(recommendation, position)}")
+    typer.echo(f"Expected points: {recommendation.expected_pool_points:.2f}")
+    typer.echo(f"Strategie: {recommendation.strategy}")
+
+
+def _print_final_standings_candidates(
+    summary: TournamentSummary,
+    scoring: PoolScoringConfig,
+    candidate_pool_size: int,
+) -> None:
+    typer.echo("\nTop candidates")
+    typer.echo(
+        f"{'Team':<20} {'Elo':>5} {'Top4%':>7} {'EV goud':>8} "
+        f"{'EV zilver':>9} {'EV brons':>9} {'EV vierde':>10}"
+    )
+    candidates = select_final_standings_candidates(summary.teams, candidate_pool_size)
+    for row in candidates:
+        position_evs = [
+            expected_points_for_team_at_position(row, position, scoring.knockout_stage)
+            for position in POSITIONS
+        ]
+        typer.echo(
+            f"{row.team:<20} {row.elo:>5.0f} {row.p_top4:>7.1%} "
+            f"{position_evs[0]:>8.3f} {position_evs[1]:>9.3f} "
+            f"{position_evs[2]:>9.3f} {position_evs[3]:>10.3f}"
         )
 
 
@@ -371,6 +431,20 @@ def _export_run(
     )
     if tournament_summary is not None:
         write_tournament_summary_csv(tournament_summary, run_path / "tournament_summary.csv")
+        knockout_scoring = load_pool_scoring_config(DEFAULT_POOL_SCORING_PATH).knockout_stage
+        recommendation = recommend_final_standings(tournament_summary.teams, knockout_scoring)
+        write_final_standings_recommendation_csv(
+            recommendation,
+            tournament_summary.teams,
+            knockout_scoring,
+            run_path / "final_standings_recommendation.csv",
+        )
+        write_final_standings_candidates_csv(
+            tournament_summary.teams,
+            knockout_scoring,
+            run_path / "final_standings_candidates.csv",
+            candidate_pool_size=recommendation.candidate_pool_size,
+        )
     return run_path
 
 
@@ -641,6 +715,107 @@ def simulate_group_stage_command(
         )
 
 
+@app.command("recommend-final-standings")
+def recommend_final_standings_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Pad naar de YAML-configuratie."),
+    ] = DEFAULT_CONFIG_PATH,
+    num_simulations: Annotated[
+        int | None,
+        typer.Option(
+            "--num-simulations",
+            min=1,
+            help="Aantal Monte Carlo-simulaties; standaard de modelconfiguratie.",
+        ),
+    ] = None,
+    seed: Annotated[
+        int | None,
+        typer.Option(
+            "--seed",
+            min=0,
+            help="Vaste random seed; standaard de modelconfiguratie.",
+        ),
+    ] = None,
+    candidate_pool_size: Annotated[
+        int,
+        typer.Option(
+            "--candidate-pool-size",
+            min=4,
+            help="Aantal teams in de brute-forcezoekruimte.",
+        ),
+    ] = 16,
+    scoring_config: Annotated[
+        Path,
+        typer.Option("--scoring-config", help="Pad naar de pool scoring-YAML."),
+    ] = DEFAULT_POOL_SCORING_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Basismap voor aanbevelingsruns."),
+    ] = DEFAULT_OUTPUT_DIR,
+    export: Annotated[
+        bool,
+        typer.Option("--export/--no-export", help="Schrijf de twee final-standings-CSV's."),
+    ] = False,
+) -> None:
+    """Optimaliseer goud, zilver, brons en vierde op verwachte poulepunten."""
+
+    config = _config(config_path)
+    try:
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        validate_teams(teams, strict=True)
+        scoring = load_pool_scoring_config(scoring_config)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Final standings konden niet worden berekend: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    simulation_count = num_simulations or config.model.num_simulations
+    run_seed = config.model.random_seed if seed is None else seed
+    summary = simulate_tournament(
+        teams,
+        config.model,
+        simulation_count,
+        np.random.default_rng(run_seed),
+    )
+    recommendation = recommend_final_standings(
+        summary.teams,
+        scoring.knockout_stage,
+        candidate_pool_size,
+    )
+
+    typer.echo(f"Aantal simulaties: {simulation_count:,}")
+    _print_knockout_scoring_summary(scoring)
+    _print_final_standings_recommendation(recommendation)
+    _print_final_standings_candidates(summary, scoring, recommendation.candidate_pool_size)
+    typer.echo(
+        "\nLet op: knock-out bracket gebruikt seeded placeholder, niet officiële FIFA mapping."
+    )
+    typer.echo("Deze aanbeveling is daardoor nog niet definitief.")
+    typer.echo(f"Limitation: {recommendation.notes}")
+
+    if export:
+        run_path = create_run_dir(output_dir, "final-standings", run_seed)
+        write_final_standings_recommendation_csv(
+            recommendation,
+            summary.teams,
+            scoring.knockout_stage,
+            run_path / "final_standings_recommendation.csv",
+        )
+        write_final_standings_candidates_csv(
+            summary.teams,
+            scoring.knockout_stage,
+            run_path / "final_standings_candidates.csv",
+            candidate_pool_size=recommendation.candidate_pool_size,
+        )
+        _print_export_result(
+            run_path,
+            [
+                "final_standings_recommendation.csv",
+                "final_standings_candidates.csv",
+            ],
+        )
+
+
 @app.command("simulate-tournament")
 def simulate_tournament_command(
     config_path: Annotated[
@@ -725,6 +900,8 @@ def simulate_tournament_command(
             [
                 "run_metadata.json",
                 "tournament_summary.csv",
+                "final_standings_recommendation.csv",
+                "final_standings_candidates.csv",
                 "group_stage_summary.csv",
                 "group_match_predictions.csv",
                 "pool_group_predictions.csv",

@@ -108,10 +108,43 @@ def test_simulate_tournament_export_writes_all_run_files(tmp_path: Path) -> None
     assert {path.name for path in run_directories[0].iterdir()} == {
         "run_metadata.json",
         "tournament_summary.csv",
+        "final_standings_recommendation.csv",
+        "final_standings_candidates.csv",
         "group_stage_summary.csv",
         "group_match_predictions.csv",
         "pool_group_predictions.csv",
     }
+
+
+def test_recommend_final_standings_command_exports_recommendation(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "recommend-final-standings",
+            "--num-simulations",
+            "2",
+            "--seed",
+            "42",
+            "--candidate-pool-size",
+            "8",
+            "--export",
+            "--output-dir",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Aantal simulaties: 2" in result.stdout
+    assert "Aanbevolen final standings" in result.stdout
+    assert "Expected points:" in result.stdout
+    assert "seeded placeholder" in result.stdout
+    run_path = next(tmp_path.iterdir())
+    assert {path.name for path in run_path.iterdir()} == {
+        "final_standings_recommendation.csv",
+        "final_standings_candidates.csv",
+    }
+    assert len(pd.read_csv(run_path / "final_standings_recommendation.csv")) == 4
+    assert len(pd.read_csv(run_path / "final_standings_candidates.csv")) == 8
 
 
 def test_export_pool_predictions_command_writes_csv(tmp_path: Path) -> None:
