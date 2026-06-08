@@ -40,7 +40,21 @@ def test_validate_data_accepts_small_temporary_dataset(tmp_path: Path) -> None:
     assert "Teams: 4" in result.stdout
     assert "Groepen: 1" in result.stdout
     assert "Fixtures: 6" in result.stdout
+    assert "Official match rounds present: no" in result.stdout
+    assert "Fixtures generated: true" in result.stdout
+    assert "Fixtures with match_round filled: 0" in result.stdout
     assert "niet WK-compleet" in result.stdout
+
+
+def test_validate_repository_data_reports_official_fixtures() -> None:
+    result = runner.invoke(app, ["validate-data"])
+
+    assert result.exit_code == 0
+    assert "Fixtures: 72" in result.stdout
+    assert "Official match rounds present: yes" in result.stdout
+    assert "Fixtures generated: false" in result.stdout
+    assert "Fixtures with match_round filled: 72" in result.stdout
+    assert "gegenereerde combinaties" not in result.stdout
 
 
 def test_simulate_group_stage_command_reports_all_groups() -> None:
@@ -113,19 +127,19 @@ def test_export_pool_predictions_command_writes_csv(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0
-    assert "Export: pool_group_predictions.csv" in result.stdout
-    assert "Wedstrijden: 72" in result.stdout
-    assert "Filter: geen" in result.stdout
-    assert "Officiële ronde-informatie: ontbreekt" in result.stdout
-    assert "Fixtures hebben nog geen officiële match_round" in result.stdout
+    assert "Export: pool_group_round1_predictions.csv" in result.stdout
+    assert "Wedstrijden: 24" in result.stdout
+    assert "Filter: match_round=1" in result.stdout
+    assert "Officiële ronde-informatie: aanwezig" in result.stdout
     assert "Strategie: max_expected_pool_points" in result.stdout
     assert "Top 10 gewijzigde aanbevelingen" in result.stdout
     assert "Top 10 hoogste verwachte poulepunten" in result.stdout
     assert "Top 10 laagste verwachte poulepunten" in result.stdout
     run_directories = list(tmp_path.iterdir())
     assert len(run_directories) == 1
-    csv_path = run_directories[0] / "pool_group_predictions.csv"
+    csv_path = run_directories[0] / "pool_group_round1_predictions.csv"
     assert csv_path.exists()
+    assert len(pd.read_csv(csv_path)) == 24
     assert "pool-predictions-seed42" in run_directories[0].name
 
 
@@ -178,15 +192,12 @@ def test_export_pool_predictions_filters_match_round_one(tmp_path: Path) -> None
     assert set(predictions["match_round"]) == {1}
 
 
-def test_export_pool_predictions_match_round_falls_back_without_round_data(
-    tmp_path: Path,
-) -> None:
+def test_export_pool_predictions_all_rounds_writes_72_rows(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
             "export-pool-predictions",
-            "--match-round",
-            "1",
+            "--all-rounds",
             "--seed",
             "42",
             "--output-dir",
@@ -197,8 +208,8 @@ def test_export_pool_predictions_match_round_falls_back_without_round_data(
     assert result.exit_code == 0
     assert "Wedstrijden: 72" in result.stdout
     assert "Filter: geen" in result.stdout
-    assert "Fixtures hebben nog geen officiële match_round" in result.stdout
+    assert "Officiële ronde-informatie: aanwezig" in result.stdout
     csv_path = next(tmp_path.iterdir()) / "pool_group_predictions.csv"
     predictions = pd.read_csv(csv_path)
     assert len(predictions) == 72
-    assert predictions["match_round"].isna().all()
+    assert set(predictions["match_round"]) == {1, 2, 3}

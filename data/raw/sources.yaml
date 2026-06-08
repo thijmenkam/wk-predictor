@@ -5,10 +5,12 @@ elo:
   notes: "Prototype ratings imported on this date. TODO: manually verify every rating against the primary source before serious predictions."
 
 fixtures:
-  primary_source: "Project prototype; verify against FIFA World Cup 2026 scores and fixtures"
+  primary_source: "FIFA World Cup 2026 scores and fixtures"
   url: "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures"
+  secondary_source: "World Cup Wiki schedule"
+  secondary_url: "https://worldcupwiki.com/schedule/"
   retrieved_at: "2026-06-08"
-  notes: "Prototype groups imported on this date. TODO: manually verify groups against FIFA; v0.1 fixtures remain generated round-robin combinations."
+  notes: "The 72 group fixtures were entered manually from the secondary schedule source, using its Eastern Time dates, times, and venues. FIFA remains the source of truth. TODO: manually verify every fixture, group, match round, venue, date, and kickoff time against FIFA before the pool is filled definitively."
 
 fifa_ranking:
   primary_source: "FIFA/Coca-Cola Men's World Ranking"

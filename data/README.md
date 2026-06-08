@@ -15,8 +15,9 @@ de bronpeildata in `raw/sources.yaml` als officieel gecontroleerd zijn vastgeleg
 ## Required files
 
 - `raw/teams.csv` is verplicht en wordt via `data.teams_path` in `configs/base.yaml` gevonden.
-- `raw/fixtures.csv` is in v0.1 optioneel. Een ontbrekend, leeg of alleen van headers voorzien
-  bestand activeert gegenereerde groepsfixtures als `allow_generated_fixtures` aan staat.
+- `raw/fixtures.csv` bevat 72 handmatig ingevulde groepswedstrijden met ronde, speeldag, locatie
+  en ET-aftraptijd. Alleen een ontbrekend, leeg of alleen van headers voorzien bestand activeert
+  gegenereerde groepsfixtures als `allow_generated_fixtures` aan staat.
 - `raw/sources.yaml` registreert herkomst, URL, peildatum en gebruiksnotities. Het bestand is
   documentatie en wordt niet gebruikt om automatisch data op te halen.
 
@@ -47,10 +48,15 @@ De loader kan kleine datasets niet-strikt valideren voor tests en prototypes.
 | `location` | tekst of leeg | Optionele speelplaats, stad of stadionnaam. |
 | `kickoff_at` | ISO datetime of leeg | Optionele officiële aftraptijd, bijvoorbeeld `2026-06-11T19:00:00Z`. |
 
-`fixtures.csv` kan handmatig met officiële FIFA-fixtures worden gevuld. Daarbij is `match_round`
-nodig om de Tipset-workflow voor groepsrondes 1, 2 en 3 te ondersteunen. Officiële groepen,
-fixtures, locaties, wedstrijdvolgorde en aftraptijden moeten tegen de FIFA World Cup 2026
-scores/fixtures en het match schedule worden gecontroleerd. FIFA is hiervoor de bron van waarheid.
+De 72 groepswedstrijden in `fixtures.csv` zijn handmatig overgenomen van de secundaire
+[World Cup Wiki schedule](https://worldcupwiki.com/schedule/). De bron publiceert tijden in Eastern
+Time; daarom gebruikt `kickoff_at` in deze dataset de zomertijd-offset `-04:00`. `matchday` telt
+kalenderdagen vanaf 11 juni 2026, waarbij die openingsdag nummer 1 is.
+
+**FIFA blijft de bron van waarheid.** Controleer vóór het definitief invullen van de poule iedere
+groep, wedstrijd, `match_round`, locatie, datum en aftraptijd handmatig tegen de FIFA World Cup
+2026 scores/fixtures en het officiële match schedule. De huidige handmatige invoer is pas na die
+controle geschikt als definitieve poulebron.
 
 ## Generated fixtures
 
@@ -60,10 +66,9 @@ binnen elke aanwezige groep. Vier teams leveren zes wedstrijden op, met IDs als 
 officiële wedstrijdvolgorde en `matchday`, `match_round`, `location` en `kickoff_at` blijven leeg.
 
 Tipset vraagt initieel alleen voorspellingen voor groepsfase ronde 1 en laat ronde 2 en 3 later
-wijzigen. Gegenereerde fixtures kennen die officiële rondes niet. TODO: vul `match_round` met de
-officiële FIFA-fixturevolgorde voordat serieuze poule-invoer wordt gedaan; scraping of automatische
-fixture-sync valt buiten v0.1. Controleer daarom vóór serieus invullen altijd
-`data/raw/fixtures.csv` handmatig tegen het officiële FIFA-wedstrijdschema.
+wijzigen. De handmatig ingevulde fixtures ondersteunen daarom `match_round` 1, 2 en 3. De fallback
+blijft alleen bedoeld voor tests en onvolledige lokale datasets; gegenereerde fixtures kennen die
+officiële rondes niet.
 
 ## Data provenance
 
@@ -71,9 +76,11 @@ fixture-sync valt buiten v0.1. Controleer daarom vóór serieus invullen altijd
   handmatig overgenomen; registreer de exacte peildatum in `raw/sources.yaml`. De tabel van
   [International Football](https://www.international-football.net/elo-ratings-table) kan alleen als
   sanity check of latere fallback dienen.
-- **Fixtures en groepen:** [FIFA scores/fixtures](https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures)
+- **Fixtures en groepen:** de [World Cup Wiki schedule](https://worldcupwiki.com/schedule/) is de
+  secundaire bron waarmee de 72 fixtures handmatig zijn ingevuld.
+  [FIFA scores/fixtures](https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/scores-fixtures)
   en het [FIFA match schedule](https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/articles/match-schedule-fixtures-results-teams-stadiums)
-  zijn officieel leidend.
+  zijn officieel leidend; handmatige FIFA-verificatie is nog vereist vóór definitieve poule-invoer.
 - **FIFA-ranking:** de [FIFA/Coca-Cola Men's World Ranking](https://inside.fifa.com/fifa-world-ranking/men)
   is optioneel en niet de primaire sterkte-indicator.
 
@@ -83,7 +90,8 @@ fixture-sync valt buiten v0.1. Controleer daarom vóór serieus invullen altijd
   handmatig tegen officiële FIFA-data of de primaire Elo-bron geverifieerd.
 - De peildatum bij prototypegegevens registreert alleen de import in deze repository; openstaande
   bronverificaties blijven als `TODO` in `raw/sources.yaml` benoemd.
-- Gegenereerde fixtures kennen geen officiële volgorde, `match_round`, speeldag, locatie of aftraptijd.
+- De handmatig ingevulde fixtures zijn nog niet definitief tegen FIFA geverifieerd; de gegenereerde
+  fallback kent geen officiële volgorde, `match_round`, speeldag, locatie of aftraptijd.
 - Er is geen scraping, API-integratie, automatische bron-sync, xG- of oddsdata.
 - De data-laag implementeert nog geen knock-outbracket of beste-nummers-drie-mapping.
 

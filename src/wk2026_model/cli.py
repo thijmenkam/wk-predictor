@@ -207,8 +207,10 @@ def validate_data_command(
     typer.echo(f"Groepen: {len(groups)}")
     typer.echo(f"Fixtures: {len(fixtures)}")
     fixtures_with_round = sum(fixture.match_round is not None for fixture in fixtures)
-    typer.echo(f"Officiële match rounds aanwezig: {'ja' if fixtures_with_round else 'nee'}")
-    typer.echo(f"Fixtures met match_round gevuld: {fixtures_with_round}")
+    fixtures_generated = not _fixture_file_has_data(config.data.fixtures_path)
+    typer.echo(f"Official match rounds present: {'yes' if fixtures_with_round else 'no'}")
+    typer.echo(f"Fixtures generated: {'true' if fixtures_generated else 'false'}")
+    typer.echo(f"Fixtures with match_round filled: {fixtures_with_round}")
 
     try:
         validate_teams(teams, strict=True)
@@ -217,8 +219,7 @@ def validate_data_command(
     else:
         typer.echo("Datavalidatie geslaagd: volledige WK 2026-groepsdataset.")
 
-    fixture_path = config.data.fixtures_path
-    if not _fixture_file_has_data(fixture_path):
+    if fixtures_generated:
         typer.echo("Waarschuwing: fixtures zijn gegenereerde combinaties, geen officiële volgorde.")
     elif fixtures_with_round < len(fixtures):
         typer.echo("Waarschuwing: match_round ontbreekt voor één of meer fixtures.")

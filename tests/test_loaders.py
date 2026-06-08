@@ -99,3 +99,18 @@ def test_generated_fixtures_have_no_official_order_fields() -> None:
     assert all(fixture.match_round is None for fixture in fixtures)
     assert all(fixture.kickoff_at is None for fixture in fixtures)
     assert all(fixture.location is None for fixture in fixtures)
+
+
+def test_repository_fixtures_cover_every_group_and_round() -> None:
+    teams = load_teams(Path("data/raw/teams.csv"))
+    fixtures = load_fixtures(Path("data/raw/fixtures.csv"), teams, allow_generated=False)
+
+    assert len(fixtures) == 72
+    assert {fixture.team_a for fixture in fixtures} | {fixture.team_b for fixture in fixtures} <= {
+        team.name for team in teams
+    }
+    for group in "ABCDEFGHIJKL":
+        group_fixtures = [fixture for fixture in fixtures if fixture.group == group]
+        assert len(group_fixtures) == 6
+        for match_round in (1, 2, 3):
+            assert sum(fixture.match_round == match_round for fixture in group_fixtures) == 2

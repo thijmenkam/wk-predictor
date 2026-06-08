@@ -89,10 +89,10 @@ uv run mypy src
 
 ## Configuratie en data
 
-`configs/base.yaml` wijst naar `data/raw/teams.csv` en het optionele
-`data/raw/fixtures.csv`. Als het fixturebestand ontbreekt of geen wedstrijden bevat, genereert de
-loader alle unieke onderlinge groepswedstrijden. Die combinaties leggen geen officiële volgorde,
-locatie of speeldag vast.
+`configs/base.yaml` wijst naar `data/raw/teams.csv` en `data/raw/fixtures.csv`. Het fixturebestand
+bevat 72 handmatig ingevulde groepswedstrijden met `match_round`, locatie en ET-aftraptijd. Als het
+bestand ontbreekt of geen wedstrijden bevat, kan de loader nog steeds alle unieke onderlinge
+groepswedstrijden genereren; die fallback legt geen officiële volgorde, locatie of speeldag vast.
 
 De belangrijkste modelinstellingen zijn:
 
@@ -169,8 +169,9 @@ alle teams en de twaalf hoogste kansen om als nummer drie te kwalificeren.
 uv run wk2026 export-pool-predictions --seed 42
 ```
 
-Dit command draait geen Monte Carlo-simulatie. Het berekent de 72 groepswedstrijdvoorspellingen,
-schrijft `pool_group_predictions.csv` naar een herkenbare runmap onder `outputs/runs/` en toont
+Dit command draait geen Monte Carlo-simulatie. Met de officiële rondevelden exporteert het
+standaard de 24 wedstrijden van ronde 1 naar `pool_group_round1_predictions.csv` in een herkenbare
+runmap onder `outputs/runs/` en toont
 de tien gewijzigde adviezen ten opzichte van de meest waarschijnlijke score plus de hoogste en
 laagste verwachte poulepunten. Standaard gebruikt het advies de Tipset-puntentelling uit
 `configs/pool_scoring.yaml` en kiest het `--strategy max_expected_pool_points`: 1 punt voor een
@@ -184,10 +185,11 @@ uv run wk2026 export-pool-predictions \
   --seed 42
 ```
 
-De export bevat ook `match_round`. Gegenereerde fixtures zetten die waarde leeg omdat ze alleen
-round-robincombinaties zijn en geen officiële FIFA-wedstrijdvolgorde bevatten. Tipset vraagt in
-het begin om groepsfase ronde 1; officiële FIFA-fixtures zijn daarom nodig voordat je serieuze
-poule-invoer doet. TODO: vul officiële fixturevolgorde in zodra die betrouwbaar beschikbaar is.
+De export bevat ook `match_round`. Gebruik `--match-round 1`, `2` of `3` voor één ronde en
+`--all-rounds` voor alle 72 wedstrijden. De fixtures zijn handmatig overgenomen van
+[World Cup Wiki](https://worldcupwiki.com/schedule/) als secundaire bron. FIFA blijft de bron van
+waarheid: controleer de volledige planning handmatig tegen FIFA voordat je de poule definitief
+invult. Gegenereerde fallbackfixtures houden `match_round` leeg.
 
 Bij `simulate-tournament --export` wordt hetzelfde pouleadviesbestand naast de bestaande
 samenvattingen en wedstrijdvoorspellingen geschreven.
