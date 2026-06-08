@@ -9,12 +9,48 @@ from typing import Any
 import pandas as pd
 from pydantic import BaseModel
 
-from wk2026_model.config import GroupStageScoringConfig, ModelConfig
+from wk2026_model.config import (
+    GroupStageScoringConfig,
+    KnockoutStageScoringConfig,
+    ModelConfig,
+)
 from wk2026_model.data.schemas import Fixture, Team
 from wk2026_model.models.poisson import score_grid
+from wk2026_model.pool.final_standings import (
+    EXACT_PROBABILITY_FIELDS,
+    POSITIONS,
+    FinalStandingsRecommendation,
+    expected_points_for_team_at_position,
+    select_final_standings_candidates,
+)
 from wk2026_model.simulation.match import predict_match, recommend_pool_score
-from wk2026_model.simulation.tournament import GroupStageSummary, TournamentSummary
+from wk2026_model.simulation.tournament import (
+    GroupStageSummary,
+    TournamentSummary,
+    TournamentTeamSummary,
+)
 
+FINAL_STANDINGS_RECOMMENDATION_COLUMNS = [
+    "position",
+    "team",
+    "elo",
+    "p_top4",
+    "p_exact_position",
+    "expected_points_component",
+]
+FINAL_STANDINGS_CANDIDATE_COLUMNS = [
+    "team",
+    "elo",
+    "p_champion",
+    "p_runner_up",
+    "p_third",
+    "p_fourth",
+    "p_top4",
+    "ev_if_gold",
+    "ev_if_silver",
+    "ev_if_bronze",
+    "ev_if_fourth",
+]
 TOURNAMENT_SUMMARY_COLUMNS = [
     "team",
     "group",
@@ -129,6 +165,71 @@ def write_tournament_summary_csv(summary: TournamentSummary, path: str | Path) -
     )
     frame = pd.DataFrame((asdict(row) for row in rows), columns=TOURNAMENT_SUMMARY_COLUMNS)
     frame.to_csv(output_path, index=False)
+    return output_path
+
+
+def write_final_standings_recommendation_csv(
+    recommendation: FinalStandingsRecommendation,
+    tournament_summary: list[TournamentTeamSummary],
+    scoring: KnockoutStageScoringConfig,
+    path: str | Path,
+) -> Path:
+    """Schrijf de vier aanbevolen posities en hun afzonderlijke EV-componenten."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_by_team = {row.team: row for row in tournament_summary}
+    rows: list[dict[str, Any]] = []
+    for position in POSITIONS:
+        team = getattr(recommendation, position)
+        summary = summary_by_team[team]
+        rows.append(
+            {
+                "position": position,
+                "team": team,
+                "elo": summary.elo,
+                "p_top4": summary.p_top4,
+                "p_exact_position": getattr(summary, EXACT_PROBABILITY_FIELDS[position]),
+                "expected_points_component": expected_points_for_team_at_position(
+                    summary, position, scoring
+                ),
+            }
+        )
+    pd.DataFrame(rows, columns=FINAL_STANDINGS_RECOMMENDATION_COLUMNS).to_csv(
+        output_path, index=False
+    )
+    return output_path
+
+
+def write_final_standings_candidates_csv(
+    tournament_summary: list[TournamentTeamSummary],
+    scoring: KnockoutStageScoringConfig,
+    path: str | Path,
+    *,
+    candidate_pool_size: int = 16,
+) -> Path:
+    """Schrijf alle positie-EV's voor de beperkte optimalisatiekandidaten."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    candidates = select_final_standings_candidates(tournament_summary, candidate_pool_size)
+    rows = [
+        {
+            "team": row.team,
+            "elo": row.elo,
+            "p_champion": row.p_champion,
+            "p_runner_up": row.p_runner_up,
+            "p_third": row.p_third,
+            "p_fourth": row.p_fourth,
+            "p_top4": row.p_top4,
+            "ev_if_gold": expected_points_for_team_at_position(row, "gold", scoring),
+            "ev_if_silver": expected_points_for_team_at_position(row, "silver", scoring),
+            "ev_if_bronze": expected_points_for_team_at_position(row, "bronze", scoring),
+            "ev_if_fourth": expected_points_for_team_at_position(row, "fourth", scoring),
+        }
+        for row in candidates
+    ]
+    pd.DataFrame(rows, columns=FINAL_STANDINGS_CANDIDATE_COLUMNS).to_csv(output_path, index=False)
     return output_path
 
 

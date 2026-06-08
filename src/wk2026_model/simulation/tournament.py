@@ -326,11 +326,15 @@ class TeamTournamentSummary:
     p_top4: float
 
 
+# Publieke naam die de team-first conventie van andere summary-types volgt.
+TournamentTeamSummary = TeamTournamentSummary
+
+
 @dataclass(frozen=True, slots=True)
 class TournamentSummary:
     """Monte Carlo-samenvatting van het volledige toernooi."""
 
-    teams: list[TeamTournamentSummary]
+    teams: list[TournamentTeamSummary]
     num_simulations: int
 
 

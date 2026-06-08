@@ -1,1 +1,1 @@
-"""Poule-specifieke aanbevelingen en puntentelling."""
+"""Pouleoptimalisaties en puntentelling."""
