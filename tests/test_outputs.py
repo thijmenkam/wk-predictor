@@ -110,7 +110,8 @@ def test_pool_group_predictions_export_contains_72_recommendations(tmp_path: Pat
     assert pd.api.types.is_integer_dtype(predictions["recommended_goals_b"])
     assert predictions["expected_pool_points"].gt(0).all()
     assert set(predictions["strategy"]) == {"most_likely_score"}
-    assert predictions["match_round"].isna().all()
+    assert set(predictions["match_round"]) == {1, 2, 3}
+    assert predictions["match_round"].value_counts().to_dict() == {1: 24, 2: 24, 3: 24}
     assert "match_round" in predictions.columns
     assert "kickoff_at" in predictions.columns
     assert "location" in predictions.columns
