@@ -5,20 +5,26 @@ from itertools import combinations
 import numpy as np
 
 from wk2026_model.config import ModelConfig
-from wk2026_model.data.schemas import Fixture, GroupStanding, Team
+from wk2026_model.data.schemas import GROUP_IDS, Fixture, GroupStanding, Team
 from wk2026_model.simulation.match import predict_match, simulate_match
 
 
 def round_robin_fixtures(group_id: str, teams: list[Team]) -> list[Fixture]:
-    """Genereer iedere unieke onderlinge wedstrijd precies één keer."""
+    """Genereer combinaties, zonder officiële wedstrijdvolgorde te suggereren."""
+
+    normalized_group = group_id.strip().upper()
+    if normalized_group not in GROUP_IDS:
+        raise ValueError("group must be one of A through L")
+    if any(team.group != normalized_group for team in teams):
+        raise ValueError("all teams must belong to the requested group")
 
     return [
         Fixture(
-            match_id=f"{group_id}-{index}",
+            match_id=f"{normalized_group}-{index}",
             stage="group",
             team_a=team_a.name,
             team_b=team_b.name,
-            group=group_id,
+            group=normalized_group,
         )
         for index, (team_a, team_b) in enumerate(combinations(teams, 2), start=1)
     ]
@@ -36,6 +42,8 @@ def simulate_group_once(
         raise ValueError("a World Cup 2026 group must contain exactly four teams")
     if len({team.name for team in teams}) != len(teams):
         raise ValueError("team names within a group must be unique")
+    if any(team.group != group_id.strip().upper() for team in teams):
+        raise ValueError("all teams must belong to the simulated group")
 
     standings = {
         team.name: GroupStanding(

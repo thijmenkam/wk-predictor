@@ -7,33 +7,35 @@ import yaml
 from pydantic import BaseModel, Field
 
 
-class DataPaths(BaseModel):
-    """Paden naar de verschillende datalagen."""
+class DataConfig(BaseModel):
+    """Paden en fallbackgedrag voor de minimale databronnen."""
 
-    raw: Path
-    interim: Path
-    processed: Path
+    teams_path: Path = Path("data/raw/teams.csv")
+    fixtures_path: Path = Path("data/raw/fixtures.csv")
+    allow_generated_fixtures: bool = True
 
 
 class ModelConfig(BaseModel):
     """Instellingen voor voorspellingen en simulaties."""
 
-    random_seed: int = 2026
-    num_simulations: int = Field(default=10_000, positive=True)
+    random_seed: int = 42
+    num_simulations: int = Field(default=50_000, gt=0)
     max_goals: int = Field(default=10, ge=0)
-    average_match_goals: float = Field(default=2.6, positive=True)
-    elo_goal_coefficient: float = Field(default=0.001, positive=True)
-    paths: DataPaths = DataPaths(
-        raw=Path("data/raw"),
-        interim=Path("data/interim"),
-        processed=Path("data/processed"),
-    )
+    average_match_goals: float = Field(default=2.65, gt=0)
+    elo_goal_coefficient: float = Field(default=0.00088, gt=0)
 
 
-def load_config(path: str | Path = "configs/base.yaml") -> ModelConfig:
+class ProjectConfig(BaseModel):
+    """Volledige applicatieconfiguratie."""
+
+    data: DataConfig = Field(default_factory=DataConfig)
+    model: ModelConfig = Field(default_factory=ModelConfig)
+
+
+def load_config(path: str | Path = "configs/base.yaml") -> ProjectConfig:
     """Lees een YAML-configuratiebestand en valideer de inhoud."""
 
     config_path = Path(path)
     with config_path.open(encoding="utf-8") as config_file:
         raw_config: Any = yaml.safe_load(config_file)
-    return ModelConfig.model_validate(raw_config)
+    return ProjectConfig.model_validate(raw_config)
