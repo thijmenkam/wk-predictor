@@ -52,7 +52,8 @@ def test_load_fixtures_generates_when_file_is_missing(tmp_path: Path) -> None:
 def test_load_fixtures_rejects_unknown_team(tmp_path: Path) -> None:
     path = tmp_path / "fixtures.csv"
     path.write_text(
-        "match_id,stage,group,team_a,team_b,matchday,location\nA-1,group,A,Alpha,Unknown,,\n",
+        "match_id,stage,group,team_a,team_b,matchday,match_round,location,kickoff_at\n"
+        "A-1,group,A,Alpha,Unknown,,,,\n",
         encoding="utf-8",
     )
 
@@ -77,14 +78,24 @@ def test_validate_teams_requires_48_teams_in_strict_mode() -> None:
         validate_teams(_small_teams(), strict=True)
 
 
-def test_load_fixtures_accepts_round_alias(tmp_path: Path) -> None:
+def test_load_fixtures_reads_match_round_and_kickoff_from_csv(tmp_path: Path) -> None:
     path = tmp_path / "fixtures.csv"
     path.write_text(
-        "match_id,stage,group,team_a,team_b,matchday,round,location\n"
-        "A-1,group,A,Alpha,Bravo,,1,\n",
+        "match_id,stage,group,team_a,team_b,matchday,match_round,location,kickoff_at\n"
+        "G-A-01,group,A,Alpha,Bravo,1,1,Mexico City,2026-06-11T19:00:00Z\n",
         encoding="utf-8",
     )
 
     fixtures = load_fixtures(path, _small_teams())
 
+    assert fixtures[0].match_id == "G-A-01"
     assert fixtures[0].match_round == 1
+    assert fixtures[0].kickoff_at == "2026-06-11T19:00:00Z"
+
+
+def test_generated_fixtures_have_no_official_order_fields() -> None:
+    fixtures = load_fixtures("/tmp/nonexistent-fixtures-for-wk2026.csv", _small_teams())
+
+    assert all(fixture.match_round is None for fixture in fixtures)
+    assert all(fixture.kickoff_at is None for fixture in fixtures)
+    assert all(fixture.location is None for fixture in fixtures)

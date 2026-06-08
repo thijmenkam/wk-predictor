@@ -53,3 +53,30 @@ def test_team_strips_name_and_normalizes_group() -> None:
 
     assert team.name == "Netherlands"
     assert team.group == "A"
+
+
+def test_fixture_accepts_group_match_rounds() -> None:
+    for match_round in (1, 2, 3):
+        fixture = Fixture(
+            match_id=f"G-A-0{match_round}",
+            stage="group",
+            team_a="Alpha",
+            team_b="Bravo",
+            group="A",
+            match_round=match_round,
+        )
+
+        assert fixture.match_round == match_round
+
+
+def test_fixture_rejects_invalid_group_match_rounds() -> None:
+    for match_round in (0, 4):
+        with pytest.raises(ValidationError):
+            Fixture(
+                match_id=f"G-A-{match_round}",
+                stage="group",
+                team_a="Alpha",
+                team_b="Bravo",
+                group="A",
+                match_round=match_round,
+            )
