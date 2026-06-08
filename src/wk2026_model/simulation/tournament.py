@@ -10,7 +10,20 @@ from wk2026_model.config import ModelConfig
 from wk2026_model.data.loaders import validate_teams
 from wk2026_model.data.schemas import GROUP_IDS, GroupStanding, Team
 from wk2026_model.models.elo import lambdas_from_elo
-from wk2026_model.simulation.group import simulate_group_once
+from wk2026_model.simulation.match import simulate_match
+
+
+@dataclass(frozen=True, slots=True)
+class MatchGoals:
+    """Gesimuleerde teamgoals in een gespeelde wedstrijd, zonder shootout-goals."""
+
+    match_id: str
+    stage: str
+    team_a: str
+    team_b: str
+    goals_a: int
+    goals_b: int
+    resolved_by: str = "normal_time"
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +34,7 @@ class GroupStageResult:
     qualified_teams: list[Team]
     best_third_placed: list[GroupStanding]
     eliminated_teams: list[Team]
+    match_goals: list[MatchGoals]
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,6 +94,74 @@ def select_best_third_placed(third_placed: list[GroupStanding]) -> list[GroupSta
     return sorted(third_placed, key=_standing_sort_key)[:8]
 
 
+def _simulate_group_once_with_goals(
+    group_id: str,
+    teams: list[Team],
+    config: ModelConfig,
+    rng: np.random.Generator,
+) -> tuple[list[GroupStanding], list[MatchGoals]]:
+    """Simuleer een groep en bewaar de onderliggende wedstrijdgoals."""
+
+    standings = {
+        team.name: GroupStanding(
+            team=team.name,
+            played=0,
+            points=0,
+            goals_for=0,
+            goals_against=0,
+            goal_difference=0,
+        )
+        for team in teams
+    }
+    match_goals: list[MatchGoals] = []
+
+    for match_number, (team_a, team_b) in enumerate(combinations(teams, 2), start=1):
+        lambda_a, lambda_b = lambdas_from_elo(
+            team_a.elo,
+            team_b.elo,
+            config.average_match_goals,
+            config.elo_goal_coefficient,
+        )
+        goals_a, goals_b = simulate_match(lambda_a, lambda_b, rng)
+        row_a = standings[team_a.name]
+        row_b = standings[team_b.name]
+
+        row_a.played += 1
+        row_b.played += 1
+        row_a.goals_for += goals_a
+        row_a.goals_against += goals_b
+        row_b.goals_for += goals_b
+        row_b.goals_against += goals_a
+
+        if goals_a > goals_b:
+            row_a.points += 3
+        elif goals_b > goals_a:
+            row_b.points += 3
+        else:
+            row_a.points += 1
+            row_b.points += 1
+
+        match_goals.append(
+            MatchGoals(
+                match_id=f"{group_id}-{match_number}",
+                stage="group",
+                team_a=team_a.name,
+                team_b=team_b.name,
+                goals_a=goals_a,
+                goals_b=goals_b,
+            )
+        )
+
+    for standing in standings.values():
+        standing.goal_difference = standing.goals_for - standing.goals_against
+
+    ranked = sorted(
+        standings.values(),
+        key=lambda row: (-row.points, -row.goal_difference, -row.goals_for, row.team),
+    )
+    return ranked, match_goals
+
+
 def _simulate_group_stage_once_validated(
     teams: list[Team],
     config: ModelConfig,
@@ -88,10 +170,14 @@ def _simulate_group_stage_once_validated(
     """Simuleer één groepsfase nadat de dataset eenmaal is gevalideerd."""
 
     grouped = _grouped_teams(teams)
-    standings = {
-        group_id: simulate_group_once(group_id, grouped[group_id], config, rng)
-        for group_id in GROUP_IDS
-    }
+    standings: dict[str, list[GroupStanding]] = {}
+    match_goals: list[MatchGoals] = []
+    for group_id in GROUP_IDS:
+        standings[group_id], group_match_goals = _simulate_group_once_with_goals(
+            group_id, grouped[group_id], config, rng
+        )
+        match_goals.extend(group_match_goals)
+
     best_third_placed = select_best_third_placed([standings[group_id][2] for group_id in GROUP_IDS])
     qualified_names = {row.team for group_id in GROUP_IDS for row in standings[group_id][:2]}
     qualified_names.update(row.team for row in best_third_placed)
@@ -104,6 +190,7 @@ def _simulate_group_stage_once_validated(
         qualified_teams=qualified_teams,
         best_third_placed=best_third_placed,
         eliminated_teams=eliminated_teams,
+        match_goals=match_goals,
     )
 
 
@@ -318,6 +405,14 @@ class TournamentResult:
 
 
 @dataclass(frozen=True, slots=True)
+class TournamentSimulationTrace:
+    """Volledige toernooi-uitkomst plus wedstrijdgoals voor scorersimulatie."""
+
+    result: TournamentResult
+    matches: list[MatchGoals]
+
+
+@dataclass(frozen=True, slots=True)
 class TeamTournamentSummary:
     """Geaggregeerde volledige-toernooikansen voor één team."""
 
@@ -482,11 +577,25 @@ def _simulate_round(
     ]
 
 
-def _simulate_tournament_once_validated(
+def _knockout_goals(result: KnockoutResult) -> MatchGoals:
+    """Converteer een knock-outresultaat naar teamgoals zonder shootout-kicks."""
+
+    return MatchGoals(
+        match_id=result.match_id,
+        stage=result.stage,
+        team_a=result.team_a,
+        team_b=result.team_b,
+        goals_a=result.goals_a,
+        goals_b=result.goals_b,
+        resolved_by=result.resolved_by,
+    )
+
+
+def _simulate_tournament_once_with_trace_validated(
     teams: list[Team],
     config: ModelConfig,
     rng: np.random.Generator,
-) -> TournamentResult:
+) -> TournamentSimulationTrace:
     group_stage = _simulate_group_stage_once_validated(teams, config, rng)
     teams_by_name = {team.name: team for team in teams}
     slots = build_qualified_slots(group_stage)
@@ -534,17 +643,35 @@ def _simulate_tournament_once_validated(
         stage="third_place",
         match_prefix="3P",
     )[0]
-    return TournamentResult(
-        champion=final.winner,
-        runner_up=final.loser,
-        third=third_place.winner,
-        fourth=third_place.loser,
-        semi_finalists=semi_finalists,
-        finalists=finalists,
-        round_of_32=round_of_32,
-        round_of_16=round_of_16,
-        quarter_finalists=quarter_finalists,
+    knockout_results = (
+        round_of_32_results
+        + round_of_16_results
+        + quarter_final_results
+        + semi_final_results
+        + [final, third_place]
     )
+    return TournamentSimulationTrace(
+        result=TournamentResult(
+            champion=final.winner,
+            runner_up=final.loser,
+            third=third_place.winner,
+            fourth=third_place.loser,
+            semi_finalists=semi_finalists,
+            finalists=finalists,
+            round_of_32=round_of_32,
+            round_of_16=round_of_16,
+            quarter_finalists=quarter_finalists,
+        ),
+        matches=group_stage.match_goals + [_knockout_goals(result) for result in knockout_results],
+    )
+
+
+def _simulate_tournament_once_validated(
+    teams: list[Team],
+    config: ModelConfig,
+    rng: np.random.Generator,
+) -> TournamentResult:
+    return _simulate_tournament_once_with_trace_validated(teams, config, rng).result
 
 
 def simulate_tournament_once(

@@ -16,7 +16,7 @@ from wk2026_model.config import (
     load_config,
     load_pool_scoring_config,
 )
-from wk2026_model.data.loaders import load_fixtures, load_teams, validate_teams
+from wk2026_model.data.loaders import load_fixtures, load_players, load_teams, validate_teams
 from wk2026_model.data.schemas import GROUP_IDS, Fixture, Team
 from wk2026_model.outputs.export import (
     create_run_dir,
@@ -27,6 +27,9 @@ from wk2026_model.outputs.export import (
     write_group_stage_summary_csv,
     write_pool_group_predictions_csv,
     write_run_metadata_json,
+    write_top_scorer_candidates_csv,
+    write_top_scorer_metadata_json,
+    write_top_scorer_recommendation_csv,
     write_tournament_summary_csv,
 )
 from wk2026_model.pool.final_standings import (
@@ -40,6 +43,11 @@ from wk2026_model.pool.final_standings import (
 )
 from wk2026_model.simulation.group import simulate_group_once
 from wk2026_model.simulation.match import predict_match
+from wk2026_model.simulation.scorers import (
+    PlayerScorerSummary,
+    recommend_top_scorers,
+    simulate_top_scorers,
+)
 from wk2026_model.simulation.tournament import (
     GroupStageSummary,
     TeamGroupStageSummary,
@@ -52,6 +60,7 @@ app = typer.Typer(help="Lokaal WK 2026-voorspelmodel.", no_args_is_help=True)
 DEFAULT_CONFIG_PATH = Path("configs/base.yaml")
 DEFAULT_OUTPUT_DIR = Path("outputs/runs")
 DEFAULT_POOL_SCORING_PATH = Path("configs/pool_scoring.yaml")
+DEFAULT_PLAYERS_PATH = Path("data/raw/players.csv")
 
 
 class FinalStandingsEvMethod(StrEnum):
@@ -67,6 +76,14 @@ class PoolScoreStrategy(StrEnum):
     MOST_LIKELY_SCORE = "most_likely_score"
     MAX_EXPECTED_POOL_POINTS = "max_expected_pool_points"
 
+
+TOP_SCORER_LIMITATIONS = [
+    "manual player baseline",
+    "no official squads",
+    "no club xG",
+    "penalty model is approximate",
+    "bracket still uses seeded placeholder",
+]
 
 RUN_LIMITATIONS = [
     "Knock-out bracket uses seeded placeholder, not official FIFA mapping",
@@ -861,6 +878,122 @@ def recommend_final_standings_command(
                 "final_standings_recommendation.csv",
                 "final_standings_candidates.csv",
                 "final_standings_metadata.json",
+            ],
+        )
+
+
+def _print_top_scorer_candidates(summaries: list[PlayerScorerSummary], top: int) -> None:
+    typer.echo("\nTop candidates")
+    typer.echo(f"{'Player':<24} {'Team':<15} {'xGoals':>7} {'P(top scorer)':>14} {'EV':>7}")
+    ranked = sorted(
+        summaries,
+        key=lambda row: (
+            -row.recommended_score_value,
+            -row.expected_goals,
+            -row.p_top_scorer,
+            -row.team_elo,
+            row.player,
+        ),
+    )
+    for row in ranked[:top]:
+        typer.echo(
+            f"{row.player:<24} {row.team:<15} {row.expected_goals:>7.2f} "
+            f"{row.p_top_scorer:>14.1%} {row.recommended_score_value:>7.2f}"
+        )
+
+
+@app.command("recommend-top-scorers")
+def recommend_top_scorers_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Pad naar de YAML-configuratie."),
+    ] = DEFAULT_CONFIG_PATH,
+    num_simulations: Annotated[
+        int | None,
+        typer.Option(
+            "--num-simulations",
+            min=1,
+            help="Aantal Monte Carlo-simulaties; standaard de modelconfiguratie.",
+        ),
+    ] = None,
+    seed: Annotated[
+        int | None,
+        typer.Option("--seed", min=0, help="Vaste random seed; standaard de modelconfiguratie."),
+    ] = None,
+    players_path: Annotated[
+        Path,
+        typer.Option("--players-path", help="Pad naar de handmatige spelersbaseline."),
+    ] = DEFAULT_PLAYERS_PATH,
+    scoring_config: Annotated[
+        Path,
+        typer.Option("--scoring-config", help="Pad naar de pool scoring-YAML."),
+    ] = DEFAULT_POOL_SCORING_PATH,
+    top: Annotated[
+        int,
+        typer.Option("--top", min=1, help="Aantal kandidaten in de uitvoertabel."),
+    ] = 20,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Basismap voor topscorerruns."),
+    ] = DEFAULT_OUTPUT_DIR,
+    export: Annotated[
+        bool,
+        typer.Option("--export/--no-export", help="Schrijf topscorer-CSV's en metadata-JSON."),
+    ] = False,
+) -> None:
+    """Optimaliseer drie topscorerpicks op verwachte Tipset-punten."""
+
+    config = _config(config_path)
+    try:
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        validate_teams(teams, strict=True)
+        players = load_players(players_path, teams)
+        scoring = load_pool_scoring_config(scoring_config)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Topscorers konden niet worden berekend: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    simulation_count = num_simulations or config.model.num_simulations
+    run_seed = config.model.random_seed if seed is None else seed
+    summaries = simulate_top_scorers(
+        teams,
+        players,
+        config.model,
+        simulation_count,
+        np.random.default_rng(run_seed),
+        scoring.top_scorers,
+    )
+    recommendation = recommend_top_scorers(summaries)
+
+    typer.echo(f"Aantal simulaties: {simulation_count:,}")
+    typer.echo(f"Aantal spelers: {len(players)}")
+    typer.echo("\nAanbevolen top scorers")
+    for rank, row in enumerate(recommendation.players, start=1):
+        typer.echo(f"{rank}. {row.player}, {row.team}")
+    typer.echo(f"Expected points: {recommendation.expected_pool_points:.2f}")
+    _print_top_scorer_candidates(summaries, top)
+    typer.echo("\nLimitations: " + "; ".join(TOP_SCORER_LIMITATIONS))
+
+    if export:
+        run_path = create_run_dir(output_dir, "top-scorers", run_seed)
+        write_top_scorer_recommendation_csv(
+            recommendation, run_path / "top_scorer_recommendation.csv"
+        )
+        write_top_scorer_candidates_csv(summaries, run_path / "top_scorer_candidates.csv")
+        write_top_scorer_metadata_json(
+            run_path / "top_scorer_metadata.json",
+            num_simulations=simulation_count,
+            seed=run_seed,
+            players_path=players_path,
+            scoring_config=scoring_config,
+            limitations=TOP_SCORER_LIMITATIONS,
+        )
+        _print_export_result(
+            run_path,
+            [
+                "top_scorer_recommendation.csv",
+                "top_scorer_candidates.csv",
+                "top_scorer_metadata.json",
             ],
         )
 
