@@ -26,6 +26,38 @@ class ModelConfig(BaseModel):
     elo_goal_coefficient: float = Field(default=0.00088, gt=0)
 
 
+class GroupStageScoringConfig(BaseModel):
+    """Punten voor uitslag en exacte score in de groepsfase."""
+
+    correct_outcome_points: float = Field(ge=0)
+    exact_score_bonus_points: float = Field(ge=0)
+
+
+class KnockoutStageScoringConfig(BaseModel):
+    """Punten voor knock-outwedstrijden en bereikte eindfases."""
+
+    correct_outcome_points: float = Field(ge=0)
+    exact_score_bonus_points: float = Field(ge=0)
+    correct_semifinalist_points: float = Field(ge=0)
+    correct_final_placement_bonus_points: float = Field(ge=0)
+
+
+class TopScorerScoringConfig(BaseModel):
+    """Punten voor voorspelde topscorers en hun doelpunten."""
+
+    correct_top_scorer_points: float = Field(ge=0)
+    points_per_goal_by_predicted_top_scorer: float = Field(ge=0)
+    include_penalty_shootout_goals: bool
+
+
+class PoolScoringConfig(BaseModel):
+    """Volledige Tipset-puntentelling."""
+
+    group_stage: GroupStageScoringConfig
+    knockout_stage: KnockoutStageScoringConfig
+    top_scorers: TopScorerScoringConfig
+
+
 class ProjectConfig(BaseModel):
     """Volledige applicatieconfiguratie."""
 
@@ -40,3 +72,14 @@ def load_config(path: str | Path = "configs/base.yaml") -> ProjectConfig:
     with config_path.open(encoding="utf-8") as config_file:
         raw_config: Any = yaml.safe_load(config_file)
     return ProjectConfig.model_validate(raw_config)
+
+
+def load_pool_scoring_config(
+    path: str | Path = "configs/pool_scoring.yaml",
+) -> PoolScoringConfig:
+    """Lees en valideer de poule-specifieke puntentelling uit YAML."""
+
+    config_path = Path(path)
+    with config_path.open(encoding="utf-8") as config_file:
+        raw_config: Any = yaml.safe_load(config_file)
+    return PoolScoringConfig.model_validate(raw_config)

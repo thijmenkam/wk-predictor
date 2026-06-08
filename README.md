@@ -171,8 +171,23 @@ uv run wk2026 export-pool-predictions --seed 42
 
 Dit command draait geen Monte Carlo-simulatie. Het berekent de 72 groepswedstrijdvoorspellingen,
 schrijft `pool_group_predictions.csv` naar een herkenbare runmap onder `outputs/runs/` en toont
-de tien hoogste gelijkspelkansen en de tien grootste favorieten. Het huidige pouleadvies gebruikt
-de meest waarschijnlijke exacte score uit het onafhankelijke Poisson-model.
+de tien gewijzigde adviezen ten opzichte van de meest waarschijnlijke score plus de hoogste en
+laagste verwachte poulepunten. Standaard gebruikt het advies de Tipset-puntentelling uit
+`configs/pool_scoring.yaml` en kiest het `--strategy max_expected_pool_points`: 1 punt voor een
+correcte 1X2-uitkomst en 1 bonuspunt voor de exacte score. De oude scorekeuze blijft beschikbaar
+met `--strategy most_likely_score`.
+
+```bash
+uv run wk2026 export-pool-predictions \
+  --strategy max_expected_pool_points \
+  --scoring-config configs/pool_scoring.yaml \
+  --seed 42
+```
+
+De export bevat ook `match_round`. Gegenereerde fixtures zetten die waarde leeg omdat ze alleen
+round-robincombinaties zijn en geen officiële FIFA-wedstrijdvolgorde bevatten. Tipset vraagt in
+het begin om groepsfase ronde 1; officiële FIFA-fixtures zijn daarom nodig voordat je serieuze
+poule-invoer doet. TODO: vul officiële fixturevolgorde in zodra die betrouwbaar beschikbaar is.
 
 Bij `simulate-tournament --export` wordt hetzelfde pouleadviesbestand naast de bestaande
 samenvattingen en wedstrijdvoorspellingen geschreven.

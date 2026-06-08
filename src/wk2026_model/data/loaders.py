@@ -189,6 +189,9 @@ def load_fixtures(
                     team_a=row["team_a"],
                     team_b=row["team_b"],
                     matchday=_optional_int(row["matchday"]),
+                    match_round=_optional_int(
+                        row.get("match_round", row.get("round"))
+                    ),
                     location=_optional_str(row["location"]),
                 )
             )

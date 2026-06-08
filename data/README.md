@@ -43,6 +43,7 @@ De loader kan kleine datasets niet-strikt valideren voor tests en prototypes.
 | `team_a` | tekst | Eerste team, exact gelijk aan een naam uit `teams.csv`. |
 | `team_b` | tekst | Tweede team, exact gelijk aan een naam uit `teams.csv`. |
 | `matchday` | positief integer of leeg | Optionele speeldag. |
+| `match_round` | positief integer of leeg | Optionele poule-/fixture-ronde; `round` wordt als alias geaccepteerd. |
 | `location` | tekst of leeg | Optionele speelplaats of stadionnaam. |
 
 Officiële groepen, fixtures, locaties, wedstrijdvolgorde en later ook aftraptijden moeten tegen de
@@ -54,7 +55,12 @@ bron van waarheid.
 Als `fixtures.csv` ontbreekt of geen datarijen bevat, genereert de loader iedere unieke combinatie
 binnen elke aanwezige groep. Vier teams leveren zes wedstrijden op, met IDs als `A-1` tot en met
 `A-6`. Deze fixtures bevatten uitsluitend round-robincombinaties: de volgorde is **niet** de
-officiële wedstrijdvolgorde en `matchday` en `location` blijven leeg.
+officiële wedstrijdvolgorde en `matchday`, `match_round` en `location` blijven leeg.
+
+Tipset vraagt initieel alleen voorspellingen voor groepsfase ronde 1 en laat ronde 2 en 3 later
+wijzigen. Gegenereerde fixtures kennen die officiële rondes niet. TODO: vul `match_round` met de
+officiële FIFA-fixturevolgorde voordat serieuze poule-invoer wordt gedaan; scraping of automatische
+fixture-sync valt buiten v0.1.
 
 ## Data provenance
 
@@ -74,7 +80,7 @@ officiële wedstrijdvolgorde en `matchday` en `location` blijven leeg.
   handmatig tegen officiële FIFA-data of de primaire Elo-bron geverifieerd.
 - De peildatum bij prototypegegevens registreert alleen de import in deze repository; openstaande
   bronverificaties blijven als `TODO` in `raw/sources.yaml` benoemd.
-- Gegenereerde fixtures kennen geen officiële volgorde, speeldag, locatie of aftraptijd.
+- Gegenereerde fixtures kennen geen officiële volgorde, `match_round`, speeldag, locatie of aftraptijd.
 - Er is geen scraping, API-integratie, automatische bron-sync, xG- of oddsdata.
 - De data-laag implementeert nog geen knock-outbracket of beste-nummers-drie-mapping.
 

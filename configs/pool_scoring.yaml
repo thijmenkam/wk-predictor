@@ -1,0 +1,14 @@
+group_stage:
+  correct_outcome_points: 1.0
+  exact_score_bonus_points: 1.0
+
+knockout_stage:
+  correct_outcome_points: 1.0
+  exact_score_bonus_points: 1.0
+  correct_semifinalist_points: 1.3
+  correct_final_placement_bonus_points: 2.3
+
+top_scorers:
+  correct_top_scorer_points: 0.5
+  points_per_goal_by_predicted_top_scorer: 1.0
+  include_penalty_shootout_goals: false
