@@ -12,6 +12,11 @@ from wk2026_model.data.loaders import load_fixtures, load_teams, validate_teams
 from wk2026_model.data.schemas import GROUP_IDS, Team
 from wk2026_model.simulation.group import simulate_group_once
 from wk2026_model.simulation.match import predict_match
+from wk2026_model.simulation.tournament import (
+    GroupStageSummary,
+    TeamGroupStageSummary,
+    simulate_group_stage,
+)
 
 app = typer.Typer(help="Lokaal WK 2026-voorspelmodel.", no_args_is_help=True)
 DEFAULT_CONFIG_PATH = Path("configs/base.yaml")
@@ -71,6 +76,48 @@ def _find_team(name: str, teams: list[Team]) -> Team:
         available = ", ".join(sorted(team.name for team in teams))
         typer.echo(f"Onbekend team {name!r}. Beschikbare teams: {available}", err=True)
         raise typer.Exit(code=2) from None
+
+
+def _print_group_stage_table(summary: GroupStageSummary) -> None:
+    """Toon per groep verwachte punten, eindposities en kwalificatiekans."""
+
+    for group_id, rows in summary.by_group().items():
+        typer.echo(f"Groep {group_id}")
+        typer.echo(
+            f"{'Team':<20} {'Elo':>5} {'xPts':>6} {'1e%':>6} "
+            f"{'2e%':>6} {'3e%':>6} {'Door%':>7}"
+        )
+        for row in sorted(rows, key=lambda item: (-item.p_qualified, item.team)):
+            typer.echo(
+                f"{row.team:<20} {row.elo:>5.0f} {row.avg_points:>6.2f} "
+                f"{row.p_group_1st:>6.1%} {row.p_group_2nd:>6.1%} "
+                f"{row.p_group_3rd:>6.1%} {row.p_qualified:>7.1%}"
+            )
+        typer.echo()
+
+
+def _print_overall_qualification(summary: GroupStageSummary) -> None:
+    """Toon de hoogste totale en derde-plaatskwalificatiekansen."""
+
+    typer.echo("Top 15 kwalificatiekansen")
+    typer.echo(f"{'Team':<20} {'Groep':>5} {'Door%':>7} {'Top2%':>7} {'Als 3e%':>8}")
+    for row in sorted(summary.teams, key=lambda item: (-item.p_qualified, item.team))[:15]:
+        typer.echo(
+            f"{row.team:<20} {row.group:>5} {row.p_qualified:>7.1%} "
+            f"{row.p_qualified_as_top2:>7.1%} {row.p_qualified_as_third:>8.1%}"
+        )
+
+    typer.echo("\nTop 12 kwalificatiekansen als nummer drie")
+    typer.echo(f"{'Team':<20} {'Groep':>5} {'3e%':>7} {'Door als 3e%':>13}")
+    third_rows: list[TeamGroupStageSummary] = sorted(
+        summary.teams,
+        key=lambda item: (-item.p_qualified_as_third, item.team),
+    )[:12]
+    for row in third_rows:
+        typer.echo(
+            f"{row.team:<20} {row.group:>5} {row.p_group_3rd:>7.1%} "
+            f"{row.p_qualified_as_third:>13.1%}"
+        )
 
 
 @app.command("validate-data")
@@ -200,6 +247,39 @@ def simulate_group_command(
             f"{row.team:<20} {row.played:>2} {row.points:>2} {row.goal_difference:>3} "
             f"{row.goals_for}-{row.goals_against}"
         )
+
+
+@app.command("simulate-group-stage")
+def simulate_group_stage_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Pad naar de YAML-configuratie."),
+    ] = DEFAULT_CONFIG_PATH,
+    num_simulations: Annotated[
+        int | None,
+        typer.Option(
+            "--num-simulations",
+            min=1,
+            help="Aantal Monte Carlo-simulaties; standaard de modelconfiguratie.",
+        ),
+    ] = None,
+) -> None:
+    """Simuleer alle twaalf groepen en selecteer exact de beste acht nummers drie."""
+
+    config = _config(config_path)
+    try:
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        validate_teams(teams, strict=True)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Volledige groepsfase kon niet worden geladen: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    simulation_count = num_simulations or config.model.num_simulations
+    rng = np.random.default_rng(config.model.random_seed)
+    summary = simulate_group_stage(teams, config.model, simulation_count, rng)
+    typer.echo(f"Volledige groepsfase: {simulation_count:,} simulaties\n")
+    _print_group_stage_table(summary)
+    _print_overall_qualification(summary)
 
 
 if __name__ == "__main__":
