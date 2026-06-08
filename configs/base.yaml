@@ -1,0 +1,9 @@
+random_seed: 2026
+num_simulations: 10000
+max_goals: 10
+average_match_goals: 2.6
+elo_goal_coefficient: 0.001
+paths:
+  raw: data/raw
+  interim: data/interim
+  processed: data/processed
