@@ -1,6 +1,9 @@
+from pathlib import Path
+
 import numpy as np
 
 from wk2026_model.config import ModelConfig
+from wk2026_model.data.loaders import load_teams
 from wk2026_model.data.schemas import Team
 from wk2026_model.simulation.group import round_robin_fixtures, simulate_group_once
 
@@ -37,3 +40,22 @@ def test_group_simulation_returns_four_ranked_standings() -> None:
         (-row.points, -row.goal_difference, -row.goals_for, row.team) for row in standings
     ]
     assert ranking_keys == sorted(ranking_keys)
+
+
+def test_group_simulation_works_with_loaded_teams(tmp_path: Path) -> None:
+
+    teams_path = tmp_path / "teams.csv"
+    teams_path.write_text(
+        "team,group,elo,is_host,fifa_ranking\n"
+        "Alpha,A,1900,false,\n"
+        "Bravo,A,1800,false,\n"
+        "Charlie,A,1700,false,\n"
+        "Delta,A,1600,false,\n",
+        encoding="utf-8",
+    )
+    teams = load_teams(teams_path)
+
+    standings = simulate_group_once("A", teams, ModelConfig(), np.random.default_rng(42))
+
+    assert len(standings) == 4
+    assert {row.team for row in standings} == {team.name for team in teams}

@@ -41,3 +41,15 @@ def test_core_schemas_validate_correct_input() -> None:
 def test_fixture_rejects_same_team_twice() -> None:
     with pytest.raises(ValidationError):
         Fixture(match_id="A-1", stage="group", team_a="Japan", team_b="Japan", group="A")
+
+
+def test_team_rejects_invalid_group_and_elo() -> None:
+    with pytest.raises(ValidationError):
+        Team(name="Invalid", elo=0, group="M")
+
+
+def test_team_strips_name_and_normalizes_group() -> None:
+    team = Team(name="  Netherlands  ", elo=1920, group="a")
+
+    assert team.name == "Netherlands"
+    assert team.group == "A"
