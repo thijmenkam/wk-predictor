@@ -18,6 +18,11 @@ from wk2026_model.config import (
 )
 from wk2026_model.data.loaders import load_fixtures, load_players, load_teams, validate_teams
 from wk2026_model.data.schemas import GROUP_IDS, Fixture, Team
+from wk2026_model.outputs.compare import (
+    compare_runs,
+    default_comparison_dir,
+    export_comparison,
+)
 from wk2026_model.outputs.export import (
     create_run_dir,
     write_basic_predictions_metadata_json,
@@ -89,6 +94,16 @@ class BracketStrategyOption(StrEnum):
 
     OFFICIAL_LIKE = "official_like"
     SEEDED_PLACEHOLDER = "seeded_placeholder"
+
+
+class ComparisonFocus(StrEnum):
+    """Onderdelen die compare-runs kan vergelijken."""
+
+    ALL = "all"
+    ROUND1 = "round1"
+    FINAL_STANDINGS = "final-standings"
+    TOP_SCORERS = "top-scorers"
+    METADATA = "metadata"
 
 
 TOP_SCORER_LIMITATIONS = [
@@ -322,6 +337,87 @@ def _print_final_standings_candidates(
             f"{position_evs[0]:>8.3f} {position_evs[1]:>9.3f} "
             f"{position_evs[2]:>9.3f} {position_evs[3]:>10.3f}"
         )
+
+
+@app.command("compare-runs")
+def compare_runs_command(
+    old_run_dir: Annotated[Path, typer.Argument(help="Oude run directory.")],
+    new_run_dir: Annotated[Path, typer.Argument(help="Nieuwe run directory.")],
+    output_dir: Annotated[
+        Path | None,
+        typer.Option("--output-dir", help="Map voor comparison artifacts."),
+    ] = None,
+    focus: Annotated[
+        ComparisonFocus,
+        typer.Option("--focus", help="Beperk de vergelijking tot één onderdeel."),
+    ] = ComparisonFocus.ALL,
+    top: Annotated[
+        int,
+        typer.Option("--top", min=1, help="Aantal opvallende wijzigingen per lijst."),
+    ] = 20,
+    export: Annotated[
+        bool,
+        typer.Option("--export/--no-export", help="Schrijf comparison artifacts."),
+    ] = True,
+) -> None:
+    """Vergelijk twee eerder geëxporteerde predictor-runs."""
+
+    try:
+        result = compare_runs(
+            old_run_dir,
+            new_run_dir,
+            focus=focus.value,
+            top=top,
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Runs konden niet worden vergeleken: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    report_path: Path | None = None
+    if export:
+        comparison_dir = output_dir or default_comparison_dir(old_run_dir, new_run_dir)
+        report_path = export_comparison(result, comparison_dir)
+
+    typer.echo("Compared runs:")
+    typer.echo(f"Old: {old_run_dir}")
+    typer.echo(f"New: {new_run_dir}")
+    typer.echo("")
+    typer.echo("Metadata:")
+    if result.metadata_diff:
+        for key, values in result.metadata_diff.items():
+            typer.echo(f"- {key}: {values['old']} -> {values['new']}")
+    else:
+        typer.echo("- no relevant changes")
+
+    if result.round1_summary is not None:
+        typer.echo("")
+        typer.echo("Round 1:")
+        typer.echo(f"- {result.round1_summary['matches_compared']} matches compared")
+        typer.echo(f"- {result.round1_summary['score_changes']} score changes")
+
+    if result.final_standings_summary is not None:
+        typer.echo("")
+        typer.echo("Final standings:")
+        old_top4 = result.final_standings_summary.get("old_top4", [])
+        new_top4 = result.final_standings_summary.get("new_top4", [])
+        if old_top4:
+            typer.echo("- old: " + ", ".join(old_top4))
+        if new_top4:
+            typer.echo("- new: " + ", ".join(new_top4))
+
+    if result.top_scorer_summary is not None:
+        typer.echo("")
+        typer.echo("Top scorers:")
+        typer.echo("- old: " + ", ".join(result.top_scorer_summary.get("old_top3", [])))
+        typer.echo("- new: " + ", ".join(result.top_scorer_summary.get("new_top3", [])))
+
+    if result.warnings:
+        typer.echo("")
+        typer.echo("Warnings:")
+        for warning in result.warnings:
+            typer.echo(f"- {warning}")
+    typer.echo("")
+    typer.echo(f"Report: {report_path if report_path is not None else 'not exported'}")
 
 
 @app.command("validate-data")
