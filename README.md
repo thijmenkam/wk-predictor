@@ -7,7 +7,8 @@ Carlo-simulaties, CSV-gedreven team- en fixturedata en een command-line-interfac
 Het toernooi-uitgangspunt is 48 teams in 12 groepen van vier. In elke volledige
 groepsfasesimulatie worden alle 72 groepswedstrijden gesimuleerd. De beste twee teams per groep
 kwalificeren zich rechtstreeks en de beste acht van de twaalf nummers drie gaan eveneens door.
-De knock-outfase is beschikbaar met een seeded placeholder-bracket; alleen de exacte officiële Round of 32-mapping valt nog buiten de huidige scope.
+De knock-outfase gebruikt standaard een data-driven, official-like bracket met de vaste
+WK 2026-matchnummers 73 tot en met 104.
 
 ## Huidige mogelijkheden
 
@@ -60,9 +61,9 @@ standaardconfiguratie gebruikt 50.000 simulaties en een vaste seed voor reproduc
 
 1. **Gereed:** verwachte goals en een aanbevolen exacte score per wedstrijd bepalen.
 2. **Gereed:** de volledige groepsfase simuleren en de beste acht nummers drie exact selecteren.
-3. **Gereed met placeholder:** de Round of 32 en verdere knock-outfase data-driven simuleren.
+3. **Gereed:** de Round of 32 en verdere knock-outfase data-driven simuleren.
 4. **Gereed:** goud, zilver, brons en vierde plaats voorspellen.
-5. **TODO:** vervang de seeded placeholder vóór serieuze voorspellingen door de officiële FIFA Round of 32-slotmapping.
+5. **Gereed met beperking:** gebruik de vaste WK 2026-slotmapping en bracketprogression.
 6. Een top drie van topscorers voorspellen.
 7. Later geavanceerdere methoden toevoegen, zoals xG, Dixon-Coles en odds-integratie.
 
@@ -218,11 +219,10 @@ De run bevat `basic_predictions_summary.md`, `basic_predictions_summary.json`,
 `pool_group_round1_predictions.csv`, `final_standings_recommendation.csv`,
 `top_scorer_recommendation.csv` en `basic_predictions_metadata.json`.
 
-Beschikbare opties zijn `--seed`, `--num-simulations`, `--scoring-config`, `--players-path`,
-`--output-dir` en `--export/--no-export`. Export staat standaard aan. De samenvattingen vermelden
-expliciet dat de bracket nog een seeded placeholder gebruikt, expected goals Elo-derived zijn,
-`players.csv` een handmatige baseline is, spelergoals bij benadering worden gealloceerd en de
-fixtures nog tegen FIFA moeten worden gecontroleerd.
+Beschikbare opties zijn onder meer `--seed`, `--num-simulations`, `--scoring-config`,
+`--players-path`, `--bracket-strategy`, `--bracket-path`, `--output-dir` en
+`--export/--no-export`. Export staat standaard aan. De metadata vermeldt de gebruikte
+bracketstrategie, het bracketpad, de bron en de methode voor toewijzing van nummers drie.
 
 ### Volledig toernooi simuleren
 
@@ -230,16 +230,34 @@ fixtures nog tegen FIFA moeten worden gecontroleerd.
 uv run wk2026 simulate-tournament --num-simulations 1000 --top 20
 ```
 
-De knock-outfase gebruikt in deze eerste versie een **seeded placeholder bracket**. De 32
-gekwalificeerde teams worden deterministisch gesorteerd op groepspositie, punten, doelsaldo,
-goals voor, Elo en teamnaam. Vervolgens speelt seed 1 tegen 32, seed 2 tegen 31, enzovoort.
-De declaratieve beschrijving staat in `configs/bracket_placeholder.yaml`.
+De knock-outfase gebruikt standaard de data-driven strategie `official_like`. De declaratieve
+beschrijving staat in `configs/bracket_2026.yaml` en modelleert de vaste progression van match
+73 tot en met match 104.
 
-> Placeholder bracket. Replace with official FIFA Round of 32 slot mapping before serious predictions.
+```bash
+uv run wk2026 simulate-tournament \
+  --num-simulations 1000 \
+  --bracket-strategy official_like \
+  --bracket-path configs/bracket_2026.yaml
+```
 
-Na de Round of 32 gaan winnaars in bracketvolgorde door. Een gelijke stand na negentig minuten
+De oude seeded bracket is alleen beschikbaar als expliciete fallback:
+
+```bash
+uv run wk2026 simulate-tournament \
+  --num-simulations 1000 \
+  --bracket-strategy seeded_placeholder
+```
+
+De matchmapping is gecontroleerd tegen de gepubliceerde FIFA-planning. De bronvermelding in
+exports blijft bewust conservatief: World Cup Wiki is een secundaire bron en FIFA is de bron van
+waarheid.
+
+De officiële FIFA-tabel voor toewijzing van de acht beste nummers drie is nog niet
+geïmplementeerd. `BEST3`-slots worden binnen hun toegestane groepen op ranking toegewezen en
+dezelfde nummer drie kan niet tweemaal worden gebruikt. Een gelijke stand na negentig minuten
 wordt voorlopig beslist met een tussen 40% en 60% begrensde, Elo-gecorrigeerde penaltyloting;
-extra tijd komt later. De CLI toont kampioenskansen en kansen op een top-vierklassering.
+extra tijd komt later.
 
 Voorbeeld (waarden hangen af van data, configuratie, seed en aantal simulaties):
 
@@ -258,9 +276,10 @@ South Africa          1572   3.29  14.5%  22.6%  25.2%   53.7%
 
 De huidige implementatie bevat nog geen:
 
-- officiële FIFA Round of 32-slotmapping (momenteel seeded placeholder);
+- officiële FIFA third-place assignment table; `BEST3` gebruikt een greedy resolver met
+  toegestane groepen;
 - complexe modellering van extra tijd;
-- officiële wedstrijdvolgorde, locaties of speeldagen;
+- modellering van knock-outlocaties of speeldagen;
 - fair-play- of FIFA-ranking-tie-breakers;
 - topscorermodellen;
 - echte xG-data;
