@@ -21,8 +21,8 @@ MARGINAL_PROBABILITY_NOTE = (
     "between final positions."
 )
 SCENARIO_OUTCOME_NOTE = (
-    "Expected value is scored over raw simulated tournament outcomes; the knockout "
-    "bracket still uses a seeded placeholder rather than the official FIFA mapping."
+    "Expected value is scored over raw simulated tournament outcomes using the configured "
+    "knockout bracket."
 )
 
 

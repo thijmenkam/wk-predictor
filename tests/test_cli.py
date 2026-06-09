@@ -43,6 +43,9 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
     assert len({row["player"] for row in summary["top_scorers"]}) == 3
     assert metadata["seed"] == 42
     assert metadata["num_simulations"] == 2
+    assert metadata["bracket_strategy"] == "official_like"
+    assert metadata["bracket_path"] == "configs/bracket_2026.yaml"
+    assert metadata["third_place_assignment_method"] == "greedy_best3_with_allowed_groups"
     assert summary["limitations"]
     assert "## Limitations" in (run_path / "basic_predictions_summary.md").read_text()
 
@@ -118,7 +121,7 @@ def test_simulate_group_stage_command_reports_all_groups() -> None:
     assert "Top 12 kwalificatiekansen als nummer drie" in result.stdout
 
 
-def test_simulate_tournament_command_reports_placeholder_and_rankings() -> None:
+def test_simulate_tournament_command_reports_official_like_and_rankings() -> None:
     result = runner.invoke(
         app,
         ["simulate-tournament", "--num-simulations", "2", "--top", "3"],
@@ -126,7 +129,10 @@ def test_simulate_tournament_command_reports_placeholder_and_rankings() -> None:
 
     assert result.exit_code == 0
     assert "Volledig toernooi: 2 simulaties" in result.stdout
-    assert "seeded placeholder mapping" in result.stdout
+    assert (
+        "Knock-out bracket: official-like bracket from configs/bracket_2026.yaml"
+        in result.stdout
+    )
     assert "Kampioenskansen" in result.stdout
     assert "Top 4 kansen" in result.stdout
 
@@ -186,7 +192,7 @@ def test_recommend_final_standings_command_exports_recommendation(tmp_path: Path
     assert "Outcomes: 2" in result.stdout
     assert "Aanbevolen final standings" in result.stdout
     assert "Expected points:" in result.stdout
-    assert "seeded placeholder" in result.stdout
+    assert "official-like bracket" in result.stdout
     run_path = next(tmp_path.iterdir())
     assert {path.name for path in run_path.iterdir()} == {
         "final_standings_recommendation.csv",
@@ -195,6 +201,24 @@ def test_recommend_final_standings_command_exports_recommendation(tmp_path: Path
     }
     assert len(pd.read_csv(run_path / "final_standings_recommendation.csv")) == 4
     assert len(pd.read_csv(run_path / "final_standings_candidates.csv")) == 8
+    metadata = json.loads((run_path / "final_standings_metadata.json").read_text())
+    assert metadata["bracket_strategy"] == "official_like"
+
+
+def test_simulate_tournament_seeded_placeholder_requires_explicit_option() -> None:
+    result = runner.invoke(
+        app,
+        [
+            "simulate-tournament",
+            "--num-simulations",
+            "2",
+            "--bracket-strategy",
+            "seeded_placeholder",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Waarschuwing: seeded placeholder" in result.stdout
 
 
 def test_recommend_final_standings_command_supports_marginal_ev() -> None:

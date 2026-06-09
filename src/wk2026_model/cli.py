@@ -53,6 +53,7 @@ from wk2026_model.simulation.scorers import (
     simulate_top_scorers,
 )
 from wk2026_model.simulation.tournament import (
+    DEFAULT_BRACKET_PATH,
     GroupStageSummary,
     TeamGroupStageSummary,
     TournamentSummary,
@@ -65,6 +66,8 @@ DEFAULT_CONFIG_PATH = Path("configs/base.yaml")
 DEFAULT_OUTPUT_DIR = Path("outputs/runs")
 DEFAULT_POOL_SCORING_PATH = Path("configs/pool_scoring.yaml")
 DEFAULT_PLAYERS_PATH = Path("data/raw/players.csv")
+BRACKET_SOURCE = "worldcupwiki.com/schedule, secondary source, verify against FIFA"
+THIRD_PLACE_ASSIGNMENT_METHOD = "greedy_best3_with_allowed_groups"
 
 
 class FinalStandingsEvMethod(StrEnum):
@@ -81,27 +84,69 @@ class PoolScoreStrategy(StrEnum):
     MAX_EXPECTED_POOL_POINTS = "max_expected_pool_points"
 
 
+class BracketStrategyOption(StrEnum):
+    """Beschikbare knock-outbracketstrategieën."""
+
+    OFFICIAL_LIKE = "official_like"
+    SEEDED_PLACEHOLDER = "seeded_placeholder"
+
+
 TOP_SCORER_LIMITATIONS = [
     "manual player baseline",
     "no official squads",
     "no club xG",
     "penalty model is approximate",
-    "bracket still uses seeded placeholder",
+    (
+        "Third-place assignment uses greedy BEST3 resolver; verify against official "
+        "FIFA assignment table."
+    ),
 ]
 
 RUN_LIMITATIONS = [
-    "Knock-out bracket uses seeded placeholder, not official FIFA mapping",
+    (
+        "Third-place assignment uses greedy BEST3 resolver; verify against official "
+        "FIFA assignment table."
+    ),
     "Expected goals are Elo-derived, not real xG",
     "No player/topscorer model yet",
 ]
 
 BASIC_PREDICTIONS_LIMITATIONS = [
-    "Knockout bracket gebruikt nog seeded placeholder",
+    (
+        "Third-place assignment uses greedy BEST3 resolver; verify against official "
+        "FIFA assignment table."
+    ),
     "Expected goals zijn Elo-derived, geen echte xG",
     "players.csv is handmatige baseline",
     "Top scorer model gebruikt approximate player goal allocation",
     "Fixtures zijn gebaseerd op secundaire bron en moeten tegen FIFA worden gecontroleerd",
 ]
+
+
+def _announce_bracket(strategy: BracketStrategyOption, path: Path) -> None:
+    if strategy is BracketStrategyOption.SEEDED_PLACEHOLDER:
+        typer.echo(
+            "Waarschuwing: seeded placeholder knockout bracket is expliciet gebruikt; "
+            "dit is niet de officiële route."
+        )
+    else:
+        typer.echo(f"Knock-out bracket: official-like bracket from {path}")
+
+
+def _bracket_metadata(strategy: BracketStrategyOption, path: Path) -> dict[str, str]:
+    if strategy is BracketStrategyOption.SEEDED_PLACEHOLDER:
+        return {
+            "bracket_strategy": strategy.value,
+            "bracket_path": str(path),
+            "bracket_source": "seeded placeholder fallback",
+            "third_place_assignment_method": "not_applicable",
+        }
+    return {
+        "bracket_strategy": strategy.value,
+        "bracket_path": str(path),
+        "bracket_source": BRACKET_SOURCE,
+        "third_place_assignment_method": THIRD_PLACE_ASSIGNMENT_METHOD,
+    }
 
 
 def _demo_teams() -> list[Team]:
@@ -437,6 +482,8 @@ def _export_run(
     output_dir: Path,
     group_stage_summary: GroupStageSummary,
     tournament_summary: TournamentSummary | None = None,
+    bracket_strategy: BracketStrategyOption = BracketStrategyOption.OFFICIAL_LIKE,
+    bracket_path: Path = DEFAULT_BRACKET_PATH,
 ) -> Path:
     created_at = datetime.now(UTC)
     run_path = create_run_dir(output_dir, run_type, seed, created_at=created_at)
@@ -452,6 +499,7 @@ def _export_run(
         fixtures_generated=not _fixture_file_has_data(config.data.fixtures_path),
         sources_path=config.data.sources_path,
         limitations=RUN_LIMITATIONS,
+        **_bracket_metadata(bracket_strategy, bracket_path),
     )
     write_group_stage_summary_csv(group_stage_summary, run_path / "group_stage_summary.csv")
     write_group_match_predictions_csv(
@@ -805,6 +853,14 @@ def recommend_final_standings_command(
             "--export/--no-export", help="Schrijf final-standings-CSV's en metadata-JSON."
         ),
     ] = False,
+    bracket_strategy: Annotated[
+        BracketStrategyOption,
+        typer.Option("--bracket-strategy", help="Knock-outbracketstrategie."),
+    ] = BracketStrategyOption.OFFICIAL_LIKE,
+    bracket_path: Annotated[
+        Path,
+        typer.Option("--bracket-path", help="Pad naar de official-like bracket-YAML."),
+    ] = DEFAULT_BRACKET_PATH,
 ) -> None:
     """Optimaliseer goud, zilver, brons en vierde op verwachte poulepunten."""
 
@@ -819,12 +875,15 @@ def recommend_final_standings_command(
 
     simulation_count = num_simulations or config.model.num_simulations
     run_seed = config.model.random_seed if seed is None else seed
+    _announce_bracket(bracket_strategy, bracket_path)
     summary = simulate_tournament(
         teams,
         config.model,
         simulation_count,
         np.random.default_rng(run_seed),
         return_outcomes=ev_method is FinalStandingsEvMethod.SCENARIO,
+        bracket_strategy=bracket_strategy.value,
+        bracket_path=bracket_path,
     )
     if ev_method is FinalStandingsEvMethod.SCENARIO:
         if summary.outcomes is None:  # pragma: no cover - guarded by return_outcomes
@@ -854,10 +913,6 @@ def recommend_final_standings_command(
     _print_final_standings_recommendation(recommendation)
     typer.echo(f"Marginal EV for same pick: {marginal_ev:.2f}")
     _print_final_standings_candidates(summary, scoring, recommendation.candidate_pool_size)
-    typer.echo(
-        "\nLet op: knock-out bracket gebruikt seeded placeholder, niet officiële FIFA mapping."
-    )
-    typer.echo("Deze aanbeveling is daardoor nog niet definitief.")
     typer.echo(f"Limitation: {recommendation.notes}")
 
     if export:
@@ -883,6 +938,7 @@ def recommend_final_standings_command(
             candidate_pool_size=recommendation.candidate_pool_size,
             strategy=recommendation.strategy,
             limitations=RUN_LIMITATIONS,
+            **_bracket_metadata(bracket_strategy, bracket_path),
         )
         _print_export_result(
             run_path,
@@ -986,6 +1042,14 @@ def recommend_top_scorers_command(
         bool,
         typer.Option("--export/--no-export", help="Schrijf topscorer-CSV's en metadata-JSON."),
     ] = False,
+    bracket_strategy: Annotated[
+        BracketStrategyOption,
+        typer.Option("--bracket-strategy", help="Knock-outbracketstrategie."),
+    ] = BracketStrategyOption.OFFICIAL_LIKE,
+    bracket_path: Annotated[
+        Path,
+        typer.Option("--bracket-path", help="Pad naar de official-like bracket-YAML."),
+    ] = DEFAULT_BRACKET_PATH,
 ) -> None:
     """Optimaliseer drie topscorerpicks op verwachte Tipset-punten."""
 
@@ -1001,6 +1065,7 @@ def recommend_top_scorers_command(
 
     simulation_count = num_simulations or config.model.num_simulations
     run_seed = config.model.random_seed if seed is None else seed
+    _announce_bracket(bracket_strategy, bracket_path)
     summaries = simulate_top_scorers(
         teams,
         players,
@@ -1009,6 +1074,8 @@ def recommend_top_scorers_command(
         np.random.default_rng(run_seed),
         scoring.top_scorers,
         config.top_scorers,
+        bracket_strategy=bracket_strategy.value,
+        bracket_path=bracket_path,
     )
     recommendation = recommend_top_scorers(summaries)
     other_summaries = [row for row in summaries if row.is_other_bucket]
@@ -1041,6 +1108,7 @@ def recommend_top_scorers_command(
             players_path=players_path,
             scoring_config=scoring_config,
             limitations=TOP_SCORER_LIMITATIONS,
+            **_bracket_metadata(bracket_strategy, bracket_path),
         )
         _print_export_result(
             run_path,
@@ -1086,6 +1154,14 @@ def export_basic_predictions_command(
         bool,
         typer.Option("--export/--no-export", help="Schrijf de gecombineerde runbestanden."),
     ] = True,
+    bracket_strategy: Annotated[
+        BracketStrategyOption,
+        typer.Option("--bracket-strategy", help="Knock-outbracketstrategie."),
+    ] = BracketStrategyOption.OFFICIAL_LIKE,
+    bracket_path: Annotated[
+        Path,
+        typer.Option("--bracket-path", help="Pad naar de official-like bracket-YAML."),
+    ] = DEFAULT_BRACKET_PATH,
 ) -> None:
     """Bereken en exporteer alle basic Tipset/Brunoson-predictions."""
 
@@ -1115,12 +1191,15 @@ def export_basic_predictions_command(
 
     simulation_count = num_simulations or config.model.num_simulations
     run_seed = config.model.random_seed if seed is None else seed
+    _announce_bracket(bracket_strategy, bracket_path)
     tournament_summary = simulate_tournament(
         teams,
         config.model,
         simulation_count,
         np.random.default_rng(run_seed),
         return_outcomes=True,
+        bracket_strategy=bracket_strategy.value,
+        bracket_path=bracket_path,
     )
     if tournament_summary.outcomes is None:  # pragma: no cover
         raise RuntimeError("scenario EV requires raw tournament outcomes")
@@ -1138,6 +1217,8 @@ def export_basic_predictions_command(
         np.random.default_rng(run_seed),
         scoring.top_scorers,
         config.top_scorers,
+        bracket_strategy=bracket_strategy.value,
+        bracket_path=bracket_path,
     )
     top_scorers = recommend_top_scorers(scorer_summaries)
 
@@ -1227,6 +1308,7 @@ def export_basic_predictions_command(
             scoring_config=scoring_config,
             players_path=players_path,
             limitations=BASIC_PREDICTIONS_LIMITATIONS,
+            **_bracket_metadata(bracket_strategy, bracket_path),
         )
 
     typer.echo("Basic predictions")
@@ -1273,8 +1355,16 @@ def simulate_tournament_command(
         int,
         typer.Option("--top", min=1, help="Aantal teams per ranglijst."),
     ] = 20,
+    bracket_strategy: Annotated[
+        BracketStrategyOption,
+        typer.Option("--bracket-strategy", help="Knock-outbracketstrategie."),
+    ] = BracketStrategyOption.OFFICIAL_LIKE,
+    bracket_path: Annotated[
+        Path,
+        typer.Option("--bracket-path", help="Pad naar de official-like bracket-YAML."),
+    ] = DEFAULT_BRACKET_PATH,
 ) -> None:
-    """Simuleer groepsfase, seeded knock-outbracket en eindklassering."""
+    """Simuleer groepsfase, knock-outbracket en eindklassering."""
 
     config = _config(config_path)
     try:
@@ -1286,17 +1376,16 @@ def simulate_tournament_command(
 
     simulation_count = num_simulations or config.model.num_simulations
     run_seed = config.model.random_seed if seed is None else seed
+    _announce_bracket(bracket_strategy, bracket_path)
     summary = simulate_tournament(
         teams,
         config.model,
         simulation_count,
         np.random.default_rng(run_seed),
+        bracket_strategy=bracket_strategy.value,
+        bracket_path=bracket_path,
     )
     typer.echo(f"Volledig toernooi: {simulation_count:,} simulaties")
-    typer.echo(
-        "Let op: knock-out bracket gebruikt seeded placeholder mapping, "
-        "niet officiele FIFA mapping.\n"
-    )
     _print_tournament_summary(summary, min(top, len(summary.teams)))
 
     if export:
@@ -1317,6 +1406,8 @@ def simulate_tournament_command(
             output_dir=output_dir,
             group_stage_summary=group_stage_summary,
             tournament_summary=summary,
+            bracket_strategy=bracket_strategy,
+            bracket_path=bracket_path,
         )
         _print_export_result(
             run_path,

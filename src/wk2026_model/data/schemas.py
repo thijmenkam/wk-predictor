@@ -147,6 +147,26 @@ class MatchPrediction(BaseModel):
     most_likely_score: tuple[int, int]
 
 
+class BracketMatchDefinition(BaseModel):
+    """Een vaste knock-outwedstrijd met twee invoerslots."""
+
+    match_id: str
+    stage: str
+    slot_a: str
+    slot_b: str
+
+
+class BracketDefinition(BaseModel):
+    """De volledige WK 2026 knock-outprogression vanaf match 73."""
+
+    round_of_32: list[BracketMatchDefinition]
+    round_of_16: list[BracketMatchDefinition]
+    quarter_finals: list[BracketMatchDefinition]
+    semi_finals: list[BracketMatchDefinition]
+    third_place: BracketMatchDefinition
+    final: BracketMatchDefinition
+
+
 class PoolScoreRecommendation(BaseModel):
     """Aanbevolen invulscore voor een groepswedstrijd in een poule."""
 

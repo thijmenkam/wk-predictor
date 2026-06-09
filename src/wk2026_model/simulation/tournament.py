@@ -3,14 +3,25 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import combinations
+from pathlib import Path
+from typing import Literal
 
 import numpy as np
 
 from wk2026_model.config import ModelConfig
-from wk2026_model.data.loaders import validate_teams
-from wk2026_model.data.schemas import GROUP_IDS, GroupStanding, Team
+from wk2026_model.data.loaders import load_bracket_definition, validate_teams
+from wk2026_model.data.schemas import (
+    GROUP_IDS,
+    BracketDefinition,
+    BracketMatchDefinition,
+    GroupStanding,
+    Team,
+)
 from wk2026_model.models.elo import lambdas_from_elo
 from wk2026_model.simulation.match import simulate_match
+
+BracketStrategy = Literal["official_like", "seeded_placeholder"]
+DEFAULT_BRACKET_PATH = Path("configs/bracket_2026.yaml")
 
 
 @dataclass(frozen=True, slots=True)
@@ -509,6 +520,203 @@ def build_seeded_round_of_32(
     ]
 
 
+def resolve_group_slot(
+    slot: str,
+    group_stage_result: GroupStageResult,
+    used_third_teams: set[str] | None = None,
+) -> Team:
+    """Resolveer een groepsslot of greedy BEST3-slot naar een gekwalificeerd team.
+
+    Official FIFA third-place assignment table is not implemented yet. BEST3
+    slots are resolved greedily by third-place ranking within allowed groups.
+    """
+
+    teams_by_name = {team.name: team for team in group_stage_result.qualified_teams}
+    qualified_thirds = {row.team for row in group_stage_result.best_third_placed}
+    if len(slot) == 2 and slot[0] in GROUP_IDS and slot[1] in "123":
+        standing = group_stage_result.standings[slot[0]][int(slot[1]) - 1]
+        if slot[1] == "3" and standing.team not in qualified_thirds:
+            raise ValueError(f"group slot {slot} is not a qualified third-place team")
+        try:
+            return teams_by_name[standing.team]
+        except KeyError:
+            raise ValueError(f"group slot {slot} does not resolve to a qualified team") from None
+
+    if not slot.startswith("BEST3:"):
+        raise ValueError(f"unsupported group bracket slot: {slot}")
+    allowed_groups = set(slot.removeprefix("BEST3:").split("/"))
+    used = used_third_teams if used_third_teams is not None else set()
+    candidates = [
+        row
+        for row in group_stage_result.best_third_placed
+        if teams_by_name[row.team].group in allowed_groups and row.team not in used
+    ]
+    if not candidates:
+        raise ValueError(
+            f"no eligible unused qualified third-place team available for slot {slot}"
+        )
+    selected = min(candidates, key=_standing_sort_key)
+    used.add(selected.team)
+    return teams_by_name[selected.team]
+
+
+def _resolve_bracket_slot(
+    slot: str,
+    group_stage_result: GroupStageResult,
+    teams_by_name: dict[str, Team],
+    results_by_match_id: dict[str, KnockoutResult],
+    used_third_teams: set[str],
+    best3_assignments: dict[str, Team] | None = None,
+) -> Team:
+    if len(slot) == 2 and slot[0] in GROUP_IDS and slot[1] in "123":
+        return resolve_group_slot(slot, group_stage_result, used_third_teams)
+    if slot[0] in {"W", "L"} and slot[1:].isdigit():
+        result = results_by_match_id[slot[1:]]
+        team_name = result.winner if slot[0] == "W" else result.loser
+        return teams_by_name[team_name]
+    if slot.startswith("BEST3:") and best3_assignments is not None:
+        return best3_assignments[slot]
+    return resolve_group_slot(slot, group_stage_result, used_third_teams)
+
+
+def _assign_best3_slots(
+    definitions: list[BracketMatchDefinition],
+    group_stage_result: GroupStageResult,
+) -> dict[str, Team]:
+    """Wijs BEST3-slots rank-first toe zonder een later slot onmogelijk te maken."""
+
+    slots = [
+        slot
+        for definition in definitions
+        for slot in (definition.slot_a, definition.slot_b)
+        if slot.startswith("BEST3:")
+    ]
+    teams_by_name = {team.name: team for team in group_stage_result.qualified_teams}
+    ranked = sorted(group_stage_result.best_third_placed, key=_standing_sort_key)
+
+    def search(index: int, used: set[str], assigned: dict[str, Team]) -> dict[str, Team] | None:
+        if index == len(slots):
+            return assigned
+        slot = slots[index]
+        allowed = set(slot.removeprefix("BEST3:").split("/"))
+        for row in ranked:
+            team = teams_by_name[row.team]
+            if team.group not in allowed or team.name in used:
+                continue
+            result = search(
+                index + 1,
+                used | {team.name},
+                {**assigned, slot: team},
+            )
+            if result is not None:
+                return result
+        return None
+
+    assignments = search(0, set(), {})
+    if assignments is None:
+        raise ValueError("no valid assignment exists for all BEST3 bracket slots")
+    return assignments
+
+
+def _simulate_bracket_with_results(
+    group_stage_result: GroupStageResult,
+    teams_by_name: dict[str, Team],
+    bracket: BracketDefinition,
+    config: ModelConfig,
+    rng: np.random.Generator,
+) -> tuple[TournamentResult, list[KnockoutResult]]:
+    results_by_match_id: dict[str, KnockoutResult] = {}
+    used_third_teams: set[str] = set()
+    round_results: dict[str, list[KnockoutResult]] = {}
+    best3_assignments = _assign_best3_slots(bracket.round_of_32, group_stage_result)
+
+    def simulate_definitions(
+        key: str, definitions: list[BracketMatchDefinition]
+    ) -> list[KnockoutResult]:
+        results: list[KnockoutResult] = []
+        for definition in definitions:
+            team_a = _resolve_bracket_slot(
+                definition.slot_a,
+                group_stage_result,
+                teams_by_name,
+                results_by_match_id,
+                used_third_teams,
+                best3_assignments,
+            )
+            team_b = _resolve_bracket_slot(
+                definition.slot_b,
+                group_stage_result,
+                teams_by_name,
+                results_by_match_id,
+                used_third_teams,
+                best3_assignments,
+            )
+            if team_a.name == team_b.name:
+                raise ValueError(
+                    f"bracket match {definition.match_id} resolves the same team twice"
+                )
+            result = simulate_knockout_match(
+                team_a,
+                team_b,
+                config,
+                rng,
+                definition.stage,
+                definition.match_id,
+            )
+            results_by_match_id[definition.match_id] = result
+            results.append(result)
+        round_results[key] = results
+        return results
+
+    round_of_32_results = simulate_definitions("round_of_32", bracket.round_of_32)
+    round_of_16_results = simulate_definitions("round_of_16", bracket.round_of_16)
+    quarter_final_results = simulate_definitions("quarter_finals", bracket.quarter_finals)
+    semi_final_results = simulate_definitions("semi_finals", bracket.semi_finals)
+    third_place = simulate_definitions("third_place", [bracket.third_place])[0]
+    final = simulate_definitions("final", [bracket.final])[0]
+    ordered_results = [
+        *round_of_32_results,
+        *round_of_16_results,
+        *quarter_final_results,
+        *semi_final_results,
+        third_place,
+        final,
+    ]
+    return (
+        TournamentResult(
+            champion=final.winner,
+            runner_up=final.loser,
+            third=third_place.winner,
+            fourth=third_place.loser,
+            semi_finalists=[result.winner for result in quarter_final_results],
+            finalists=[result.winner for result in semi_final_results],
+            round_of_32=[
+                team_name
+                for result in round_of_32_results
+                for team_name in (result.team_a, result.team_b)
+            ],
+            round_of_16=[result.winner for result in round_of_32_results],
+            quarter_finalists=[result.winner for result in round_of_16_results],
+        ),
+        ordered_results,
+    )
+
+
+def simulate_bracket_from_definition(
+    group_stage_result: GroupStageResult,
+    teams_by_name: dict[str, Team],
+    bracket: BracketDefinition,
+    config: ModelConfig,
+    rng: np.random.Generator,
+) -> TournamentResult:
+    """Simuleer match 73-104 volgens een geladen bracketdefinitie."""
+
+    result, _ = _simulate_bracket_with_results(
+        group_stage_result, teams_by_name, bracket, config, rng
+    )
+    return result
+
+
 def penalty_win_probability(elo_a: float, elo_b: float) -> float:
     """Geef team A een kleine, tot 40-60% begrensde Elo-edge in de penaltyloting."""
 
@@ -595,9 +803,28 @@ def _simulate_tournament_once_with_trace_validated(
     teams: list[Team],
     config: ModelConfig,
     rng: np.random.Generator,
+    *,
+    bracket_strategy: BracketStrategy = "official_like",
+    bracket_path: Path | str = DEFAULT_BRACKET_PATH,
 ) -> TournamentSimulationTrace:
     group_stage = _simulate_group_stage_once_validated(teams, config, rng)
     teams_by_name = {team.name: team for team in teams}
+    if bracket_strategy == "official_like":
+        result, knockout_results = _simulate_bracket_with_results(
+            group_stage,
+            teams_by_name,
+            load_bracket_definition(bracket_path),
+            config,
+            rng,
+        )
+        return TournamentSimulationTrace(
+            result=result,
+            matches=group_stage.match_goals
+            + [_knockout_goals(result) for result in knockout_results],
+        )
+    if bracket_strategy != "seeded_placeholder":
+        raise ValueError(f"unsupported bracket strategy: {bracket_strategy}")
+
     slots = build_qualified_slots(group_stage)
     round_of_32_matches = build_seeded_round_of_32(group_stage, teams_by_name)
     round_of_32_results = [
@@ -670,19 +897,37 @@ def _simulate_tournament_once_validated(
     teams: list[Team],
     config: ModelConfig,
     rng: np.random.Generator,
+    *,
+    bracket_strategy: BracketStrategy = "official_like",
+    bracket_path: Path | str = DEFAULT_BRACKET_PATH,
 ) -> TournamentResult:
-    return _simulate_tournament_once_with_trace_validated(teams, config, rng).result
+    return _simulate_tournament_once_with_trace_validated(
+        teams,
+        config,
+        rng,
+        bracket_strategy=bracket_strategy,
+        bracket_path=bracket_path,
+    ).result
 
 
 def simulate_tournament_once(
     teams: list[Team],
     config: ModelConfig,
     rng: np.random.Generator,
+    *,
+    bracket_strategy: BracketStrategy = "official_like",
+    bracket_path: Path | str = DEFAULT_BRACKET_PATH,
 ) -> TournamentResult:
     """Simuleer groepsfase, alle knock-outrondes, finale en troostfinale eenmaal."""
 
     validate_teams(teams, strict=True)
-    return _simulate_tournament_once_validated(teams, config, rng)
+    return _simulate_tournament_once_validated(
+        teams,
+        config,
+        rng,
+        bracket_strategy=bracket_strategy,
+        bracket_path=bracket_path,
+    )
 
 
 def simulate_tournament(
@@ -692,6 +937,8 @@ def simulate_tournament(
     rng: np.random.Generator,
     *,
     return_outcomes: bool = False,
+    bracket_strategy: BracketStrategy = "official_like",
+    bracket_path: Path | str = DEFAULT_BRACKET_PATH,
 ) -> TournamentSummary:
     """Simuleer het toernooi en bewaar desgewenst ieder eindscenario."""
 
@@ -713,7 +960,13 @@ def simulate_tournament(
     counters: dict[str, defaultdict[str, int]] = {field: defaultdict(int) for field in fields}
     outcomes: list[TournamentOutcome] | None = [] if return_outcomes else None
     for _ in range(num_simulations):
-        result = _simulate_tournament_once_validated(teams, config, rng)
+        result = _simulate_tournament_once_validated(
+            teams,
+            config,
+            rng,
+            bracket_strategy=bracket_strategy,
+            bracket_path=bracket_path,
+        )
         if outcomes is not None:
             outcomes.append(
                 TournamentOutcome(

@@ -2,6 +2,7 @@
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 
@@ -9,6 +10,8 @@ from wk2026_model.config import ModelConfig, TopScorerModelConfig, TopScorerScor
 from wk2026_model.data.loaders import validate_teams
 from wk2026_model.data.schemas import Player, Team
 from wk2026_model.simulation.tournament import (
+    DEFAULT_BRACKET_PATH,
+    BracketStrategy,
     TournamentOutcome,
     TournamentResult,
     _simulate_tournament_once_with_trace_validated,
@@ -201,11 +204,20 @@ def simulate_tournament_scorers_once(
     config: ModelConfig,
     rng: np.random.Generator,
     scorer_config: TopScorerModelConfig | None = None,
+    *,
+    bracket_strategy: BracketStrategy = "official_like",
+    bracket_path: Path | str = DEFAULT_BRACKET_PATH,
 ) -> TournamentScorerOutcome:
     """Simuleer één toernooi en alloceer gesimuleerde teamgoals aan spelers."""
 
     validate_teams(teams, strict=True)
-    trace = _simulate_tournament_once_with_trace_validated(teams, config, rng)
+    trace = _simulate_tournament_once_with_trace_validated(
+        teams,
+        config,
+        rng,
+        bracket_strategy=bracket_strategy,
+        bracket_path=bracket_path,
+    )
     goals_by_team: defaultdict[str, int] = defaultdict(int)
     for match in trace.matches:
         # goals_a/goals_b zijn wedstrijdgoals; eventuele penalty-shootout-kicks worden
@@ -260,6 +272,9 @@ def simulate_top_scorers(
     rng: np.random.Generator,
     scoring: TopScorerScoringConfig | None = None,
     scorer_config: TopScorerModelConfig | None = None,
+    *,
+    bracket_strategy: BracketStrategy = "official_like",
+    bracket_path: Path | str = DEFAULT_BRACKET_PATH,
 ) -> list[PlayerScorerSummary]:
     """Monte Carlo-samenvatting voor bekende spelers en teamgebonden Other-buckets."""
 
@@ -281,7 +296,13 @@ def simulate_top_scorers(
     team_match_counts = {team.name: 0 for team in teams}
 
     for _ in range(num_simulations):
-        trace = _simulate_tournament_once_with_trace_validated(teams, config, rng)
+        trace = _simulate_tournament_once_with_trace_validated(
+            teams,
+            config,
+            rng,
+            bracket_strategy=bracket_strategy,
+            bracket_path=bracket_path,
+        )
         goals_by_team: defaultdict[str, int] = defaultdict(int)
         matches_by_team: Counter[str] = Counter()
         for match in trace.matches:

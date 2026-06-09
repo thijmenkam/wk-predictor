@@ -5,9 +5,17 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 from pydantic import ValidationError
 
-from wk2026_model.data.schemas import GROUP_IDS, Fixture, Player, Team
+from wk2026_model.data.schemas import (
+    GROUP_IDS,
+    BracketDefinition,
+    BracketMatchDefinition,
+    Fixture,
+    Player,
+    Team,
+)
 from wk2026_model.simulation.group import round_robin_fixtures
 
 TEAM_COLUMNS = {"team", "group", "elo", "is_host", "fifa_ranking"}
@@ -34,6 +42,12 @@ FIXTURE_COLUMNS = {
 }
 TRUE_VALUES = {"1", "true", "yes", "y"}
 FALSE_VALUES = {"0", "false", "no", "n", ""}
+BRACKET_ROUND_SIZES = {
+    "round_of_32": 16,
+    "round_of_16": 8,
+    "quarter_finals": 4,
+    "semi_finals": 2,
+}
 
 
 def _require_columns(frame: pd.DataFrame, required: set[str], source: Path) -> None:
@@ -92,6 +106,69 @@ def load_teams(path: Path | str) -> list[Team]:
         except (TypeError, ValueError, ValidationError) as exc:
             raise ValueError(f"invalid team data in {source} at row {row_number}: {exc}") from exc
     return teams
+
+
+def _validate_bracket_slot(
+    slot: str,
+    *,
+    known_match_ids: set[str],
+    match: BracketMatchDefinition,
+) -> None:
+    if len(slot) == 2 and slot[0] in GROUP_IDS and slot[1] in "123":
+        return
+    if slot.startswith("BEST3:"):
+        groups = slot.removeprefix("BEST3:").split("/")
+        if not groups or any(group not in GROUP_IDS for group in groups):
+            raise ValueError(f"invalid BEST3 slot {slot!r} in match {match.match_id}")
+        if len(groups) != len(set(groups)):
+            raise ValueError(f"duplicate group in BEST3 slot {slot!r}")
+        return
+    if len(slot) >= 2 and slot[0] in {"W", "L"} and slot[1:].isdigit():
+        reference = slot[1:]
+        if reference not in known_match_ids:
+            raise ValueError(
+                f"match {match.match_id} references unknown or later match {reference}"
+            )
+        return
+    raise ValueError(f"invalid bracket slot {slot!r} in match {match.match_id}")
+
+
+def load_bracket_definition(path: Path | str) -> BracketDefinition:
+    """Laad en valideer een data-driven knock-outbracket uit YAML."""
+
+    source = Path(path)
+    try:
+        raw = yaml.safe_load(source.read_text(encoding="utf-8"))
+        bracket = BracketDefinition.model_validate(raw)
+    except (OSError, yaml.YAMLError, ValidationError, TypeError) as exc:
+        raise ValueError(f"invalid bracket definition in {source}: {exc}") from exc
+
+    for field, expected in BRACKET_ROUND_SIZES.items():
+        actual = len(getattr(bracket, field))
+        if actual != expected:
+            raise ValueError(f"{field} must contain {expected} matches, found {actual}")
+
+    ordered_matches = [
+        *bracket.round_of_32,
+        *bracket.round_of_16,
+        *bracket.quarter_finals,
+        *bracket.semi_finals,
+        bracket.third_place,
+        bracket.final,
+    ]
+    match_ids = [match.match_id for match in ordered_matches]
+    duplicates = sorted(
+        match_id for match_id, count in Counter(match_ids).items() if count > 1
+    )
+    if duplicates:
+        raise ValueError(f"duplicate bracket match_id(s): {', '.join(duplicates)}")
+
+    known_match_ids: set[str] = set()
+    for match in ordered_matches:
+        for slot in (match.slot_a, match.slot_b):
+            _validate_bracket_slot(slot, known_match_ids=known_match_ids, match=match)
+        known_match_ids.add(match.match_id)
+    return bracket
 
 
 def load_players(path: Path | str, teams: list[Team]) -> list[Player]:
