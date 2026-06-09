@@ -1,11 +1,12 @@
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from wk2026_model.config import ModelConfig
+from wk2026_model.config import ModelConfig, TopScorerModelConfig
 from wk2026_model.data.loaders import load_players, load_teams
 from wk2026_model.data.schemas import Player
 from wk2026_model.outputs.export import (
@@ -88,6 +89,7 @@ def test_allocate_team_goals_conserves_goals() -> None:
     )
 
     assert sum(allocations.values()) == 100
+    assert "Other France" in allocations
 
 
 def test_higher_weight_player_gets_more_goals_over_many_draws() -> None:
@@ -97,6 +99,23 @@ def test_higher_weight_player_gets_more_goals_over_many_draws() -> None:
     )
 
     assert allocations["High"] > allocations["Low"]
+
+
+def test_other_bucket_has_minimum_share_and_player_is_capped() -> None:
+    allocations = allocate_team_goals_to_players(
+        "France",
+        100_000,
+        [_player("Only", 1.0)],
+        np.random.default_rng(42),
+        TopScorerModelConfig(
+            min_other_goal_share=0.35,
+            max_player_effective_goal_share=0.45,
+            penalty_share_bonus=0.10,
+        ),
+    )
+
+    assert allocations["Only"] / 100_000 == pytest.approx(0.45, abs=0.01)
+    assert allocations["Other France"] / 100_000 >= 0.54
 
 
 def test_simulate_top_scorers_returns_valid_summary_for_every_player() -> None:
@@ -109,7 +128,8 @@ def test_simulate_top_scorers_returns_valid_summary_for_every_player() -> None:
 
     summaries = simulate_top_scorers(teams, players, ModelConfig(), 3, np.random.default_rng(42))
 
-    assert {row.player for row in summaries} == {player.name for player in players}
+    assert {player.name for player in players}.issubset({row.player for row in summaries})
+    assert sum(row.is_other_bucket for row in summaries) == len(teams)
     assert all(0 <= row.p_top_scorer <= 1 for row in summaries)
     assert all(row.expected_goals >= 0 for row in summaries)
     assert all(
@@ -126,6 +146,16 @@ def test_recommend_top_scorers_returns_three_unique_players() -> None:
     assert len(recommendation.players) == 3
     assert len({row.player for row in recommendation.players}) == 3
     assert recommendation.expected_pool_points == pytest.approx(9.3)
+
+
+def test_recommend_top_scorers_excludes_other_bucket() -> None:
+    other = _summary("Other France", 100.0)
+    other = replace(other, is_other_bucket=True)
+    recommendation = recommend_top_scorers(
+        [other, _summary("One", 4.0), _summary("Two", 3.0), _summary("Three", 2.0)]
+    )
+
+    assert "Other France" not in {row.player for row in recommendation.players}
 
 
 def test_top_scorer_exports_are_written(tmp_path: Path) -> None:

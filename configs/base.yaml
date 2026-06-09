@@ -9,3 +9,8 @@ model:
   max_goals: 10
   average_match_goals: 2.65
   elo_goal_coefficient: 0.00088
+
+top_scorers:
+  min_other_goal_share: 0.35
+  max_player_effective_goal_share: 0.45
+  penalty_share_bonus: 0.10

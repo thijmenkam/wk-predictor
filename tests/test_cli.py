@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -6,6 +7,44 @@ from typer.testing import CliRunner
 from wk2026_model.cli import app
 
 runner = CliRunner()
+
+
+def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "export-basic-predictions",
+            "--seed",
+            "42",
+            "--num-simulations",
+            "2",
+            "--output-dir",
+            str(tmp_path),
+            "--export",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    run_path = next(tmp_path.iterdir())
+    assert "basic-predictions-seed42" in run_path.name
+    assert {path.name for path in run_path.iterdir()} == {
+        "basic_predictions_summary.md",
+        "basic_predictions_summary.json",
+        "pool_group_round1_predictions.csv",
+        "final_standings_recommendation.csv",
+        "top_scorer_recommendation.csv",
+        "basic_predictions_metadata.json",
+    }
+    summary = json.loads((run_path / "basic_predictions_summary.json").read_text())
+    metadata = json.loads((run_path / "basic_predictions_metadata.json").read_text())
+    assert len(summary["round_1_predictions"]) == 24
+    standings = summary["final_standings"]
+    assert len({standings[position] for position in ("gold", "silver", "bronze", "fourth")}) == 4
+    assert len({row["player"] for row in summary["top_scorers"]}) == 3
+    assert metadata["seed"] == 42
+    assert metadata["num_simulations"] == 2
+    assert summary["limitations"]
+    assert "## Limitations" in (run_path / "basic_predictions_summary.md").read_text()
 
 
 def test_validate_data_accepts_small_temporary_dataset(tmp_path: Path) -> None:
@@ -55,6 +94,14 @@ def test_validate_repository_data_reports_official_fixtures() -> None:
     assert "Fixtures generated: false" in result.stdout
     assert "Fixtures with match_round filled: 72" in result.stdout
     assert "gegenereerde combinaties" not in result.stdout
+
+
+def test_validate_players_detects_team_with_one_player() -> None:
+    result = runner.invoke(app, ["validate-players"])
+
+    assert result.exit_code == 0
+    assert "Colombia" in result.stdout
+    assert "only one listed player" in result.stdout
 
 
 def test_simulate_group_stage_command_reports_all_groups() -> None:

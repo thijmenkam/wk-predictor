@@ -26,6 +26,14 @@ class ModelConfig(BaseModel):
     elo_goal_coefficient: float = Field(default=0.00088, gt=0)
 
 
+class TopScorerModelConfig(BaseModel):
+    """Kalibratie van de baseline verdeling van teamgoals."""
+
+    min_other_goal_share: float = Field(default=0.35, ge=0, le=1)
+    max_player_effective_goal_share: float = Field(default=0.45, ge=0, le=1)
+    penalty_share_bonus: float = Field(default=0.10, ge=0)
+
+
 class GroupStageScoringConfig(BaseModel):
     """Punten voor uitslag en exacte score in de groepsfase."""
 
@@ -63,6 +71,7 @@ class ProjectConfig(BaseModel):
 
     data: DataConfig = Field(default_factory=DataConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
+    top_scorers: TopScorerModelConfig = Field(default_factory=TopScorerModelConfig)
 
 
 def load_config(path: str | Path = "configs/base.yaml") -> ProjectConfig:

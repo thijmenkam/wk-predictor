@@ -20,6 +20,9 @@ from wk2026_model.data.loaders import load_fixtures, load_players, load_teams, v
 from wk2026_model.data.schemas import GROUP_IDS, Fixture, Team
 from wk2026_model.outputs.export import (
     create_run_dir,
+    write_basic_predictions_metadata_json,
+    write_basic_predictions_summary_json,
+    write_basic_predictions_summary_markdown,
     write_final_standings_candidates_csv,
     write_final_standings_metadata_json,
     write_final_standings_recommendation_csv,
@@ -45,6 +48,7 @@ from wk2026_model.simulation.group import simulate_group_once
 from wk2026_model.simulation.match import predict_match
 from wk2026_model.simulation.scorers import (
     PlayerScorerSummary,
+    player_diagnostics,
     recommend_top_scorers,
     simulate_top_scorers,
 )
@@ -89,6 +93,14 @@ RUN_LIMITATIONS = [
     "Knock-out bracket uses seeded placeholder, not official FIFA mapping",
     "Expected goals are Elo-derived, not real xG",
     "No player/topscorer model yet",
+]
+
+BASIC_PREDICTIONS_LIMITATIONS = [
+    "Knockout bracket gebruikt nog seeded placeholder",
+    "Expected goals zijn Elo-derived, geen echte xG",
+    "players.csv is handmatige baseline",
+    "Top scorer model gebruikt approximate player goal allocation",
+    "Fixtures zijn gebaseerd op secundaire bron en moeten tegen FIFA worden gecontroleerd",
 ]
 
 
@@ -886,7 +898,7 @@ def _print_top_scorer_candidates(summaries: list[PlayerScorerSummary], top: int)
     typer.echo("\nTop candidates")
     typer.echo(f"{'Player':<24} {'Team':<15} {'xGoals':>7} {'P(top scorer)':>14} {'EV':>7}")
     ranked = sorted(
-        summaries,
+        (row for row in summaries if not row.is_other_bucket),
         key=lambda row: (
             -row.recommended_score_value,
             -row.expected_goals,
@@ -899,6 +911,40 @@ def _print_top_scorer_candidates(summaries: list[PlayerScorerSummary], top: int)
         typer.echo(
             f"{row.player:<24} {row.team:<15} {row.expected_goals:>7.2f} "
             f"{row.p_top_scorer:>14.1%} {row.recommended_score_value:>7.2f}"
+        )
+
+
+@app.command("validate-players")
+def validate_players_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Pad naar de YAML-configuratie."),
+    ] = DEFAULT_CONFIG_PATH,
+    players_path: Annotated[
+        Path,
+        typer.Option("--players-path", help="Pad naar de handmatige spelersbaseline."),
+    ] = DEFAULT_PLAYERS_PATH,
+) -> None:
+    """Toon per team hoe bekende spelers en de Other-bucket goals verdelen."""
+
+    config = _config(config_path)
+    try:
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        players = load_players(players_path, teams)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Spelers konden niet worden gevalideerd: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    diagnostics = player_diagnostics(teams, players, config.top_scorers)
+    typer.echo(
+        f"{'Team':<20} {'Players':>7} {'RawShare':>9} "
+        f"{'KnownShare':>10} {'OtherShare':>10}  Warnings"
+    )
+    for row in diagnostics:
+        warnings = "; ".join(row.warnings) if row.warnings else "ok"
+        typer.echo(
+            f"{row.team:<20} {row.player_count:>7} {row.raw_team_goal_share:>9.2f} "
+            f"{row.known_share:>10.2f} {row.other_share:>10.2f}  {warnings}"
         )
 
 
@@ -962,11 +1008,19 @@ def recommend_top_scorers_command(
         simulation_count,
         np.random.default_rng(run_seed),
         scoring.top_scorers,
+        config.top_scorers,
     )
     recommendation = recommend_top_scorers(summaries)
+    other_summaries = [row for row in summaries if row.is_other_bucket]
 
     typer.echo(f"Aantal simulaties: {simulation_count:,}")
     typer.echo(f"Aantal spelers: {len(players)}")
+    typer.echo(f"Aantal Other buckets: {len(other_summaries)}")
+    average_other_share = sum(row.other_share_for_team for row in other_summaries) / len(
+        other_summaries
+    )
+    typer.echo(f"Gemiddelde Other share: {average_other_share:.1%}")
+    typer.echo("Waarschuwing: players.csv blijft een handmatige baseline.")
     typer.echo("\nAanbevolen top scorers")
     for rank, row in enumerate(recommendation.players, start=1):
         typer.echo(f"{rank}. {row.player}, {row.team}")
@@ -996,6 +1050,193 @@ def recommend_top_scorers_command(
                 "top_scorer_metadata.json",
             ],
         )
+
+
+@app.command("export-basic-predictions")
+def export_basic_predictions_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="Pad naar de YAML-configuratie."),
+    ] = DEFAULT_CONFIG_PATH,
+    seed: Annotated[
+        int | None,
+        typer.Option("--seed", min=0, help="Vaste random seed; standaard de modelconfiguratie."),
+    ] = None,
+    num_simulations: Annotated[
+        int | None,
+        typer.Option(
+            "--num-simulations",
+            min=1,
+            help="Aantal Monte Carlo-simulaties; standaard de modelconfiguratie.",
+        ),
+    ] = None,
+    scoring_config: Annotated[
+        Path,
+        typer.Option("--scoring-config", help="Pad naar de pool scoring-YAML."),
+    ] = DEFAULT_POOL_SCORING_PATH,
+    players_path: Annotated[
+        Path,
+        typer.Option("--players-path", help="Pad naar de handmatige spelersbaseline."),
+    ] = DEFAULT_PLAYERS_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Basismap voor gecombineerde exportruns."),
+    ] = DEFAULT_OUTPUT_DIR,
+    export: Annotated[
+        bool,
+        typer.Option("--export/--no-export", help="Schrijf de gecombineerde runbestanden."),
+    ] = True,
+) -> None:
+    """Bereken en exporteer alle basic Tipset/Brunoson-predictions."""
+
+    config = _config(config_path)
+    try:
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        validate_teams(teams, strict=True)
+        fixtures = _load_export_fixtures(config, teams)
+        players = load_players(players_path, teams)
+        scoring = load_pool_scoring_config(scoring_config)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Basic predictions konden niet worden berekend: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    round_one_fixtures = [
+        fixture
+        for fixture in fixtures
+        if fixture.stage == "group" and fixture.match_round == 1
+    ]
+    if len(round_one_fixtures) != 24:
+        typer.echo(
+            f"Basic predictions vereisen 24 round 1-fixtures; gevonden: "
+            f"{len(round_one_fixtures)}.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    simulation_count = num_simulations or config.model.num_simulations
+    run_seed = config.model.random_seed if seed is None else seed
+    tournament_summary = simulate_tournament(
+        teams,
+        config.model,
+        simulation_count,
+        np.random.default_rng(run_seed),
+        return_outcomes=True,
+    )
+    if tournament_summary.outcomes is None:  # pragma: no cover
+        raise RuntimeError("scenario EV requires raw tournament outcomes")
+    standings = recommend_final_standings_from_outcomes(
+        tournament_summary.outcomes,
+        tournament_summary.teams,
+        scoring.knockout_stage,
+        16,
+    )
+    scorer_summaries = simulate_top_scorers(
+        teams,
+        players,
+        config.model,
+        simulation_count,
+        np.random.default_rng(run_seed),
+        scoring.top_scorers,
+        config.top_scorers,
+    )
+    top_scorers = recommend_top_scorers(scorer_summaries)
+
+    run_path: Path | None = None
+    if export:
+        run_path = create_run_dir(output_dir, "basic-predictions", run_seed)
+        pool_path = write_pool_group_predictions_csv(
+            round_one_fixtures,
+            teams,
+            config.model,
+            run_path / "pool_group_round1_predictions.csv",
+            strategy=PoolScoreStrategy.MAX_EXPECTED_POOL_POINTS.value,
+            scoring=scoring.group_stage,
+        )
+        round_one_frame = pd.read_csv(pool_path)
+    else:
+        temporary_path = output_dir / ".basic_predictions_round1.tmp.csv"
+        try:
+            round_one_frame = pd.read_csv(
+                write_pool_group_predictions_csv(
+                    round_one_fixtures,
+                    teams,
+                    config.model,
+                    temporary_path,
+                    strategy=PoolScoreStrategy.MAX_EXPECTED_POOL_POINTS.value,
+                    scoring=scoring.group_stage,
+                )
+            )
+        finally:
+            temporary_path.unlink(missing_ok=True)
+
+    payload = {
+        "seed": run_seed,
+        "num_simulations": simulation_count,
+        "round_1_predictions": [
+            {
+                "match_id": row.match_id,
+                "kickoff_at": row.kickoff_at,
+                "group": row.group,
+                "match": f"{row.team_a} - {row.team_b}",
+                "recommended_score": row.recommended_score,
+                "expected_pool_points": row.expected_pool_points,
+            }
+            for row in round_one_frame.itertuples()
+        ],
+        "final_standings": {
+            "gold": standings.gold,
+            "silver": standings.silver,
+            "bronze": standings.bronze,
+            "fourth": standings.fourth,
+            "expected_points": standings.expected_pool_points,
+        },
+        "top_scorers": [
+            {
+                "rank": rank,
+                "player": row.player,
+                "team": row.team,
+                "expected_goals": row.expected_goals,
+                "expected_points_value": row.recommended_score_value,
+            }
+            for rank, row in enumerate(top_scorers.players, start=1)
+        ],
+        "limitations": BASIC_PREDICTIONS_LIMITATIONS,
+    }
+
+    if run_path is not None:
+        write_final_standings_recommendation_csv(
+            standings,
+            tournament_summary.teams,
+            scoring.knockout_stage,
+            run_path / "final_standings_recommendation.csv",
+            ev_method=FinalStandingsEvMethod.SCENARIO.value,
+        )
+        write_top_scorer_recommendation_csv(
+            top_scorers, run_path / "top_scorer_recommendation.csv"
+        )
+        write_basic_predictions_summary_json(
+            payload, run_path / "basic_predictions_summary.json"
+        )
+        write_basic_predictions_summary_markdown(
+            payload, run_path / "basic_predictions_summary.md"
+        )
+        write_basic_predictions_metadata_json(
+            run_path / "basic_predictions_metadata.json",
+            seed=run_seed,
+            num_simulations=simulation_count,
+            scoring_config=scoring_config,
+            players_path=players_path,
+            limitations=BASIC_PREDICTIONS_LIMITATIONS,
+        )
+
+    typer.echo("Basic predictions")
+    typer.echo(f"Round 1 matches: {len(round_one_frame)}")
+    typer.echo(
+        "Final standings: "
+        + ", ".join((standings.gold, standings.silver, standings.bronze, standings.fourth))
+    )
+    typer.echo("Top scorers: " + ", ".join(row.player for row in top_scorers.players))
+    typer.echo(f"Output: {run_path if run_path is not None else 'not exported'}")
 
 
 @app.command("simulate-tournament")

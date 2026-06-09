@@ -497,6 +497,11 @@ def write_top_scorer_candidates_csv(
         "starter_probability",
         "expected_minutes_share",
         "team_goal_share",
+        "raw_team_goal_share",
+        "effective_goal_share",
+        "other_share_for_team",
+        "known_share_for_team",
+        "is_other_bucket",
         "penalty_taker_probability",
         "recommended_score_value",
     ]
@@ -525,4 +530,96 @@ def write_top_scorer_metadata_json(
         "limitations": limitations,
     }
     output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return output_path
+
+
+def write_basic_predictions_summary_json(payload: dict[str, Any], path: str | Path) -> Path:
+    """Schrijf de machine-readable samenvatting van alle basic predictions."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def write_basic_predictions_summary_markdown(
+    payload: dict[str, Any], path: str | Path
+) -> Path:
+    """Schrijf een leesbare Tipset/Brunoson-samenvatting."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    standings = payload["final_standings"]
+    lines = [
+        "# Basic Predictions",
+        "",
+        "## Group stage round 1",
+        "",
+        "| match_id | date/kickoff_at | group | match | recommended_score | expected_pool_points |",
+        "|---|---|---|---|---:|---:|",
+    ]
+    for row in payload["round_1_predictions"]:
+        lines.append(
+            f"| {row['match_id']} | {row['kickoff_at']} | {row['group']} | "
+            f"{row['match']} | {row['recommended_score']} | "
+            f"{row['expected_pool_points']:.3f} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Final standings",
+            "",
+            f"- Gold: {standings['gold']}",
+            f"- Silver: {standings['silver']}",
+            f"- Bronze: {standings['bronze']}",
+            f"- Fourth: {standings['fourth']}",
+            f"- Expected points: {standings['expected_points']:.2f}",
+            "",
+            "## Top scorers",
+            "",
+            "| Rank | Player | Team | Expected goals | Expected points value |",
+            "|---:|---|---|---:|---:|",
+        ]
+    )
+    for row in payload["top_scorers"]:
+        lines.append(
+            f"| {row['rank']} | {row['player']} | {row['team']} | "
+            f"{row['expected_goals']:.2f} | {row['expected_points_value']:.2f} |"
+        )
+    lines.extend(["", "## Limitations", ""])
+    lines.extend(f"- {limitation}" for limitation in payload["limitations"])
+    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return output_path
+
+
+def write_basic_predictions_metadata_json(
+    path: str | Path,
+    *,
+    seed: int,
+    num_simulations: int,
+    scoring_config: str | Path,
+    players_path: str | Path,
+    limitations: list[str],
+) -> Path:
+    """Schrijf reproduceerbare metadata voor de gecombineerde basic run."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "run_type": "basic-predictions",
+        "seed": seed,
+        "num_simulations": num_simulations,
+        "pool_strategy": "max_expected_pool_points",
+        "final_standings_ev_method": "scenario",
+        "scoring_config": str(scoring_config),
+        "players_path": str(players_path),
+        "limitations": limitations,
+    }
+    output_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
     return output_path
