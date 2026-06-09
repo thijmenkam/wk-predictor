@@ -11,3 +11,5 @@ build/
 *.egg-info/
 
 outputs/runs/
+outputs/polymarket/*
+!outputs/polymarket/.gitkeep

@@ -1,0 +1,123 @@
+{
+  "run_dir": "outputs/runs/20260609-153822-basic-predictions-seed42",
+  "market_probs": "outputs/polymarket/20260609-153834-price-fetch/processed/world_cup_winner_binary_markets.csv",
+  "prob_column": "normalized_probability",
+  "model_source": "tournament_summary.csv",
+  "model_teams": 48,
+  "market_teams": 48,
+  "matched_teams": 48,
+  "missing_in_market": 0,
+  "missing_in_model": 0,
+  "mean_absolute_delta": 0.010936894808090495,
+  "max_absolute_delta": 0.07942393693263261,
+  "sum_model_p_champion_matched": 1.0,
+  "sum_market_probability_matched": 0.9999999999999978,
+  "spearman_rank_correlation": 0.9463776744360152,
+  "market_higher_than_model": [
+    {
+      "team": "France",
+      "model_p_champion": 0.0749,
+      "market_probability": 0.1543239369326326,
+      "delta_market_minus_model": 0.07942393693263261
+    },
+    {
+      "team": "Portugal",
+      "model_p_champion": 0.0473,
+      "market_probability": 0.1127568084089823,
+      "delta_market_minus_model": 0.0654568084089823
+    },
+    {
+      "team": "England",
+      "model_p_champion": 0.0642,
+      "market_probability": 0.1046344959388437,
+      "delta_market_minus_model": 0.04043449593884371
+    },
+    {
+      "team": "Brazil",
+      "model_p_champion": 0.0498,
+      "market_probability": 0.0797897754419493,
+      "delta_market_minus_model": 0.029989775441949307
+    },
+    {
+      "team": "Spain",
+      "model_p_champion": 0.1281,
+      "market_probability": 0.1524128045867176,
+      "delta_market_minus_model": 0.024312804586717612
+    },
+    {
+      "team": "Germany",
+      "model_p_champion": 0.0339,
+      "market_probability": 0.051122790253225,
+      "delta_market_minus_model": 0.017222790253224998
+    },
+    {
+      "team": "Netherlands",
+      "model_p_champion": 0.0321,
+      "market_probability": 0.0377448638318203,
+      "delta_market_minus_model": 0.0056448638318203
+    }
+  ],
+  "model_higher_than_market": [
+    {
+      "team": "Colombia",
+      "model_p_champion": 0.0454,
+      "market_probability": 0.0186335403726708,
+      "delta_market_minus_model": -0.026766459627329202
+    },
+    {
+      "team": "Ecuador",
+      "model_p_champion": 0.0341,
+      "market_probability": 0.0081223124701385,
+      "delta_market_minus_model": -0.025977687529861498
+    },
+    {
+      "team": "Croatia",
+      "model_p_champion": 0.0304,
+      "market_probability": 0.009077878643096,
+      "delta_market_minus_model": -0.021322121356904
+    },
+    {
+      "team": "Argentina",
+      "model_p_champion": 0.1043,
+      "market_probability": 0.0836120401337792,
+      "delta_market_minus_model": -0.02068795986622081
+    },
+    {
+      "team": "Türkiye",
+      "model_p_champion": 0.0301,
+      "market_probability": 0.0109890109890109,
+      "delta_market_minus_model": -0.0191109890109891
+    },
+    {
+      "team": "Uruguay",
+      "model_p_champion": 0.0271,
+      "market_probability": 0.0100334448160535,
+      "delta_market_minus_model": -0.0170665551839465
+    },
+    {
+      "team": "Switzerland",
+      "model_p_champion": 0.0236,
+      "market_probability": 0.0100334448160535,
+      "delta_market_minus_model": -0.0135665551839465
+    },
+    {
+      "team": "Senegal",
+      "model_p_champion": 0.0187,
+      "market_probability": 0.0062111801242236,
+      "delta_market_minus_model": -0.012488819875776401
+    },
+    {
+      "team": "Austria",
+      "model_p_champion": 0.014,
+      "market_probability": 0.0043000477783086,
+      "delta_market_minus_model": -0.0096999522216914
+    },
+    {
+      "team": "South Korea",
+      "model_p_champion": 0.0117,
+      "market_probability": 0.0033444816053511,
+      "delta_market_minus_model": -0.0083555183946489
+    }
+  ],
+  "warnings": []
+}

@@ -21,6 +21,7 @@ WK 2026-matchnummers 73 tot en met 104.
 - Rapporteren van positie-, kwalificatie-, punten- en doelgemiddelden per team.
 - Simuleren van Round of 32 tot en met finale en troostfinale.
 - Aggregeren van kansen op iedere knock-outronde, goud, zilver, brons en vierde plaats.
+- Optioneel calibreren van team-Elo op verwerkte Polymarket-kampioenskansen.
 
 ## Groepsfase en kwalificatie
 
@@ -285,3 +286,51 @@ De huidige implementatie bevat nog geen:
 - echte xG-data;
 - bookmakerodds;
 - scraping van externe bronnen.
+
+## Market-calibrated Elo-experiment
+
+De standaard ratingstrategie blijft `elo`. Market calibration wordt uitsluitend geactiveerd met
+`--rating-strategy market_calibrated_elo`; simulaties halen nooit automatisch marktdata op. De
+opties zijn beschikbaar op `simulate-tournament`, `recommend-final-standings`,
+`recommend-top-scorers` en `export-basic-predictions`.
+
+Maak eerst een rapport op basis van een bestaande baseline-Elo-run:
+
+```bash
+uv run wk2026 calibrate-market-ratings \
+  --market-probs outputs/polymarket/<LATEST>/processed/world_cup_winner_binary_markets.csv \
+  --model-run-dir outputs/runs/<BASELINE_ELO_RUN> \
+  --export
+```
+
+Maak daarna een afzonderlijke calibrated run:
+
+```bash
+uv run wk2026 export-basic-predictions \
+  --seed 42 \
+  --num-simulations 50000 \
+  --rating-strategy market_calibrated_elo \
+  --market-probs outputs/polymarket/<LATEST>/processed/world_cup_winner_binary_markets.csv \
+  --model-run-dir outputs/runs/<BASELINE_ELO_RUN> \
+  --export
+```
+
+`model_run_dir` moet naar een bestaande baseline-run met ratingstrategie `elo` en een
+`tournament_summary.csv` wijzen, nooit naar de calibrated run die op dat moment wordt gemaakt.
+Vergelijk de afzonderlijke outputs met:
+
+```bash
+uv run wk2026 compare-runs \
+  outputs/runs/<BASELINE_ELO_RUN> \
+  outputs/runs/<CALIBRATED_RUN>
+```
+
+De geverifieerde snapshot van 9 juni 2026 matchte alle 48 teams. Met `scale: 35.0` en
+`max_elo_adjustment: 75.0` was de gemiddelde absolute aanpassing 25,90 Elo en werd geen
+aanpassing geclampt. De grootste positieve aanpassingen waren Portugal (+32,90), Frankrijk
+(+28,44) en Engeland (+18,64). Ecuador (-51,14), Kroatië (-43,06) en Colombia (-32,14) kregen
+duidelijke negatieve aanpassingen.
+
+De calibratie verandert uitsluitend teamratings voor de expliciet aangevraagde run. Er is geen
+xG-, match-odds- of topscorermarktcalibratie, geen trading/authenticatie en geen automatische
+Polymarket-fetch tijdens simulaties.

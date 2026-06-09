@@ -13,6 +13,7 @@ authors = [
   { name = "WK 2026 Predictor contributors" },
 ]
 dependencies = [
+  "httpx>=0.27",
   "numpy>=1.26",
   "pandas>=2.2",
   "pydantic>=2.7",

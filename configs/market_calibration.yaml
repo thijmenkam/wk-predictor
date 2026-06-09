@@ -1,0 +1,11 @@
+market_calibration:
+  enabled: false
+  market_probs_path: null
+  model_run_dir: null
+  probability_column: normalized_probability
+  min_confidence: low
+  method: logit_champion_delta
+  scale: 35.0
+  max_elo_adjustment: 75.0
+  min_market_probability: 0.001
+  min_model_probability: 0.001

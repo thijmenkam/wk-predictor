@@ -1,5 +1,6 @@
 """Typer-command-line-interface voor data-inspectie en voorspellingen."""
 
+import json
 from collections import defaultdict
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -18,6 +19,26 @@ from wk2026_model.config import (
 )
 from wk2026_model.data.loaders import load_fixtures, load_players, load_teams, validate_teams
 from wk2026_model.data.schemas import GROUP_IDS, Fixture, Team
+from wk2026_model.markets.polymarket import (
+    PolymarketError,
+    PolymarketGammaClient,
+    extract_event_markets,
+    fetch_manifest,
+    fetch_manifest_prices,
+    summarize_market_candidate,
+    write_json,
+    write_market_candidates_csv,
+)
+from wk2026_model.models.market_calibration import (
+    MarketCalibrationConfig,
+    MarketCalibrationResult,
+    apply_market_calibration_to_teams,
+    compute_market_elo_adjustments,
+    export_market_calibration,
+    load_market_calibration_config,
+    load_market_champion_probabilities,
+    load_model_champion_probabilities,
+)
 from wk2026_model.outputs.compare import (
     compare_runs,
     default_comparison_dir,
@@ -39,6 +60,11 @@ from wk2026_model.outputs.export import (
     write_top_scorer_metadata_json,
     write_top_scorer_recommendation_csv,
     write_tournament_summary_csv,
+)
+from wk2026_model.outputs.market_compare import (
+    compare_market_to_model,
+    default_market_comparison_dir,
+    export_market_comparison,
 )
 from wk2026_model.pool.final_standings import (
     POSITIONS,
@@ -71,6 +97,9 @@ DEFAULT_CONFIG_PATH = Path("configs/base.yaml")
 DEFAULT_OUTPUT_DIR = Path("outputs/runs")
 DEFAULT_POOL_SCORING_PATH = Path("configs/pool_scoring.yaml")
 DEFAULT_PLAYERS_PATH = Path("data/raw/players.csv")
+DEFAULT_POLYMARKET_OUTPUT_DIR = Path("outputs/polymarket")
+DEFAULT_MARKET_CALIBRATION_CONFIG = Path("configs/market_calibration.yaml")
+DEFAULT_MARKET_CALIBRATION_OUTPUT_DIR = Path("outputs/market-calibration")
 BRACKET_SOURCE = "worldcupwiki.com/schedule, secondary source, verify against FIFA"
 THIRD_PLACE_ASSIGNMENT_METHOD = "greedy_best3_with_allowed_groups"
 
@@ -106,6 +135,18 @@ class ComparisonFocus(StrEnum):
     METADATA = "metadata"
 
 
+class MarketConfidence(StrEnum):
+    MISSING = "missing"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class RatingStrategy(StrEnum):
+    ELO = "elo"
+    MARKET_CALIBRATED_ELO = "market_calibrated_elo"
+
+
 TOP_SCORER_LIMITATIONS = [
     "manual player baseline",
     "no official squads",
@@ -136,6 +177,253 @@ BASIC_PREDICTIONS_LIMITATIONS = [
     "Top scorer model gebruikt approximate player goal allocation",
     "Fixtures zijn gebaseerd op secundaire bron en moeten tegen FIFA worden gecontroleerd",
 ]
+
+
+def _candidate_type(row: dict[str, object]) -> str:
+    if "question" in row:
+        return "market"
+    if "title" in row or "markets" in row:
+        return "event"
+    return "unknown"
+
+
+def _candidate_value(row: dict[str, object], *keys: str) -> object:
+    for key in keys:
+        value = row.get(key)
+        if value not in (None, ""):
+            return value
+    return ""
+
+
+def _print_polymarket_candidates(rows: list[dict[str, object]]) -> None:
+    headers = ("type", "id", "slug", "title/question", "active", "closed", "liq", "vol", "end")
+    typer.echo(" | ".join(headers))
+    for row in rows:
+        values = (
+            _candidate_type(row),
+            _candidate_value(row, "id"),
+            _candidate_value(row, "slug"),
+            _candidate_value(row, "question", "title"),
+            _candidate_value(row, "active"),
+            _candidate_value(row, "closed"),
+            _candidate_value(row, "liquidity", "liquidityNum"),
+            _candidate_value(row, "volume", "volumeNum"),
+            _candidate_value(row, "endDate", "end_date_iso"),
+        )
+        typer.echo(" | ".join(str(value).replace("\n", " ")[:80] for value in values))
+
+
+@app.command("polymarket-search")
+def polymarket_search_command(
+    query: Annotated[str, typer.Option("--query", help="Vrije Gamma-zoekterm.")],
+    limit: Annotated[int, typer.Option("--limit", min=1)] = 20,
+    active: Annotated[
+        bool, typer.Option("--active/--all", help="Toon standaard alleen actieve kandidaten.")
+    ] = True,
+    output_dir: Annotated[Path, typer.Option("--output-dir")] = DEFAULT_POLYMARKET_OUTPUT_DIR,
+    save: Annotated[bool, typer.Option("--save/--no-save")] = True,
+) -> None:
+    """Zoek publieke Polymarket-events en -markets voor handmatige beoordeling."""
+
+    try:
+        rows = PolymarketGammaClient().search_markets(
+            query, limit=limit, active=True if active else None, closed=False if active else None
+        )
+    except PolymarketError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+    _print_polymarket_candidates(rows)
+    if save:
+        timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+        path = output_dir / f"search_{timestamp}.json"
+        write_json(path, rows)
+        typer.echo(f"Raw JSON: {path}")
+
+
+@app.command("polymarket-fetch-manifest")
+def polymarket_fetch_manifest_command(
+    manifest: Annotated[Path, typer.Option("--manifest")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")] = DEFAULT_POLYMARKET_OUTPUT_DIR,
+) -> None:
+    """Haal expliciete slugs of zoekresultaten uit een handmatig manifest op."""
+
+    try:
+        run_dir, summary = fetch_manifest(manifest, output_dir)
+    except (OSError, ValueError, PolymarketError) as exc:
+        typer.echo(f"Polymarket manifest fetch failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    for row in summary:
+        detail = (
+            f", {row['markets_found']} markets found" if row["markets_found"] is not None else ""
+        )
+        typer.echo(f"{row['entry']}: {', '.join(row['fetched']) or 'nothing fetched'}{detail}")
+    typer.echo(f"Output: {run_dir}")
+
+
+@app.command("polymarket-inspect")
+def polymarket_inspect_command(
+    path: Path,
+    write_candidates_csv: Annotated[
+        bool, typer.Option("--write-candidates-csv/--no-write-candidates-csv")
+    ] = False,
+) -> None:
+    """Inspecteer discovery JSON, raw price JSON, of processed outcome CSV."""
+
+    if path.suffix.lower() == ".csv":
+        try:
+            frame = pd.read_csv(path).sort_values(
+                "chosen_probability", ascending=False, na_position="last"
+            )
+        except (OSError, ValueError, KeyError) as exc:
+            typer.echo(f"Processed CSV kon niet worden geladen: {exc}", err=True)
+            raise typer.Exit(code=1) from exc
+        if "entity" in frame.columns:
+            columns = [
+                "entity",
+                "raw_entity",
+                "chosen_probability",
+                "normalized_probability",
+                "spread",
+                "price_confidence",
+                "market_slug",
+            ]
+        else:
+            columns = [
+                "entry_name",
+                "outcome",
+                "chosen_probability",
+                "normalized_probability",
+                "price_confidence",
+                "spread",
+            ]
+        typer.echo(frame[columns].to_string(index=False))
+        return
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Raw JSON kon niet worden geladen: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    if isinstance(payload, dict) and isinstance(payload.get("outcomes"), list):
+        typer.echo("outcome | token_id | bid | ask | mid | spread | confidence | errors")
+        for row in payload["outcomes"]:
+            if not isinstance(row, dict):
+                continue
+            bid, ask, spread = row.get("bid"), row.get("ask"), row.get("spread")
+            if bid is None and ask is None:
+                confidence = "missing"
+            elif bid is None or ask is None:
+                confidence = "medium"
+            else:
+                confidence = "high" if spread is not None and float(spread) <= 0.20 else "low"
+            token_id = str(row.get("token_id", ""))
+            values = (
+                row.get("outcome", ""),
+                f"{token_id[:8]}...{token_id[-6:]}" if len(token_id) > 16 else token_id,
+                bid,
+                ask,
+                row.get("mid"),
+                spread,
+                confidence,
+                "; ".join(row.get("errors", [])),
+            )
+            typer.echo(" | ".join("" if value is None else str(value) for value in values))
+        return
+    if isinstance(payload, dict):
+        event_markets = extract_event_markets(payload)
+        if event_markets:
+            event = payload.get("event") if isinstance(payload.get("event"), dict) else payload
+            event_slug = _candidate_value(event, "slug")
+            typer.echo(
+                f"Event: {_candidate_value(event, 'title')} "
+                f"(slug={event_slug}, markets={len(event_markets)})"
+            )
+            typer.echo(
+                "index | slug | question/title | active | closed | enableOrderBook | "
+                "outcomes | tokens | volume | liquidity"
+            )
+            for index, market in enumerate(event_markets):
+                candidate = summarize_market_candidate(market)
+                values = (
+                    index,
+                    candidate.slug,
+                    candidate.question or candidate.title,
+                    candidate.active,
+                    candidate.closed,
+                    candidate.enable_order_book,
+                    candidate.outcomes_count,
+                    candidate.clob_token_ids_count,
+                    candidate.volume,
+                    candidate.liquidity,
+                )
+                typer.echo(" | ".join("" if value is None else str(value) for value in values))
+            if write_candidates_csv:
+                candidates_path = path.parent / "market_candidates.csv"
+                write_market_candidates_csv(candidates_path, str(event_slug), event_markets)
+                typer.echo(f"Candidates CSV: {candidates_path}")
+            return
+    rows = payload if isinstance(payload, list) else [payload]
+    candidates: list[dict[str, object]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        candidates.append(row)
+        nested = row.get("markets", [])
+        if isinstance(nested, list):
+            candidates.extend(item for item in nested if isinstance(item, dict))
+    _print_polymarket_candidates(candidates)
+    for row in candidates:
+        outcomes = _candidate_value(row, "outcomes")
+        token_ids = _candidate_value(row, "clobTokenIds")
+        if outcomes or token_ids:
+            typer.echo(
+                f"{_candidate_value(row, 'slug')}: outcomes={outcomes} clobTokenIds={token_ids}"
+            )
+
+
+@app.command("polymarket-fetch-prices")
+def polymarket_fetch_prices_command(
+    manifest: Annotated[Path, typer.Option("--manifest")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")] = DEFAULT_POLYMARKET_OUTPUT_DIR,
+    include_query_results: Annotated[
+        bool, typer.Option("--include-query-results/--no-include-query-results")
+    ] = False,
+    market_type: Annotated[str | None, typer.Option("--market-type")] = None,
+    max_spread: Annotated[float, typer.Option("--max-spread", min=0.0)] = 0.20,
+) -> None:
+    """Haal publieke BUY/SELL CLOB-prijzen op voor expliciete manifest-slugs."""
+
+    try:
+        run_dir, summary = fetch_manifest_prices(
+            manifest,
+            output_dir,
+            include_query_results=include_query_results,
+            market_type=market_type,
+            max_spread=max_spread,
+        )
+    except (OSError, ValueError, PolymarketError) as exc:
+        typer.echo(f"Polymarket price fetch failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    for row in summary["entries"]:
+        reason = f": {row['reason']}" if row.get("reason") else ""
+        typer.echo(f"{row['entry_name']}: {row['status']}{reason}")
+        if row.get("source") == "event_binary_markets":
+            typer.echo(f"  event markets found: {row['event_markets_found']}")
+            typer.echo(f"  binary markets considered: {row['binary_markets_considered']}")
+            typer.echo(f"  mapped teams: {row['mapped_teams']}")
+            typer.echo(f"  unmapped teams: {row['unmapped_teams']}")
+            typer.echo(f"  priced teams: {row['priced_teams']}")
+            typer.echo(f"  sum raw YES probabilities: {row['sum_raw_yes_probabilities']:.6f}")
+            normalized = "yes" if row["normalized_probabilities_written"] else "no"
+            typer.echo(f"  normalized probabilities written: {normalized}")
+            for warning in row["warnings"]:
+                typer.echo(f"  warning: {warning}")
+            typer.echo("  top 10 by chosen_probability:")
+            for item in row["top_10"]:
+                name = item["entity"] or item["raw_entity"] or "<unknown>"
+                typer.echo(f"    {name}: {item['chosen_probability']:.6f}")
+    typer.echo(f"Markets fetched: {summary['markets_fetched']}")
+    typer.echo(f"Outcomes priced: {summary['outcomes_priced']}")
+    typer.echo(f"Output: {run_dir}")
 
 
 def _announce_bracket(strategy: BracketStrategyOption, path: Path) -> None:
@@ -195,6 +483,62 @@ def _configured_teams(config: ProjectConfig, *, demo_fallback: bool) -> tuple[li
             raise
         typer.echo(f"Waarschuwing: data niet beschikbaar ({exc}); demo-teams worden gebruikt.")
         return _demo_teams(), True
+
+
+def _rating_metadata(
+    strategy: RatingStrategy,
+    calibration: MarketCalibrationResult | None = None,
+    calibration_config: MarketCalibrationConfig | None = None,
+) -> dict[str, object]:
+    metadata: dict[str, object] = {"rating_strategy": strategy.value}
+    if calibration is not None and calibration_config is not None:
+        metadata.update(
+            {
+                "market_probs_path": str(calibration_config.market_probs_path),
+                "model_run_dir": str(calibration_config.model_run_dir),
+                "scale": calibration_config.scale,
+                "max_elo_adjustment": calibration_config.max_elo_adjustment,
+                "mean_abs_elo_adjustment": calibration.mean_abs_elo_adjustment,
+                "clamped_adjustments_count": calibration.clamped_adjustments_count,
+            }
+        )
+    return metadata
+
+
+def _apply_rating_strategy(
+    teams: list[Team],
+    strategy: RatingStrategy,
+    config_path: Path,
+    market_probs: Path | None,
+    model_run_dir: Path | None,
+) -> tuple[list[Team], dict[str, object]]:
+    if strategy is RatingStrategy.ELO:
+        return teams, _rating_metadata(strategy)
+    calibration_config = load_market_calibration_config(config_path)
+    market_path = market_probs or calibration_config.market_probs_path
+    baseline_path = model_run_dir or calibration_config.model_run_dir
+    if market_path is None or baseline_path is None:
+        raise ValueError("market_calibrated_elo requires --market-probs and --model-run-dir")
+    calibration_config = calibration_config.model_copy(
+        update={
+            "enabled": True,
+            "market_probs_path": market_path,
+            "model_run_dir": baseline_path,
+        }
+    )
+    model_probs = load_model_champion_probabilities(baseline_path)
+    market_probabilities = load_market_champion_probabilities(
+        market_path,
+        calibration_config.probability_column,
+        calibration_config.min_confidence,
+    )
+    calibration = compute_market_elo_adjustments(
+        teams, model_probs, market_probabilities, calibration_config
+    )
+    return (
+        apply_market_calibration_to_teams(teams, calibration),
+        _rating_metadata(strategy, calibration, calibration_config),
+    )
 
 
 def _fixture_file_has_data(path: Path) -> bool:
@@ -420,6 +764,99 @@ def compare_runs_command(
     typer.echo(f"Report: {report_path if report_path is not None else 'not exported'}")
 
 
+@app.command("compare-market-odds")
+def compare_market_odds_command(
+    run_dir: Annotated[
+        Path, typer.Option("--run-dir", help="Run directory met model probabilities.")
+    ],
+    market_probs: Annotated[
+        Path, typer.Option("--market-probs", help="Polymarket binary probabilities CSV.")
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Rootmap voor comparison artifacts."),
+    ] = Path("outputs/market-comparisons"),
+    top: Annotated[
+        int, typer.Option("--top", min=1, help="Aantal teams per afwijkingslijst.")
+    ] = 20,
+    export: Annotated[
+        bool,
+        typer.Option("--export/--no-export", help="Schrijf CSV, JSON en Markdown."),
+    ] = True,
+    prob_column: Annotated[
+        str,
+        typer.Option("--prob-column", help="Market probability-kolom voor vergelijking."),
+    ] = "normalized_probability",
+    min_confidence: Annotated[
+        MarketConfidence,
+        typer.Option("--min-confidence", help="Minimale price confidence."),
+    ] = MarketConfidence.LOW,
+) -> None:
+    """Vergelijk Polymarket winner probabilities met model champion probabilities."""
+
+    try:
+        result = compare_market_to_model(
+            run_dir,
+            market_probs,
+            prob_column=prob_column,
+            min_confidence=min_confidence.value,
+            top=top,
+        )
+        report_path = (
+            export_market_comparison(
+                result,
+                default_market_comparison_dir(output_dir),
+                top=top,
+            )
+            if export
+            else None
+        )
+    except (OSError, ValueError, json.JSONDecodeError, pd.errors.ParserError) as exc:
+        typer.echo(f"Market probabilities konden niet worden vergeleken: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    summary = result.summary
+    typer.echo("Market vs model champion probabilities")
+    typer.echo(f"Model source: {summary['model_source']}")
+    typer.echo(f"Model teams: {summary['model_teams']}")
+    typer.echo(f"Market teams: {summary['market_teams']}")
+    typer.echo(f"Matched teams: {summary['matched_teams']}")
+    typer.echo(f"Missing in market: {summary['missing_in_market']}")
+    typer.echo(f"Missing in model: {summary['missing_in_model']}")
+    mean_delta = summary["mean_absolute_delta"]
+    typer.echo(
+        "Mean abs delta: unavailable"
+        if mean_delta is None
+        else f"Mean abs delta: {mean_delta * 100:.1f}pp"
+    )
+    correlation = summary["spearman_rank_correlation"]
+    typer.echo(
+        "Rank correlation: unavailable"
+        if correlation is None
+        else f"Rank correlation: {correlation:.3f}"
+    )
+    typer.echo("")
+    typer.echo("Market higher than model:")
+    for row in summary["market_higher_than_model"][:top]:
+        typer.echo(
+            f"{row['team']}: market {row['market_probability']:.1%}, "
+            f"model {row['model_p_champion']:.1%}, "
+            f"delta {row['delta_market_minus_model'] * 100:+.1f}pp"
+        )
+    typer.echo("")
+    typer.echo("Model higher than market:")
+    for row in summary["model_higher_than_market"][:top]:
+        typer.echo(
+            f"{row['team']}: model {row['model_p_champion']:.1%}, "
+            f"market {row['market_probability']:.1%}, "
+            f"delta {row['delta_market_minus_model'] * 100:+.1f}pp"
+        )
+    for warning in result.warnings:
+        typer.echo(f"Warning: {warning}")
+    typer.echo("")
+    typer.echo(f"Report: {report_path if report_path is not None else 'not exported'}")
+
+
 @app.command("validate-data")
 def validate_data_command(
     config_path: Annotated[
@@ -580,6 +1017,7 @@ def _export_run(
     tournament_summary: TournamentSummary | None = None,
     bracket_strategy: BracketStrategyOption = BracketStrategyOption.OFFICIAL_LIKE,
     bracket_path: Path = DEFAULT_BRACKET_PATH,
+    rating_metadata: dict[str, object] | None = None,
 ) -> Path:
     created_at = datetime.now(UTC)
     run_path = create_run_dir(output_dir, run_type, seed, created_at=created_at)
@@ -596,6 +1034,7 @@ def _export_run(
         sources_path=config.data.sources_path,
         limitations=RUN_LIMITATIONS,
         **_bracket_metadata(bracket_strategy, bracket_path),
+        **(rating_metadata or {"rating_strategy": RatingStrategy.ELO.value}),
     )
     write_group_stage_summary_csv(group_stage_summary, run_path / "group_stage_summary.csv")
     write_group_match_predictions_csv(
@@ -629,6 +1068,67 @@ def _export_run(
             candidate_pool_size=recommendation.candidate_pool_size,
         )
     return run_path
+
+
+@app.command("calibrate-market-ratings")
+def calibrate_market_ratings_command(
+    market_probs: Annotated[Path, typer.Option("--market-probs")],
+    model_run_dir: Annotated[Path, typer.Option("--model-run-dir")],
+    config_path: Annotated[Path, typer.Option("--config")] = DEFAULT_MARKET_CALIBRATION_CONFIG,
+    scale: Annotated[float | None, typer.Option("--scale")] = None,
+    max_elo_adjustment: Annotated[
+        float | None, typer.Option("--max-elo-adjustment", min=0)
+    ] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_MARKET_CALIBRATION_OUTPUT_DIR,
+    export: Annotated[bool, typer.Option("--export/--no-export")] = True,
+) -> None:
+    """Bereken een reproduceerbaar Elo-calibratierapport zonder een simulatie te starten."""
+
+    project_config = _config(DEFAULT_CONFIG_PATH)
+    try:
+        teams, _ = _configured_teams(project_config, demo_fallback=False)
+        calibration_config = load_market_calibration_config(config_path).model_copy(
+            update={
+                "enabled": True,
+                "market_probs_path": market_probs,
+                "model_run_dir": model_run_dir,
+                **({"scale": scale} if scale is not None else {}),
+                **(
+                    {"max_elo_adjustment": max_elo_adjustment}
+                    if max_elo_adjustment is not None
+                    else {}
+                ),
+            }
+        )
+        calibration = compute_market_elo_adjustments(
+            teams,
+            load_model_champion_probabilities(model_run_dir),
+            load_market_champion_probabilities(
+                market_probs,
+                calibration_config.probability_column,
+                calibration_config.min_confidence,
+            ),
+            calibration_config,
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Market calibration failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    ranked = sorted(calibration.rows, key=lambda row: row.elo_adjustment, reverse=True)
+    typer.echo("Top positive Elo adjustments")
+    for row in ranked[:10]:
+        typer.echo(f"{row.team}: {row.elo_adjustment:+.2f}")
+    typer.echo("Top negative Elo adjustments")
+    for row in ranked[-10:][::-1]:
+        typer.echo(f"{row.team}: {row.elo_adjustment:+.2f}")
+    typer.echo(f"Matched teams: {calibration.matched_count}")
+    typer.echo(f"Clamped adjustments: {calibration.clamped_adjustments_count}")
+    typer.echo(f"Mean absolute adjustment: {calibration.mean_abs_elo_adjustment:.2f}")
+    if export:
+        run_path = export_market_calibration(calibration, calibration_config, output_dir)
+        typer.echo(f"Output: {run_path}")
 
 
 def _print_export_result(run_path: Path, filenames: list[str]) -> None:
@@ -957,6 +1457,14 @@ def recommend_final_standings_command(
         Path,
         typer.Option("--bracket-path", help="Pad naar de official-like bracket-YAML."),
     ] = DEFAULT_BRACKET_PATH,
+    rating_strategy: Annotated[
+        RatingStrategy, typer.Option("--rating-strategy")
+    ] = RatingStrategy.ELO,
+    market_calibration_config: Annotated[
+        Path, typer.Option("--market-calibration-config")
+    ] = DEFAULT_MARKET_CALIBRATION_CONFIG,
+    market_probs: Annotated[Path | None, typer.Option("--market-probs")] = None,
+    model_run_dir: Annotated[Path | None, typer.Option("--model-run-dir")] = None,
 ) -> None:
     """Optimaliseer goud, zilver, brons en vierde op verwachte poulepunten."""
 
@@ -964,6 +1472,9 @@ def recommend_final_standings_command(
     try:
         teams, _ = _configured_teams(config, demo_fallback=False)
         validate_teams(teams, strict=True)
+        teams, rating_metadata = _apply_rating_strategy(
+            teams, rating_strategy, market_calibration_config, market_probs, model_run_dir
+        )
         scoring = load_pool_scoring_config(scoring_config)
     except (OSError, ValueError) as exc:
         typer.echo(f"Final standings konden niet worden berekend: {exc}", err=True)
@@ -1035,6 +1546,7 @@ def recommend_final_standings_command(
             strategy=recommendation.strategy,
             limitations=RUN_LIMITATIONS,
             **_bracket_metadata(bracket_strategy, bracket_path),
+            **rating_metadata,
         )
         _print_export_result(
             run_path,
@@ -1146,6 +1658,14 @@ def recommend_top_scorers_command(
         Path,
         typer.Option("--bracket-path", help="Pad naar de official-like bracket-YAML."),
     ] = DEFAULT_BRACKET_PATH,
+    rating_strategy: Annotated[
+        RatingStrategy, typer.Option("--rating-strategy")
+    ] = RatingStrategy.ELO,
+    market_calibration_config: Annotated[
+        Path, typer.Option("--market-calibration-config")
+    ] = DEFAULT_MARKET_CALIBRATION_CONFIG,
+    market_probs: Annotated[Path | None, typer.Option("--market-probs")] = None,
+    model_run_dir: Annotated[Path | None, typer.Option("--model-run-dir")] = None,
 ) -> None:
     """Optimaliseer drie topscorerpicks op verwachte Tipset-punten."""
 
@@ -1153,6 +1673,9 @@ def recommend_top_scorers_command(
     try:
         teams, _ = _configured_teams(config, demo_fallback=False)
         validate_teams(teams, strict=True)
+        teams, rating_metadata = _apply_rating_strategy(
+            teams, rating_strategy, market_calibration_config, market_probs, model_run_dir
+        )
         players = load_players(players_path, teams)
         scoring = load_pool_scoring_config(scoring_config)
     except (OSError, ValueError) as exc:
@@ -1205,6 +1728,7 @@ def recommend_top_scorers_command(
             scoring_config=scoring_config,
             limitations=TOP_SCORER_LIMITATIONS,
             **_bracket_metadata(bracket_strategy, bracket_path),
+            **rating_metadata,
         )
         _print_export_result(
             run_path,
@@ -1258,6 +1782,14 @@ def export_basic_predictions_command(
         Path,
         typer.Option("--bracket-path", help="Pad naar de official-like bracket-YAML."),
     ] = DEFAULT_BRACKET_PATH,
+    rating_strategy: Annotated[
+        RatingStrategy, typer.Option("--rating-strategy")
+    ] = RatingStrategy.ELO,
+    market_calibration_config: Annotated[
+        Path, typer.Option("--market-calibration-config")
+    ] = DEFAULT_MARKET_CALIBRATION_CONFIG,
+    market_probs: Annotated[Path | None, typer.Option("--market-probs")] = None,
+    model_run_dir: Annotated[Path | None, typer.Option("--model-run-dir")] = None,
 ) -> None:
     """Bereken en exporteer alle basic Tipset/Brunoson-predictions."""
 
@@ -1265,6 +1797,9 @@ def export_basic_predictions_command(
     try:
         teams, _ = _configured_teams(config, demo_fallback=False)
         validate_teams(teams, strict=True)
+        teams, rating_metadata = _apply_rating_strategy(
+            teams, rating_strategy, market_calibration_config, market_probs, model_run_dir
+        )
         fixtures = _load_export_fixtures(config, teams)
         players = load_players(players_path, teams)
         scoring = load_pool_scoring_config(scoring_config)
@@ -1273,14 +1808,11 @@ def export_basic_predictions_command(
         raise typer.Exit(code=1) from exc
 
     round_one_fixtures = [
-        fixture
-        for fixture in fixtures
-        if fixture.stage == "group" and fixture.match_round == 1
+        fixture for fixture in fixtures if fixture.stage == "group" and fixture.match_round == 1
     ]
     if len(round_one_fixtures) != 24:
         typer.echo(
-            f"Basic predictions vereisen 24 round 1-fixtures; gevonden: "
-            f"{len(round_one_fixtures)}.",
+            f"Basic predictions vereisen 24 round 1-fixtures; gevonden: {len(round_one_fixtures)}.",
             err=True,
         )
         raise typer.Exit(code=1)
@@ -1381,6 +1913,7 @@ def export_basic_predictions_command(
     }
 
     if run_path is not None:
+        write_tournament_summary_csv(tournament_summary, run_path / "tournament_summary.csv")
         write_final_standings_recommendation_csv(
             standings,
             tournament_summary.teams,
@@ -1388,15 +1921,9 @@ def export_basic_predictions_command(
             run_path / "final_standings_recommendation.csv",
             ev_method=FinalStandingsEvMethod.SCENARIO.value,
         )
-        write_top_scorer_recommendation_csv(
-            top_scorers, run_path / "top_scorer_recommendation.csv"
-        )
-        write_basic_predictions_summary_json(
-            payload, run_path / "basic_predictions_summary.json"
-        )
-        write_basic_predictions_summary_markdown(
-            payload, run_path / "basic_predictions_summary.md"
-        )
+        write_top_scorer_recommendation_csv(top_scorers, run_path / "top_scorer_recommendation.csv")
+        write_basic_predictions_summary_json(payload, run_path / "basic_predictions_summary.json")
+        write_basic_predictions_summary_markdown(payload, run_path / "basic_predictions_summary.md")
         write_basic_predictions_metadata_json(
             run_path / "basic_predictions_metadata.json",
             seed=run_seed,
@@ -1405,6 +1932,7 @@ def export_basic_predictions_command(
             players_path=players_path,
             limitations=BASIC_PREDICTIONS_LIMITATIONS,
             **_bracket_metadata(bracket_strategy, bracket_path),
+            **rating_metadata,
         )
 
     typer.echo("Basic predictions")
@@ -1459,6 +1987,14 @@ def simulate_tournament_command(
         Path,
         typer.Option("--bracket-path", help="Pad naar de official-like bracket-YAML."),
     ] = DEFAULT_BRACKET_PATH,
+    rating_strategy: Annotated[
+        RatingStrategy, typer.Option("--rating-strategy")
+    ] = RatingStrategy.ELO,
+    market_calibration_config: Annotated[
+        Path, typer.Option("--market-calibration-config")
+    ] = DEFAULT_MARKET_CALIBRATION_CONFIG,
+    market_probs: Annotated[Path | None, typer.Option("--market-probs")] = None,
+    model_run_dir: Annotated[Path | None, typer.Option("--model-run-dir")] = None,
 ) -> None:
     """Simuleer groepsfase, knock-outbracket en eindklassering."""
 
@@ -1466,6 +2002,9 @@ def simulate_tournament_command(
     try:
         teams, _ = _configured_teams(config, demo_fallback=False)
         validate_teams(teams, strict=True)
+        teams, rating_metadata = _apply_rating_strategy(
+            teams, rating_strategy, market_calibration_config, market_probs, model_run_dir
+        )
     except (OSError, ValueError) as exc:
         typer.echo(f"Volledig toernooi kon niet worden geladen: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -1504,6 +2043,7 @@ def simulate_tournament_command(
             tournament_summary=summary,
             bracket_strategy=bracket_strategy,
             bracket_path=bracket_path,
+            rating_metadata=rating_metadata,
         )
         _print_export_result(
             run_path,

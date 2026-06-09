@@ -34,6 +34,7 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
         "final_standings_recommendation.csv",
         "top_scorer_recommendation.csv",
         "basic_predictions_metadata.json",
+        "tournament_summary.csv",
     }
     summary = json.loads((run_path / "basic_predictions_summary.json").read_text())
     metadata = json.loads((run_path / "basic_predictions_metadata.json").read_text())
@@ -46,6 +47,23 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
     assert metadata["bracket_strategy"] == "official_like"
     assert metadata["bracket_path"] == "configs/bracket_2026.yaml"
     assert metadata["third_place_assignment_method"] == "greedy_best3_with_allowed_groups"
+    tournament = pd.read_csv(run_path / "tournament_summary.csv")
+    assert len(tournament) == 48
+    assert list(tournament.columns) == [
+        "team",
+        "group",
+        "elo",
+        "p_round_of_32",
+        "p_round_of_16",
+        "p_quarter_final",
+        "p_semi_final",
+        "p_final",
+        "p_champion",
+        "p_runner_up",
+        "p_third",
+        "p_fourth",
+        "p_top4",
+    ]
     assert summary["limitations"]
     assert "## Limitations" in (run_path / "basic_predictions_summary.md").read_text()
 
@@ -130,8 +148,7 @@ def test_simulate_tournament_command_reports_official_like_and_rankings() -> Non
     assert result.exit_code == 0
     assert "Volledig toernooi: 2 simulaties" in result.stdout
     assert (
-        "Knock-out bracket: official-like bracket from configs/bracket_2026.yaml"
-        in result.stdout
+        "Knock-out bracket: official-like bracket from configs/bracket_2026.yaml" in result.stdout
     )
     assert "Kampioenskansen" in result.stdout
     assert "Top 4 kansen" in result.stdout

@@ -1,0 +1,11 @@
+{
+  "created_at": "2026-06-09T15:47:03.320860+00:00",
+  "method": "logit_champion_delta",
+  "scale": 35.0,
+  "max_elo_adjustment": 75.0,
+  "matched_teams": 48,
+  "clamped_adjustments_count": 0,
+  "mean_abs_elo_adjustment": 25.897385238609903,
+  "market_probs_path": "outputs/polymarket/20260609-153834-price-fetch/processed/world_cup_winner_binary_markets.csv",
+  "model_run_dir": "outputs/runs/20260609-153822-basic-predictions-seed42"
+}

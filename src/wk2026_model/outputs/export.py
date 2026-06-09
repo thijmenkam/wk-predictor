@@ -374,6 +374,7 @@ def write_final_standings_metadata_json(
     bracket_path: str | Path = "configs/bracket_2026.yaml",
     bracket_source: str = "worldcupwiki.com/schedule, secondary source, verify against FIFA",
     third_place_assignment_method: str = "greedy_best3_with_allowed_groups",
+    **rating_metadata: Any,
 ) -> Path:
     """Schrijf reproduceerbare metadata voor een final-standingsadvies."""
 
@@ -390,6 +391,7 @@ def write_final_standings_metadata_json(
         "bracket_source": bracket_source,
         "third_place_assignment_method": third_place_assignment_method,
         "limitations": limitations,
+        **rating_metadata,
     }
     output_path.write_text(
         json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
@@ -415,6 +417,7 @@ def write_run_metadata_json(
     bracket_path: str | Path = "configs/bracket_2026.yaml",
     bracket_source: str = "worldcupwiki.com/schedule, secondary source, verify against FIFA",
     third_place_assignment_method: str = "greedy_best3_with_allowed_groups",
+    **rating_metadata: Any,
 ) -> Path:
     """Schrijf alle relevante model-, data- en runparameters als JSON."""
 
@@ -441,6 +444,7 @@ def write_run_metadata_json(
         "bracket_source": bracket_source,
         "third_place_assignment_method": third_place_assignment_method,
         "limitations": limitations,
+        **rating_metadata,
     }
     output_path.write_text(
         json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
@@ -537,6 +541,7 @@ def write_top_scorer_metadata_json(
     bracket_path: str | Path = "configs/bracket_2026.yaml",
     bracket_source: str = "worldcupwiki.com/schedule, secondary source, verify against FIFA",
     third_place_assignment_method: str = "greedy_best3_with_allowed_groups",
+    **rating_metadata: Any,
 ) -> Path:
     """Schrijf reproduceerbare metadata voor een topscorerrun."""
 
@@ -552,6 +557,7 @@ def write_top_scorer_metadata_json(
         "bracket_source": bracket_source,
         "third_place_assignment_method": third_place_assignment_method,
         "limitations": limitations,
+        **rating_metadata,
     }
     output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     return output_path
@@ -631,6 +637,7 @@ def write_basic_predictions_metadata_json(
     bracket_path: str | Path = "configs/bracket_2026.yaml",
     bracket_source: str = "worldcupwiki.com/schedule, secondary source, verify against FIFA",
     third_place_assignment_method: str = "greedy_best3_with_allowed_groups",
+    **rating_metadata: Any,
 ) -> Path:
     """Schrijf reproduceerbare metadata voor de gecombineerde basic run."""
 
@@ -649,6 +656,7 @@ def write_basic_predictions_metadata_json(
         "bracket_source": bracket_source,
         "third_place_assignment_method": third_place_assignment_method,
         "limitations": limitations,
+        **rating_metadata,
     }
     output_path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",

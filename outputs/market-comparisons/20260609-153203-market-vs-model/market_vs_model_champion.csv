@@ -1,0 +1,47 @@
+team,elo,model_p_champion,model_p_top4,market_raw_probability,market_probability,delta_market_minus_model,abs_delta,ratio_market_to_model,spread,price_confidence,market_slug,comparison_status
+Algeria,,,,0.0015,0.0014492753623188,,,,0.001,high,will-algeria-win-the-2026-fifa-world-cup,missing_in_model
+Australia,,,,0.0015,0.0014492753623188,,,,0.001,high,will-australia-win-the-2026-fifa-world-cup-816,missing_in_model
+Austria,,,,0.0045,0.0043478260869565,,,,0.001,high,will-austria-win-the-2026-fifa-world-cup,missing_in_model
+Belgium,,,,0.0225,0.0217391304347826,,,,0.001,high,will-belgium-win-the-2026-fifa-world-cup-358,missing_in_model
+Canada,,,,0.0035,0.0033816425120772,,,,0.001,high,will-canada-win-the-2026-fifa-world-cup-755,missing_in_model
+Cape Verde,,,,0.0005,0.0004830917874396,,,,0.001,high,will-cape-verde-win-the-2026-fifa-world-cup,missing_in_model
+Curaçao,,,,0.0005,0.0004830917874396,,,,0.001,high,will-curaao-win-the-2026-fifa-world-cup,missing_in_model
+Czechia,,,,0.0025,0.002415458937198,,,,0.001,high,will-czechia-win-the-2026-fifa-world-cup,missing_in_model
+Egypt,,,,0.0025,0.002415458937198,,,,0.001,high,will-egypt-win-the-2026-fifa-world-cup,missing_in_model
+Ghana,,,,0.0015,0.0014492753623188,,,,0.001,high,will-ghana-win-the-2026-fifa-world-cup,missing_in_model
+Haiti,,,,0.0005,0.0004830917874396,,,,0.001,high,will-haiti-win-the-2026-fifa-world-cup,missing_in_model
+Iran,,,,0.0015,0.0014492753623188,,,,0.001,high,will-iran-win-the-2026-fifa-world-cup-788,missing_in_model
+Iraq,,,,0.0005,0.0004830917874396,,,,0.001,high,will-iraq-win-the-2026-fifa-world-cup,missing_in_model
+Ivory Coast,,,,0.0045,0.0043478260869565,,,,0.001,high,will-ivory-coast-win-the-2026-fifa-world-cup,missing_in_model
+Jordan,,,,0.0005,0.0004830917874396,,,,0.001,high,will-jordan-win-the-2026-fifa-world-cup-233,missing_in_model
+Mexico,,,,0.0165,0.0159420289855072,,,,0.001,high,will-mexico-win-the-2026-fifa-world-cup-529,missing_in_model
+Morocco,,,,0.0185,0.0178743961352657,,,,0.001,high,will-morocco-win-the-2026-fifa-world-cup-464,missing_in_model
+New Zealand,,,,0.0005,0.0004830917874396,,,,0.001,high,will-new-zealand-win-the-2026-fifa-world-cup-635,missing_in_model
+Panama,,,,0.0005,0.0004830917874396,,,,0.001,high,will-team-z-win-the-2026-fifa-world-cup-316,missing_in_model
+Paraguay,,,,0.0025,0.002415458937198,,,,0.001,high,will-paraguay-win-the-2026-fifa-world-cup-967,missing_in_model
+Qatar,,,,0.0005,0.0004830917874396,,,,0.001,high,will-qatar-win-the-2026-fifa-world-cup,missing_in_model
+Saudi Arabia,,,,0.0005,0.0004830917874396,,,,0.001,high,will-saudi-arabia-win-the-2026-fifa-world-cup,missing_in_model
+Scotland,,,,0.0025,0.002415458937198,,,,0.001,high,will-scotland-win-the-2026-fifa-world-cup,missing_in_model
+Senegal,,,,0.0065,0.0062801932367149,,,,0.001,high,will-senegal-win-the-2026-fifa-world-cup,missing_in_model
+South Africa,,,,0.0005,0.0004830917874396,,,,0.001,high,will-south-africa-win-the-2026-fifa-world-cup,missing_in_model
+South Korea,,,,0.0035,0.0033816425120772,,,,0.001,high,will-south-korea-win-the-2026-fifa-world-cup-485,missing_in_model
+Sweden,,,,0.0035,0.0033816425120772,,,,0.001,high,will-sweden-win-the-2026-fifa-world-cup,missing_in_model
+Tunisia,,,,0.0005,0.0004830917874396,,,,0.001,high,will-tunisia-win-the-2026-fifa-world-cup-165,missing_in_model
+USA,,,,0.0115,0.0111111111111111,,,,0.001,high,will-usa-win-the-2026-fifa-world-cup-467,missing_in_model
+Uzbekistan,,,,0.0005,0.0004830917874396,,,,0.001,high,will-uzbekistan-win-the-2026-fifa-world-cup-773,missing_in_model
+France,2062.0,0.0749,0.2281,0.1615,0.1560386473429952,0.0811386473429952,0.0811386473429952,2.0832930219358503,0.001,high,will-france-win-the-2026-fifa-world-cup-924,matched
+Portugal,1986.0,0.0473,0.1645,0.1095,0.1057971014492753,0.0584971014492753,0.0584971014492753,2.2367251892024376,0.001,high,will-portugal-win-the-2026-fifa-world-cup-912,matched
+England,2021.0,0.0642,0.1888,0.1095,0.1057971014492753,0.04159710144927531,0.04159710144927531,1.647929929116438,0.001,high,will-england-win-the-2026-fifa-world-cup-937,matched
+Brazil,1991.0,0.0498,0.1685999999999999,0.0835,0.0806763285024154,0.03087632850241541,0.03087632850241541,1.6200065964340444,0.001,high,will-brazil-win-the-2026-fifa-world-cup-183,matched
+Colombia,1977.0,0.0454,0.1585,0.0195,0.0188405797101449,-0.026559420289855102,0.026559420289855102,0.4149907425142048,0.001,high,will-colombia-win-the-2026-fifa-world-cup-734,matched
+Spain,2155.0,0.1281,0.2955,0.1595,0.1541062801932367,0.026006280193236697,0.026006280193236697,1.2030154581829562,0.001,high,will-spain-win-the-2026-fifa-world-cup-963,matched
+Ecuador,1935.0,0.0341,0.1412,0.0085,0.0082125603864734,-0.025887439613526596,0.025887439613526596,0.2408375479904223,0.0009999999999999,high,will-ecuador-win-the-2026-fifa-world-cup-986,matched
+Croatia,1905.0,0.0304,0.1258999999999999,0.0095,0.0091787439613526,-0.0212212560386474,0.0212212560386474,0.3019323671497566,0.001,high,will-croatia-win-the-2026-fifa-world-cup,matched
+Argentina,2114.0,0.1043,0.2516,0.0875,0.0845410628019323,-0.019758937198067705,0.019758937198067705,0.8105566903349213,0.001,high,will-argentina-win-the-2026-fifa-world-cup-245,matched
+Türkiye,1911.0,0.0301,0.1217,0.0115,0.0111111111111111,-0.0189888888888889,0.0189888888888889,0.36913990402362457,0.001,high,will-turkiye-win-the-2026-fifa-world-cup,matched
+Germany,1932.0,0.0339,0.1399,0.0535,0.0516908212560386,0.0177908212560386,0.0177908212560386,1.5248029869037936,0.001,high,will-germany-win-the-2026-fifa-world-cup-467,matched
+Uruguay,1890.0,0.0271,0.1146,0.0104999999999999,0.0101449275362318,-0.0169550724637682,0.0169550724637682,0.3743515696026495,0.0009999999999999,high,will-uruguay-win-the-2026-fifa-world-cup-932,matched
+Switzerland,1897.0,0.0236,0.1154,0.0104999999999999,0.0101449275362318,-0.0134550724637682,0.0134550724637682,0.42986981085727966,0.0009999999999999,high,will-switzerland-win-the-2026-fifa-world-cup,matched
+Netherlands,1944.0,0.0321,0.1322999999999999,0.0395,0.0381642512077294,0.006064251207729403,0.006064251207729403,1.188917483106835,0.001,high,will-netherlands-win-the-2026-fifa-world-cup-739,matched
+Norway,1917.0,0.0301,0.1179,0.0255,0.0246376811594202,-0.0054623188405797975,0.0054623188405797975,0.8185276132697742,0.0009999999999999,high,will-norway-win-the-2026-fifa-world-cup-893,matched
+Japan,1879.0,0.0206,0.1035,0.0185,0.0178743961352657,-0.0027256038647343016,0.0027256038647343016,0.8676891327798882,0.001,high,will-japan-win-the-2026-fifa-world-cup-112,matched

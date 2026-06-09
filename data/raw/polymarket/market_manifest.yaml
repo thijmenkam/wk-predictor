@@ -1,0 +1,18 @@
+world_cup_winner:
+  source: "polymarket"
+  market_type: "outright_winner"
+  event_slug: "world-cup-winner"
+  market_slug: null
+  query: "2026 FIFA World Cup winner"
+  structure: "event_binary_markets"
+  yes_outcome_names: ["Yes"]
+  no_outcome_names: ["No"]
+  notes: "Event contains one binary market per team. Use YES token probabilities."
+
+golden_boot:
+  source: "polymarket"
+  market_type: "top_scorer"
+  event_slug: null
+  market_slug: null
+  query: "2026 World Cup Golden Boot"
+  notes: "Fill event_slug/market_slug after discovery."
