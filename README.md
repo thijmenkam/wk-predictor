@@ -194,6 +194,36 @@ invult. Gegenereerde fallbackfixtures houden `match_round` leeg.
 Bij `simulate-tournament --export` wordt hetzelfde pouleadviesbestand naast de bestaande
 samenvattingen en wedstrijdvoorspellingen geschreven.
 
+### Basic predictions exporteren
+
+Gebruik één command om de Tipset/Brunoson-basic predictions samen te berekenen en exporteren:
+
+```bash
+uv run wk2026 export-basic-predictions --seed 42 --num-simulations 50000
+```
+
+Dit combineert:
+
+- de 24 groepswedstrijden uit ronde 1 met strategie `max_expected_pool_points`;
+- een final-standingsadvies via scenario-EV;
+- drie topscoreradviezen.
+
+Alles wordt geschreven naar één runmap:
+
+```text
+outputs/runs/YYYYMMDD-HHMMSS-basic-predictions-seed42/
+```
+
+De run bevat `basic_predictions_summary.md`, `basic_predictions_summary.json`,
+`pool_group_round1_predictions.csv`, `final_standings_recommendation.csv`,
+`top_scorer_recommendation.csv` en `basic_predictions_metadata.json`.
+
+Beschikbare opties zijn `--seed`, `--num-simulations`, `--scoring-config`, `--players-path`,
+`--output-dir` en `--export/--no-export`. Export staat standaard aan. De samenvattingen vermelden
+expliciet dat de bracket nog een seeded placeholder gebruikt, expected goals Elo-derived zijn,
+`players.csv` een handmatige baseline is, spelergoals bij benadering worden gealloceerd en de
+fixtures nog tegen FIFA moeten worden gecontroleerd.
+
 ### Volledig toernooi simuleren
 
 ```bash
