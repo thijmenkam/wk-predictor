@@ -52,6 +52,7 @@ from wk2026_model.outputs.export import (
     write_final_standings_candidates_csv,
     write_final_standings_metadata_json,
     write_final_standings_recommendation_csv,
+    write_frontend_data_json,
     write_group_match_predictions_csv,
     write_group_stage_summary_csv,
     write_pool_group_predictions_csv,
@@ -1921,7 +1922,16 @@ def export_basic_predictions_command(
             run_path / "final_standings_recommendation.csv",
             ev_method=FinalStandingsEvMethod.SCENARIO.value,
         )
+        write_final_standings_candidates_csv(
+            tournament_summary.teams,
+            scoring.knockout_stage,
+            run_path / "final_standings_candidates.csv",
+            candidate_pool_size=standings.candidate_pool_size,
+        )
         write_top_scorer_recommendation_csv(top_scorers, run_path / "top_scorer_recommendation.csv")
+        write_top_scorer_candidates_csv(
+            scorer_summaries, run_path / "top_scorer_candidates.csv"
+        )
         write_basic_predictions_summary_json(payload, run_path / "basic_predictions_summary.json")
         write_basic_predictions_summary_markdown(payload, run_path / "basic_predictions_summary.md")
         write_basic_predictions_metadata_json(
@@ -1934,6 +1944,7 @@ def export_basic_predictions_command(
             **_bracket_metadata(bracket_strategy, bracket_path),
             **rating_metadata,
         )
+        write_frontend_data_json(run_path, run_path / "frontend_data.json")
 
     typer.echo("Basic predictions")
     typer.echo(f"Round 1 matches: {len(round_one_frame)}")

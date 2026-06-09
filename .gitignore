@@ -8,6 +8,10 @@ __pycache__/
 htmlcov/
 dist/
 build/
+node_modules/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
 *.egg-info/
 
 outputs/runs/

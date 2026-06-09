@@ -35,6 +35,9 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
         "top_scorer_recommendation.csv",
         "basic_predictions_metadata.json",
         "tournament_summary.csv",
+        "final_standings_candidates.csv",
+        "top_scorer_candidates.csv",
+        "frontend_data.json",
     }
     summary = json.loads((run_path / "basic_predictions_summary.json").read_text())
     metadata = json.loads((run_path / "basic_predictions_metadata.json").read_text())
@@ -66,6 +69,19 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
     ]
     assert summary["limitations"]
     assert "## Limitations" in (run_path / "basic_predictions_summary.md").read_text()
+    frontend = json.loads((run_path / "frontend_data.json").read_text())
+    assert set(frontend) == {
+        "metadata",
+        "matches",
+        "teams",
+        "top_scorers",
+        "final_standings",
+        "market_comparison",
+    }
+    assert len(frontend["matches"]) == 24
+    assert len(frontend["teams"]) == 48
+    assert sum(row["is_recommended"] for row in frontend["top_scorers"]) >= 3
+    assert {"gold", "silver", "bronze", "fourth"}.issubset(frontend["final_standings"])
 
 
 def test_validate_data_accepts_small_temporary_dataset(tmp_path: Path) -> None:

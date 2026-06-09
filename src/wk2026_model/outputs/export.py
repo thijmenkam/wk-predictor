@@ -139,6 +139,20 @@ POOL_GROUP_PREDICTION_COLUMNS = [
     "recommended_score_probability",
     "recommendation_reason",
 ]
+FRONTEND_MATCH_COLUMNS = [
+    "match_id", "group", "match_round", "kickoff_at", "location", "team_a", "team_b",
+    "elo_a", "elo_b", "lambda_a", "lambda_b", "p_win_a", "p_draw", "p_win_b",
+    "most_likely_score", "recommended_score", "expected_pool_points", "strategy",
+    "recommendation_reason",
+]
+FRONTEND_TEAM_COLUMNS = [
+    "team", "group", "elo", "p_round_of_32", "p_round_of_16", "p_quarter_final",
+    "p_semi_final", "p_final", "p_champion", "p_top4",
+]
+FRONTEND_TOP_SCORER_COLUMNS = [
+    "player", "team", "position", "expected_goals", "p_top_scorer", "p_top_3_goals",
+    "recommended_score_value", "is_recommended",
+]
 
 
 def create_run_dir(
@@ -660,6 +674,73 @@ def write_basic_predictions_metadata_json(
     }
     output_path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def _frontend_json_value(value: Any) -> Any:
+    """Normaliseer dataframewaarden naar geldige, compacte JSON-waarden."""
+
+    if pd.isna(value):
+        return None
+    if isinstance(value, float):
+        return round(value, 6)
+    return value
+
+
+def _frontend_records(frame: pd.DataFrame) -> list[dict[str, Any]]:
+    return [
+        {key: _frontend_json_value(value) for key, value in row.items()}
+        for row in frame.to_dict(orient="records")
+    ]
+
+
+def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
+    """Bundel bestaande basic-predictionexports voor gebruik door een frontend."""
+
+    run_path = Path(run_path)
+    matches = pd.read_csv(run_path / "pool_group_round1_predictions.csv").loc[
+        :, FRONTEND_MATCH_COLUMNS
+    ]
+    matches = matches.sort_values(
+        ["kickoff_at", "match_round", "group"], kind="stable", na_position="last"
+    )
+    teams = pd.read_csv(run_path / "tournament_summary.csv").loc[:, FRONTEND_TEAM_COLUMNS]
+    teams = teams.sort_values("p_champion", ascending=False, kind="stable")
+
+    top_scorers = pd.read_csv(run_path / "top_scorer_candidates.csv")
+    recommended_players = set(
+        pd.read_csv(run_path / "top_scorer_recommendation.csv")["player"]
+    )
+    top_scorers["is_recommended"] = top_scorers["player"].isin(recommended_players)
+    top_scorers = top_scorers.loc[:, FRONTEND_TOP_SCORER_COLUMNS].sort_values(
+        "recommended_score_value", ascending=False, kind="stable"
+    )
+
+    recommendation = pd.read_csv(run_path / "final_standings_recommendation.csv")
+    final_standings = {
+        row.position: _frontend_json_value(row.team)
+        for row in recommendation.itertuples()
+    }
+    final_standings["recommendation"] = _frontend_records(recommendation)
+    final_standings["candidates"] = _frontend_records(
+        pd.read_csv(run_path / "final_standings_candidates.csv")
+    )
+    metadata = json.loads(
+        (run_path / "basic_predictions_metadata.json").read_text(encoding="utf-8")
+    )
+    payload = {
+        "metadata": metadata,
+        "matches": _frontend_records(matches),
+        "teams": _frontend_records(teams),
+        "top_scorers": _frontend_records(top_scorers),
+        "final_standings": final_standings,
+        "market_comparison": [],
+    }
+    output_path = Path(path)
+    output_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
         encoding="utf-8",
     )
     return output_path
