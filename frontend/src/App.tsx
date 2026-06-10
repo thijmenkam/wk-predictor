@@ -69,6 +69,10 @@ function MatchesTable({ matches, showExactScore }: { matches: Match[]; showExact
         const model = match.model ?? { lambda_a: match.lambda_a, lambda_b: match.lambda_b, p_win_a: match.p_win_a, p_draw: match.p_draw, p_win_b: match.p_win_b, recommended_score: match.most_likely_score, expected_pool_points: match.expected_pool_points };
         const market = match.market_1x2 ?? { available: false, confidence: null, p_win_a: null, p_draw: null, p_win_b: null, raw_p_win_a: null, raw_p_draw: null, raw_p_win_b: null, source_used: null, market_slug: null };
         const exact = match.exact_score_market ?? { available: false, score_probability_source: "model_score_grid", market_score_weight: null, scores_count: 0, raw_probability_sum: null, top_scores: [] };
+        const recommendation = match.recommendation;
+        const bestEvScore = recommendation?.best_ev_score ?? match.best_ev_score;
+        const evLoss = recommendation?.ev_loss_vs_best ?? match.ev_loss_vs_best;
+        const selectionReason = recommendation?.selection_reason ?? match.selection_reason ?? match.recommendation_reason;
         return (
           <article key={match.match_id} className="match-card">
             <div className="match-summary">
@@ -81,6 +85,7 @@ function MatchesTable({ matches, showExactScore }: { matches: Match[]; showExact
               <summary>Prediction details</summary>
               <div className="detail-grid">
                 <section><h3>Model</h3><p>Lambda: {decimal.format(model.lambda_a)} / {decimal.format(model.lambda_b)}</p><ProbabilityLine match={match} values={model} /><p>Recommended: <b>{model.recommended_score}</b></p></section>
+                <section><h3>Score selection</h3><p>Best EV score: <b>{bestEvScore ?? match.recommended_score}</b></p><p>Chosen score: <b>{recommendation?.score ?? match.recommended_score}</b></p><p>EV loss: <b>{decimal.format(evLoss ?? 0)}</b></p><p>{selectionReason ?? "Beste score op expected pool points."}</p></section>
                 <section><h3>Polymarket 1X2</h3>{market.available ? <><ProbabilityLine match={match} values={market} /><p>Confidence: <b>{market.confidence ?? "—"}</b></p><p>Largest delta: <b>{match.market_delta?.largest_outcome ?? "—"} {optionalPct(match.market_delta?.largest_abs_delta)}</b></p></> : <p className="fallback-copy">Geen Polymarket 1X2 beschikbaar, model fallback.</p>}</section>
                 {match.hybrid_1x2?.available ? <section><h3>Hybrid</h3><ProbabilityLine match={match} values={match.hybrid_1x2} /><p>Market weight: {optionalPct(match.hybrid_1x2.market_weight)}</p><p>Source: {match.hybrid_1x2.source_used}</p></section> : null}
                 {showExactScore ? <section><h3>Exact-score market</h3>{exact.available ? <div className="exact-scores">{exact.top_scores.map((item) => <div key={item.score} className={item.score === match.recommended_score ? "selected" : ""}><b>{item.score}</b><span>{optionalPct(item.normalized_probability)} normalized</span><span>{optionalPct(item.raw_probability)} raw · {item.confidence ?? "—"}</span></div>)}</div> : <p className="fallback-copy">Geen exact-score markt gevonden.</p>}</section> : null}

@@ -14,3 +14,8 @@ top_scorers:
   min_other_goal_share: 0.35
   max_player_effective_goal_share: 0.45
   penalty_share_bonus: 0.10
+
+score_selection:
+  ev_tolerance: 0.02
+  max_extra_total_goals: 2
+  prefer_realistic_score_distribution: true

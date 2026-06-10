@@ -18,6 +18,15 @@ export type Match = {
   expected_pool_points: number;
   strategy: string;
   recommendation_reason: string | null;
+  best_ev_score?: string;
+  best_ev?: number;
+  recommended_ev?: number;
+  ev_loss_vs_best?: number;
+  score_selection_strategy?: string;
+  candidate_scores_within_tolerance?: number;
+  selection_reason?: string | null;
+  realism_score?: number;
+  score_rank_by_ev?: number;
   fixture_id?: string;
   recommended_goals_a?: number;
   recommended_goals_b?: number;
@@ -30,6 +39,12 @@ export type Match = {
     score_probability_source: string;
     selection_strategy: string | null;
     selection_reason: string | null;
+    best_ev_score?: string;
+    best_ev?: number;
+    recommended_ev?: number;
+    ev_loss_vs_best?: number;
+    realism_score?: number;
+    score_rank_by_ev?: number;
   };
   model?: ProbabilityView & {
     lambda_a: number;

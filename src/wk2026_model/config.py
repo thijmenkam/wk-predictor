@@ -34,6 +34,14 @@ class TopScorerModelConfig(BaseModel):
     penalty_share_bonus: float = Field(default=0.10, ge=0)
 
 
+class ScoreSelectionConfig(BaseModel):
+    """Grenzen voor realistische alternatieven rond de beste score-EV."""
+
+    ev_tolerance: float = Field(default=0.02, ge=0)
+    max_extra_total_goals: int = Field(default=2, ge=0)
+    prefer_realistic_score_distribution: bool = True
+
+
 class GroupStageScoringConfig(BaseModel):
     """Punten voor uitslag en exacte score in de groepsfase."""
 
@@ -72,6 +80,7 @@ class ProjectConfig(BaseModel):
     data: DataConfig = Field(default_factory=DataConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
     top_scorers: TopScorerModelConfig = Field(default_factory=TopScorerModelConfig)
+    score_selection: ScoreSelectionConfig = Field(default_factory=ScoreSelectionConfig)
 
 
 def load_config(path: str | Path = "configs/base.yaml") -> ProjectConfig:

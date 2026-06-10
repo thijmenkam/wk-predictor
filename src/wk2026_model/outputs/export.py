@@ -34,6 +34,14 @@ from wk2026_model.pool.probabilities import (
     select_pool_probabilities,
     select_score_grid,
 )
+from wk2026_model.pool.score_selection import (
+    SCORE_SELECTION_STRATEGIES,
+    choose_realistic,
+    diversify_rows,
+    eligible_candidates,
+    score_candidates,
+    selection_diagnostics,
+)
 from wk2026_model.simulation.match import predict_match, recommend_pool_score
 from wk2026_model.simulation.tournament import (
     GroupStageSummary,
@@ -176,6 +184,15 @@ POOL_GROUP_PREDICTION_COLUMNS = [
     "expected_pool_points_model",
     "expected_pool_points_market",
     "expected_pool_points_final",
+    "best_ev_score",
+    "best_ev",
+    "recommended_ev",
+    "ev_loss_vs_best",
+    "score_selection_strategy",
+    "candidate_scores_within_tolerance",
+    "selection_reason",
+    "realism_score",
+    "score_rank_by_ev",
 ]
 FRONTEND_MATCH_COLUMNS = [
     "match_id",
@@ -197,6 +214,15 @@ FRONTEND_MATCH_COLUMNS = [
     "expected_pool_points",
     "strategy",
     "recommendation_reason",
+    "best_ev_score",
+    "best_ev",
+    "recommended_ev",
+    "ev_loss_vs_best",
+    "score_selection_strategy",
+    "candidate_scores_within_tolerance",
+    "selection_reason",
+    "realism_score",
+    "score_rank_by_ev",
 ]
 FRONTEND_TEAM_COLUMNS = [
     "team",
@@ -350,11 +376,16 @@ def _group_match_prediction_rows(
     score_probability_source: ScoreProbabilitySource = "model_score_grid",
     market_exact_score_odds: dict[str, MarketExactScoreOdds] | None = None,
     market_score_weight: float = 0.70,
+    score_selection_strategy: str = "max_ev",
+    ev_tolerance: float = 0.02,
+    max_extra_total_goals: int = 2,
 ) -> list[dict[str, Any]]:
     """Bereken exportvelden voor alle groepswedstrijden zonder I/O uit te voeren."""
 
     teams_by_name = {team.name: team for team in teams}
     market_by_fixture = market_odds_by_fixture(fixtures, market_odds or [])
+    if score_selection_strategy not in SCORE_SELECTION_STRATEGIES:
+        raise ValueError(f"unsupported score selection strategy: {score_selection_strategy}")
     rows: list[dict[str, Any]] = []
     for fixture in fixtures:
         if fixture.stage != "group":
@@ -406,6 +437,28 @@ def _group_match_prediction_rows(
             max_goals=config.max_goals,
             probability_grid=exported_grid,
         )
+        candidates = score_candidates(
+            exported_grid,
+            active_scoring,
+            lambda_a=prediction.lambda_a,
+            lambda_b=prediction.lambda_b,
+        )
+        eligible = eligible_candidates(
+            candidates,
+            ev_tolerance=ev_tolerance,
+            max_extra_total_goals=max_extra_total_goals,
+        )
+        selected_candidate = (
+            choose_realistic(eligible)
+            if score_selection_strategy == "max_ev_with_realism"
+            else candidates[0]
+        )
+        diagnostics = selection_diagnostics(
+            candidates,
+            selected_candidate,
+            strategy=score_selection_strategy,
+            candidate_count=len(eligible),
+        )
         market_recommendation = (
             recommendation
             if score_selection.source_used in {"market_exact_score", "hybrid_exact_score"}
@@ -450,13 +503,13 @@ def _group_match_prediction_rows(
                 "most_likely_goals_a": goals_a,
                 "most_likely_goals_b": goals_b,
                 "strategy": recommendation.strategy,
-                "expected_pool_points": recommendation.expected_pool_points,
+                "expected_pool_points": selected_candidate.ev,
                 "most_likely_score_probability": exported_grid.get((goals_a, goals_b), 0.0),
-                "recommended_score_probability": recommendation.score_probability,
-                "recommended_score": (f"{recommendation.goals_a}-{recommendation.goals_b}"),
-                "recommended_goals_a": recommendation.goals_a,
-                "recommended_goals_b": recommendation.goals_b,
-                "recommendation_reason": recommendation.reason,
+                "recommended_score_probability": selected_candidate.probability,
+                "recommended_score": selected_candidate.score,
+                "recommended_goals_a": selected_candidate.goals_a,
+                "recommended_goals_b": selected_candidate.goals_b,
+                "recommendation_reason": diagnostics["selection_reason"],
                 "score_probability_source": score_probability_source,
                 "score_source_used": score_selection.source_used,
                 "market_exact_score_available": score_selection.market_available,
@@ -470,14 +523,24 @@ def _group_match_prediction_rows(
                     if market_recommendation
                     else None
                 ),
-                "final_recommended_score": (f"{recommendation.goals_a}-{recommendation.goals_b}"),
+                "final_recommended_score": selected_candidate.score,
                 "expected_pool_points_model": model_recommendation.expected_pool_points,
                 "expected_pool_points_market": (
                     market_recommendation.expected_pool_points if market_recommendation else None
                 ),
-                "expected_pool_points_final": recommendation.expected_pool_points,
+                "expected_pool_points_final": selected_candidate.ev,
+                **diagnostics,
+                "_score_candidates": candidates,
             }
         )
+    if score_selection_strategy == "diversified_realistic":
+        diversify_rows(
+            rows,
+            ev_tolerance=ev_tolerance,
+            max_extra_total_goals=max_extra_total_goals,
+        )
+    for row in rows:
+        row.pop("_score_candidates", None)
     return rows
 
 
@@ -512,6 +575,9 @@ def write_pool_group_predictions_csv(
     score_probability_source: ScoreProbabilitySource = "model_score_grid",
     market_exact_score_odds: dict[str, MarketExactScoreOdds] | None = None,
     market_score_weight: float = 0.70,
+    score_selection_strategy: str = "max_ev",
+    ev_tolerance: float = 0.02,
+    max_extra_total_goals: int = 2,
 ) -> Path:
     """Schrijf direct invulbare pouleadviezen voor alle groepswedstrijden."""
 
@@ -531,6 +597,9 @@ def write_pool_group_predictions_csv(
         score_probability_source=score_probability_source,
         market_exact_score_odds=market_exact_score_odds,
         market_score_weight=market_score_weight,
+        score_selection_strategy=score_selection_strategy,
+        ev_tolerance=ev_tolerance,
+        max_extra_total_goals=max_extra_total_goals,
     )
     pd.DataFrame(rows, columns=POOL_GROUP_PREDICTION_COLUMNS).to_csv(output_path, index=False)
     return output_path
@@ -811,6 +880,9 @@ def write_basic_predictions_metadata_json(
     market_weight: float = 0.70,
     market_coverage_round1: int = 0,
     model_fallback_count: int = 0,
+    score_selection_strategy: str = "max_ev",
+    ev_tolerance: float = 0.02,
+    max_extra_total_goals: int = 2,
     bracket_strategy: str = "official_like",
     bracket_path: str | Path = "configs/bracket_2026.yaml",
     bracket_source: str = "worldcupwiki.com/schedule, secondary source, verify against FIFA",
@@ -836,6 +908,9 @@ def write_basic_predictions_metadata_json(
         "market_weight": market_weight,
         "market_coverage_round1": market_coverage_round1,
         "model_fallback_count": model_fallback_count,
+        "score_selection_strategy": score_selection_strategy,
+        "ev_tolerance": ev_tolerance,
+        "max_extra_total_goals": max_extra_total_goals,
         "bracket_strategy": bracket_strategy,
         "bracket_path": str(bracket_path),
         "bracket_source": bracket_source,
@@ -904,9 +979,9 @@ def _frontend_match_records(
             str(fixture_id): group.sort_values(
                 "normalized_probability", ascending=False, na_position="last"
             )
-            for fixture_id, group in exact_frame[
-                exact_frame["score_type"].eq("exact")
-            ].groupby("fixture_id")
+            for fixture_id, group in exact_frame[exact_frame["score_type"].eq("exact")].groupby(
+                "fixture_id"
+            )
         }
         if not exact_frame.empty
         else {}
@@ -951,10 +1026,7 @@ def _frontend_match_records(
         final_source = row.get("score_source_used") or "model_score_grid"
         records.append(
             {
-                **{
-                    key: _frontend_json_value(row.get(key))
-                    for key in FRONTEND_MATCH_COLUMNS
-                },
+                **{key: _frontend_json_value(row.get(key)) for key in FRONTEND_MATCH_COLUMNS},
                 "fixture_id": fixture_id,
                 "recommended_goals_a": int(row["recommended_goals_a"]),
                 "recommended_goals_b": int(row["recommended_goals_b"]),
@@ -969,6 +1041,12 @@ def _frontend_match_records(
                     ),
                     "selection_strategy": _frontend_json_value(row.get("strategy")),
                     "selection_reason": _frontend_json_value(row.get("recommendation_reason")),
+                    "best_ev_score": _frontend_json_value(row.get("best_ev_score")),
+                    "best_ev": _frontend_json_value(row.get("best_ev")),
+                    "recommended_ev": _frontend_json_value(row.get("recommended_ev")),
+                    "ev_loss_vs_best": _frontend_json_value(row.get("ev_loss_vs_best")),
+                    "realism_score": _frontend_json_value(row.get("realism_score")),
+                    "score_rank_by_ev": _frontend_json_value(row.get("score_rank_by_ev")),
                 },
                 "model": {
                     "lambda_a": _frontend_json_value(row["lambda_a"]),
@@ -1152,9 +1230,7 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
     metadata["generated_at"] = datetime.now(UTC).isoformat()
     metadata["market_coverage"] = metadata.get("market_coverage_round1", 0)
     metadata["market_coverage"] = source_metadata.get("market_coverage_round1", 0)
-    metadata["exact_score_market_coverage"] = source_metadata.get(
-        "exact_score_market_coverage", 0
-    )
+    metadata["exact_score_market_coverage"] = source_metadata.get("exact_score_market_coverage", 0)
     metadata["fallback_count"] = source_metadata.get("model_fallback_count", 0)
     match_records = _frontend_match_records(matches, source_metadata)
     total = len(match_records)

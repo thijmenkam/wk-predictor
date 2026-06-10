@@ -141,6 +141,12 @@ class PoolScoreStrategy(StrEnum):
     MAX_EXPECTED_POOL_POINTS = "max_expected_pool_points"
 
 
+class ScoreSelectionStrategy(StrEnum):
+    MAX_EV = "max_ev"
+    MAX_EV_WITH_REALISM = "max_ev_with_realism"
+    DIVERSIFIED_REALISTIC = "diversified_realistic"
+
+
 class PoolProbabilitySource(StrEnum):
     MODEL_ONLY = "model_only"
     MARKET_ONLY = "market_only"
@@ -313,9 +319,7 @@ def polymarket_discover_fixture_markets_command(
     output_dir: Annotated[
         Path, typer.Option("--output-dir")
     ] = DEFAULT_POLYMARKET_DISCOVERY_OUTPUT_DIR,
-    existing_match_odds: Annotated[
-        Path | None, typer.Option("--existing-match-odds")
-    ] = None,
+    existing_match_odds: Annotated[Path | None, typer.Option("--existing-match-odds")] = None,
 ) -> None:
     """Discover en classificeer Gamma-markten per WK-fixture."""
 
@@ -389,9 +393,7 @@ def polymarket_discover_event_deep_command(
         raise typer.Exit(code=1) from exc
     typer.echo(f"Event: {event_slug}")
     typer.echo(f"Direct markets: {summary['direct_markets']}")
-    typer.echo(
-        f"Recursive market-like objects: {summary['recursive_market_like_objects']}"
-    )
+    typer.echo(f"Recursive market-like objects: {summary['recursive_market_like_objects']}")
     typer.echo(f"With clobTokenIds: {summary['with_clob_token_ids']}")
     typer.echo(f"Output: {run_dir}")
 
@@ -1474,6 +1476,31 @@ def _print_pool_scoring_summary(scoring: PoolScoringConfig) -> None:
     )
 
 
+def _print_score_selection_report(frame: pd.DataFrame) -> None:
+    """Print voor/na-frequenties en de EV-kosten van scoreselectie."""
+
+    before = frame["best_ev_score"].value_counts().sort_index().to_dict()
+    after = frame["recommended_score"].value_counts().sort_index().to_dict()
+    changed = frame[frame["best_ev_score"] != frame["recommended_score"]].copy()
+    total_loss = float(frame["ev_loss_vs_best"].sum())
+    average_loss = float(changed["ev_loss_vs_best"].mean()) if len(changed) else 0.0
+    typer.echo(f"Scorefrequenties voor: {before}")
+    typer.echo(f"Scorefrequenties na: {after}")
+    typer.echo(f"Gewijzigde scores: {len(changed)}")
+    typer.echo(f"Totale EV-loss: {total_loss:.4f}")
+    typer.echo(f"Gemiddelde EV-loss: {average_loss:.4f}")
+    typer.echo("Top gewijzigde matches:")
+    for row in (
+        changed.sort_values(["ev_loss_vs_best", "match_id"], ascending=[False, True])
+        .head(10)
+        .itertuples()
+    ):
+        typer.echo(
+            f"- {row.team_a} - {row.team_b}: {row.best_ev_score} -> "
+            f"{row.recommended_score} (EV-loss {row.ev_loss_vs_best:.4f})"
+        )
+
+
 @app.command("export-pool-predictions")
 def export_pool_predictions_command(
     config_path: Annotated[
@@ -1547,6 +1574,11 @@ def export_pool_predictions_command(
         float,
         typer.Option("--market-score-weight", min=0.0, max=1.0),
     ] = 0.70,
+    score_selection_strategy: Annotated[
+        ScoreSelectionStrategy, typer.Option("--score-selection-strategy")
+    ] = ScoreSelectionStrategy.MAX_EV,
+    ev_tolerance: Annotated[float, typer.Option("--ev-tolerance", min=0.0)] = 0.02,
+    max_extra_total_goals: Annotated[int, typer.Option("--max-extra-total-goals", min=0)] = 2,
 ) -> None:
     """Exporteer Tipset-pouleadviezen, standaard voor ronde 1 indien beschikbaar."""
 
@@ -1628,6 +1660,9 @@ def export_pool_predictions_command(
         score_probability_source=score_probability_source.value,
         market_exact_score_odds=exact_score_odds,
         market_score_weight=market_score_weight,
+        score_selection_strategy=score_selection_strategy.value,
+        ev_tolerance=ev_tolerance,
+        max_extra_total_goals=max_extra_total_goals,
     )
 
     filter_parts: list[str] = []
@@ -1643,7 +1678,9 @@ def export_pool_predictions_command(
     typer.echo(f"Strategie: {strategy.value}")
     typer.echo(f"Probability source: {probability_source.value}")
     typer.echo(f"Score probability source: {score_probability_source.value}")
+    typer.echo(f"Score selection strategy: {score_selection_strategy.value}")
     exported = pd.read_csv(csv_path)
+    _print_score_selection_report(exported)
     typer.echo(f"Market gebruikt: {int(exported['source_used'].isin(['hybrid', 'market']).sum())}")
     fallback_count = exported["source_used"].str.startswith("model_fallback").sum()
     typer.echo(f"Model fallback: {int(fallback_count)}")
@@ -2308,6 +2345,11 @@ def export_basic_predictions_command(
         float, typer.Option("--market-score-weight", min=0.0, max=1.0)
     ] = 0.70,
     allow_missing_market: Annotated[bool, typer.Option("--allow-missing-market")] = False,
+    score_selection_strategy: Annotated[
+        ScoreSelectionStrategy, typer.Option("--score-selection-strategy")
+    ] = ScoreSelectionStrategy.MAX_EV,
+    ev_tolerance: Annotated[float, typer.Option("--ev-tolerance", min=0.0)] = 0.02,
+    max_extra_total_goals: Annotated[int, typer.Option("--max-extra-total-goals", min=0)] = 2,
 ) -> None:
     """Bereken en exporteer alle basic Tipset/Brunoson-predictions."""
 
@@ -2407,6 +2449,9 @@ def export_basic_predictions_command(
             score_probability_source=score_probability_source.value,
             market_exact_score_odds=exact_score_odds,
             market_score_weight=market_score_weight,
+            score_selection_strategy=score_selection_strategy.value,
+            ev_tolerance=ev_tolerance,
+            max_extra_total_goals=max_extra_total_goals,
         )
         round_one_frame = pd.read_csv(pool_path)
     else:
@@ -2428,6 +2473,9 @@ def export_basic_predictions_command(
                     score_probability_source=score_probability_source.value,
                     market_exact_score_odds=exact_score_odds,
                     market_score_weight=market_score_weight,
+                    score_selection_strategy=score_selection_strategy.value,
+                    ev_tolerance=ev_tolerance,
+                    max_extra_total_goals=max_extra_total_goals,
                 )
             )
         finally:
@@ -2452,6 +2500,15 @@ def export_basic_predictions_command(
                 "match": f"{row.team_a} - {row.team_b}",
                 "recommended_score": row.recommended_score,
                 "expected_pool_points": row.expected_pool_points,
+                "best_ev_score": row.best_ev_score,
+                "best_ev": row.best_ev,
+                "recommended_ev": row.recommended_ev,
+                "ev_loss_vs_best": row.ev_loss_vs_best,
+                "score_selection_strategy": row.score_selection_strategy,
+                "candidate_scores_within_tolerance": row.candidate_scores_within_tolerance,
+                "selection_reason": row.selection_reason,
+                "realism_score": row.realism_score,
+                "score_rank_by_ev": row.score_rank_by_ev,
             }
             for row in round_one_frame.itertuples()
         ],
@@ -2521,6 +2578,9 @@ def export_basic_predictions_command(
             exact_score_market_fallback_count=int(
                 round_one_frame["score_source_used"].eq("model_fallback").sum()
             ),
+            score_selection_strategy=score_selection_strategy.value,
+            ev_tolerance=ev_tolerance,
+            max_extra_total_goals=max_extra_total_goals,
             **_bracket_metadata(bracket_strategy, bracket_path),
             **rating_metadata,
         )
@@ -2530,6 +2590,8 @@ def export_basic_predictions_command(
     typer.echo(f"Round 1 matches: {len(round_one_frame)}")
     typer.echo(f"Probability source: {probability_source.value}")
     typer.echo(f"Score probability source: {score_probability_source.value}")
+    typer.echo(f"Score selection strategy: {score_selection_strategy.value}")
+    _print_score_selection_report(round_one_frame)
     typer.echo(
         "Final standings: "
         + ", ".join((standings.gold, standings.silver, standings.bronze, standings.fourth))

@@ -171,6 +171,24 @@ alle teams en de twaalf hoogste kansen om als nummer drie te kwalificeren.
 uv run wk2026 export-pool-predictions --seed 42
 ```
 
+De standaard scoreselectie blijft `max_ev`. Voor deterministische scorevariatie
+binnen een beperkte EV-afstand:
+
+```fish
+uv run wk2026 export-pool-predictions \
+  --match-round 1 \
+  --score-selection-strategy diversified_realistic \
+  --ev-tolerance 0.02 \
+  --max-extra-total-goals 2 \
+  --seed 42
+```
+
+Beschikbare score-selection strategies zijn `max_ev`, `max_ev_with_realism` en
+`diversified_realistic`. De CSV en `frontend_data.json` bevatten de beste
+EV-score, gekozen score, EV-loss, kandidaatcount, realism score, EV-rank en
+selectiereden. Deze laag gebruikt alleen het geselecteerde scoregrid en
+fabriceert geen exact-score odds.
+
 Dit command draait geen Monte Carlo-simulatie. Met de officiële rondevelden exporteert het
 standaard de 24 wedstrijden van ronde 1 naar `pool_group_round1_predictions.csv` in een herkenbare
 runmap onder `outputs/runs/` en toont
