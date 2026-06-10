@@ -16,3 +16,23 @@ golden_boot:
   market_slug: null
   query: "2026 World Cup Golden Boot"
   notes: "Fill event_slug/market_slug after discovery."
+
+group_stage_matches:
+  source: "polymarket"
+  market_type: "group_stage_1x2"
+  event_slug: null
+  market_slug: null
+  query: "2026 FIFA World Cup"
+  structure: "match_markets"
+  notes: "Discover active match markets and map them to fixtures."
+
+group_stage_exact_scores:
+  source: "polymarket"
+  market_type: "group_stage_exact_score"
+  event_slug: null
+  market_slug: null
+  query: "2026 FIFA World Cup exact score"
+  structure: "exact_score_binary_markets"
+  yes_outcome_names: ["Yes"]
+  no_outcome_names: ["No"]
+  notes: "Discover exact-score binary markets for group-stage fixtures. Use YES token price per exact score."

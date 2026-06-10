@@ -50,6 +50,8 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
     assert metadata["bracket_strategy"] == "official_like"
     assert metadata["bracket_path"] == "configs/bracket_2026.yaml"
     assert metadata["third_place_assignment_method"] == "greedy_best3_with_allowed_groups"
+    assert metadata["probability_source"] == "model_only"
+    assert metadata["market_coverage_round1"] == 0
     tournament = pd.read_csv(run_path / "tournament_summary.csv")
     assert len(tournament) == 48
     assert list(tournament.columns) == [
@@ -71,6 +73,7 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
     assert "## Limitations" in (run_path / "basic_predictions_summary.md").read_text()
     frontend = json.loads((run_path / "frontend_data.json").read_text())
     assert set(frontend) == {
+        "schema_version",
         "metadata",
         "matches",
         "teams",
@@ -78,10 +81,76 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
         "final_standings",
         "market_comparison",
     }
+    assert frontend["schema_version"] == "2.0"
     assert len(frontend["matches"]) == 24
+    assert {
+        "model",
+        "market_1x2",
+        "hybrid_1x2",
+        "exact_score_market",
+        "score_recommendations",
+        "warnings",
+    }.issubset(frontend["matches"][0])
+    assert frontend["matches"][0]["market_1x2"]["available"] is False
     assert len(frontend["teams"]) == 48
     assert sum(row["is_recommended"] for row in frontend["top_scorers"]) >= 3
     assert {"gold", "silver", "bronze", "fourth"}.issubset(frontend["final_standings"])
+
+
+def test_export_frontend_data_writes_market_schema(tmp_path: Path) -> None:
+    output = tmp_path / "frontend_data.json"
+    exact_odds = tmp_path / "exact.csv"
+    pd.DataFrame(
+        [
+            {
+                "fixture_id": "G-A-1-1",
+                "score_type": "exact",
+                "goals_a": 1,
+                "goals_b": 0,
+                "normalized_probability": 1.0,
+                "chosen_probability": 0.18,
+                "price_confidence": "high",
+                "market_slug": "mexico-south-africa-1-0",
+            }
+        ]
+    ).to_csv(exact_odds, index=False)
+    result = runner.invoke(
+        app,
+        [
+            "export-frontend-data",
+            "--match-round",
+            "1",
+            "--probability-source",
+            "hybrid",
+            "--market-match-odds",
+            "outputs/polymarket/20260610-065818-price-fetch/processed/group_stage_match_odds.csv",
+            "--score-probability-source",
+            "hybrid_exact_score",
+            "--market-exact-score-odds",
+            str(exact_odds),
+            "--allow-missing-market",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    payload = json.loads(output.read_text())
+    assert payload["schema_version"] == "2.0"
+    assert len(payload["matches"]) == 24
+    assert payload["metadata"]["market_match_odds_path"]
+    assert "market_coverage" in payload["metadata"]
+    assert all("available" in match["exact_score_market"] for match in payload["matches"])
+    exact_match = next(match for match in payload["matches"] if match["fixture_id"] == "G-A-1-1")
+    assert exact_match["exact_score_market"]["top_scores"][0] == {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "raw_probability": 0.18,
+        "normalized_probability": 1.0,
+        "confidence": "high",
+        "market_slug": "mexico-south-africa-1-0",
+    }
 
 
 def test_validate_data_accepts_small_temporary_dataset(tmp_path: Path) -> None:

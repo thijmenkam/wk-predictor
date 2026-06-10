@@ -79,13 +79,21 @@ def recommend_pool_score(
     strategy: str = "most_likely_score",
     scoring: GroupStageScoringConfig = DEFAULT_GROUP_SCORING,
     max_goals: int = 10,
+    probability_grid: dict[tuple[int, int], float] | None = None,
 ) -> PoolScoreRecommendation:
     """Kies een score op modelkans of maximale verwachte groepsfasepunten."""
 
     if strategy not in POOL_SCORE_STRATEGIES:
         raise ValueError(f"unsupported pool score recommendation strategy: {strategy}")
 
-    grid = _prediction_score_grid(prediction, max_goals)
+    grid = (
+        [
+            ScoreProbability(goals_a, goals_b, probability)
+            for (goals_a, goals_b), probability in probability_grid.items()
+        ]
+        if probability_grid is not None
+        else _prediction_score_grid(prediction, max_goals)
+    )
     probabilities = {(item.goals_a, item.goals_b): item.probability for item in grid}
 
     if strategy == "most_likely_score":

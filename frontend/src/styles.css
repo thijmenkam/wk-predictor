@@ -48,6 +48,31 @@ td small { margin-top: 5px; display: block; color: #718078; }
 .probabilities span { display: flex; flex-direction: column; gap: 3px; font-weight: 700; }
 .probabilities span small { margin: 0; max-width: 72px; overflow: hidden; color: #718078; font-size: 10px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .score { padding: 7px 12px; display: inline-block; color: white; background: #34735d; border-radius: 3px; font-size: 18px; font-weight: 700; }
+.match-list { display: grid; gap: 12px; }
+.match-card { background: #faf9f5; border: 1px solid #d9ddd6; }
+.match-summary { padding: 18px; display: grid; grid-template-columns: minmax(240px, 1fr) auto auto auto; align-items: center; gap: 24px; }
+.match-summary small { margin-top: 5px; display: block; color: #718078; }
+.recommended { display: flex; align-items: center; gap: 10px; }
+.recommended small { margin: 0; }
+.source-badge { padding: 5px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.source-badge.model { color: #53635c; background: #e5e8e2; }
+.source-badge.hybrid { color: #214f40; background: #dceba7; }
+.source-badge.market { color: white; background: #34735d; }
+.source-badge.fallback { color: #7c3d20; background: #f3d7bd; }
+.match-card details { border-top: 1px solid #e1e3dd; }
+.match-card summary { padding: 13px 18px; color: #34735d; cursor: pointer; font-size: 13px; font-weight: 700; }
+.detail-grid { padding: 8px 18px 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.detail-grid section { margin: 0; padding: 18px; background: #f0f1eb; }
+.detail-grid h3 { margin: 0 0 14px; font-size: 16px; }
+.detail-grid p { color: #607169; font-size: 13px; }
+.probability-line { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; }
+.probability-line span { display: flex; flex-direction: column; color: #718078; }
+.probability-line b { color: #15251f; font-size: 15px; }
+.fallback-copy { padding-left: 10px; border-left: 3px solid #d49a67; }
+.exact-scores { display: grid; gap: 7px; }
+.exact-scores div { padding: 9px; display: grid; grid-template-columns: 50px 1fr 1fr; gap: 8px; background: #faf9f5; font-size: 12px; }
+.exact-scores .selected { outline: 2px solid #b6e63f; }
+.warnings { margin: 0 18px 18px; padding: 12px 12px 12px 32px; color: #7c3d20; background: #fff1e3; font-size: 13px; }
 .rank { margin-right: 12px; color: #98a39d; font-size: 12px; }
 .tag { margin-left: 9px; padding: 3px 7px; color: #244f40; background: #dceba7; font-size: 10px; text-transform: uppercase; }
 .scorer-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -94,6 +119,11 @@ footer { padding: 28px 4vw; display: flex; justify-content: space-between; color
   .controls { align-items: stretch; flex-direction: column; }
   .controls select { width: 100%; }
   .controls > span { margin-left: 0; }
+  .match-summary { grid-template-columns: 1fr auto; gap: 14px; }
+  .recommended { justify-content: flex-start; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .exact-scores div { grid-template-columns: 45px 1fr; }
+  .exact-scores div span:last-child { grid-column: 2; }
   .table-shell:has(.match-row) { overflow: visible; border: 0; background: transparent; }
   .match-row { margin-bottom: 12px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 14px; background: #faf9f5; border: 1px solid #d9ddd6; }
   .match-row td { padding: 0; display: block; border: 0; }

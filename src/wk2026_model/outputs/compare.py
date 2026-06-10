@@ -38,6 +38,11 @@ METADATA_KEYS = (
     "scoring",
     "scoring_config",
     "players_path",
+    "probability_source",
+    "market_match_odds_path",
+    "market_weight",
+    "market_coverage_round1",
+    "model_fallback_count",
 )
 POSITIONS = ("gold", "silver", "bronze", "fourth")
 

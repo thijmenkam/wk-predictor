@@ -1,0 +1,5 @@
+position,old_team,new_team,changed,old_p_top4,new_p_top4,old_p_exact_position,new_p_exact_position,old_expected_points_component,new_expected_points_component
+gold,Spain,Spain,False,0.29484,0.29484,0.12608,0.12608,0.673276,0.673276
+silver,Argentina,Argentina,False,0.257,0.257,0.0627,0.0627,0.47831,0.47831
+bronze,France,France,False,0.22046,0.22046,0.05662,0.05662,0.416824,0.416824
+fourth,England,England,False,0.19306,0.19306,0.0339,0.0339,0.328948,0.328948

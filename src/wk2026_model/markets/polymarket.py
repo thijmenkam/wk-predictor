@@ -13,6 +13,9 @@ from typing import Any, Literal
 import httpx
 import yaml
 
+from wk2026_model.data.loaders import load_fixtures, load_teams
+from wk2026_model.data.schemas import Fixture
+
 
 class PolymarketError(RuntimeError):
     """Base error for Polymarket discovery and raw-data operations."""
@@ -180,6 +183,58 @@ class EntityAliases:
     teams: dict[str, str]
 
 
+@dataclass(frozen=True)
+class PolymarketMatchMarket:
+    market_id: str | None
+    market_slug: str
+    question: str
+    home_raw: str
+    away_raw: str
+    home: str | None
+    away: str | None
+    outcomes: list[str]
+    token_ids: list[str]
+    active: bool | None
+    volume: float | None
+    liquidity: float | None
+
+
+@dataclass(frozen=True)
+class MatchOutcomeTokens:
+    home_token: str
+    draw_token: str
+    away_token: str
+
+
+@dataclass(frozen=True)
+class MarketFixtureMapping:
+    fixture_id: str | None
+    home: str | None
+    away: str | None
+    market_slug: str
+    status: Literal["matched", "ambiguous", "missing"]
+
+
+@dataclass(frozen=True)
+class PolymarketExactScoreMarket:
+    market_id: str | None
+    market_slug: str | None
+    question: str | None
+    team_a_raw: str
+    team_b_raw: str
+    team_a: str | None
+    team_b: str | None
+    goals_a: int | None
+    goals_b: int | None
+    yes_token_id: str
+    active: bool | None
+    closed: bool | None
+    enable_order_book: bool | None
+    volume: float | None
+    liquidity: float | None
+    score_type: Literal["exact", "other"] = "exact"
+
+
 class PolymarketClobClient:
     """Public read-only CLOB price client; no auth, retries, or order methods."""
 
@@ -333,6 +388,252 @@ def infer_team_from_binary_market(market: dict[str, Any]) -> str | None:
     return raw_name.title() or None
 
 
+MATCH_PATTERNS = (
+    re.compile(r"^(.+?)\s+vs\.?\s+(.+?)\??$", re.IGNORECASE),
+    re.compile(r"^(.+?)\s+v\.?\s+(.+?)\??$", re.IGNORECASE),
+    re.compile(r"^Will\s+(.+?)\s+beat\s+(.+?)\??$", re.IGNORECASE),
+)
+
+EXACT_SCORE_PATTERNS = (
+    re.compile(
+        r"^(?P<a>.+?)\s+(?P<ga>10|[0-9])\s*[-–]\s*(?P<gb>10|[0-9])\s+"
+        r"(?P<b>.+?)(?:\s+REG(?:ULATION)?\s+TIME)?\??$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^Will\s+(?P<a>.+?)\s+beat\s+(?P<b>.+?)\s+"
+        r"(?P<ga>10|[0-9])\s*[-–]\s*(?P<gb>10|[0-9])\??$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^(?P<a>.+?)\s+vs\.?\s+(?P<b>.+?):\s*(?:correct|exact)\s+score\s+"
+        r"(?P<ga>10|[0-9])\s*[-–]\s*(?P<gb>10|[0-9])\??$",
+        re.IGNORECASE,
+    ),
+)
+OTHER_SCORE_PATTERN = re.compile(
+    r"^(?P<a>.+?)\s+vs\.?\s+(?P<b>.+?):\s*(?:any\s+)?other\s+score\??$",
+    re.IGNORECASE,
+)
+
+
+def extract_match_names(value: str) -> tuple[str, str] | None:
+    for pattern in MATCH_PATTERNS:
+        if match := pattern.fullmatch(value.strip()):
+            return match.group(1).strip(), match.group(2).strip()
+    return None
+
+
+def extract_exact_score_market(
+    market: dict[str, Any],
+    aliases: EntityAliases,
+    valid_teams: set[str] | None = None,
+) -> PolymarketExactScoreMarket | None:
+    """Extract a binary exact-score market without guessing ambiguous team names."""
+
+    text = (
+        _optional_string(market.get("question"))
+        or _optional_string(market.get("title"))
+        or _optional_string(market.get("slug"))
+    )
+    if not text or not is_binary_yes_no_market(market, ["Yes"], ["No"]):
+        return None
+    exact_match = next(
+        (match for pattern in EXACT_SCORE_PATTERNS if (match := pattern.fullmatch(text.strip()))),
+        None,
+    )
+    other_match = OTHER_SCORE_PATTERN.fullmatch(text.strip())
+    if exact_match is None and other_match is None:
+        return None
+    match = exact_match or other_match
+    assert match is not None
+    team_a_raw = match.group("a").strip()
+    team_b_raw = match.group("b").strip()
+    if not team_a_raw or not team_b_raw:
+        return None
+    try:
+        yes_token = extract_yes_token_from_binary_market(market, ["Yes"])
+    except ValueError:
+        return None
+    teams = valid_teams or set(aliases.teams.values())
+    return PolymarketExactScoreMarket(
+        market_id=_optional_string(market.get("id")),
+        market_slug=_optional_string(market.get("slug")),
+        question=_optional_string(market.get("question")) or _optional_string(market.get("title")),
+        team_a_raw=team_a_raw,
+        team_b_raw=team_b_raw,
+        team_a=normalize_team_name(team_a_raw, aliases, teams),
+        team_b=normalize_team_name(team_b_raw, aliases, teams),
+        goals_a=int(match.group("ga")) if exact_match is not None else None,
+        goals_b=int(match.group("gb")) if exact_match is not None else None,
+        yes_token_id=yes_token.token_id,
+        active=_optional_bool(market.get("active")),
+        closed=_optional_bool(market.get("closed")),
+        enable_order_book=_optional_bool(market.get("enableOrderBook")),
+        volume=_optional_float(market.get("volume", market.get("volumeNum"))),
+        liquidity=_optional_float(market.get("liquidity", market.get("liquidityNum"))),
+        score_type="exact" if exact_match is not None else "other",
+    )
+
+
+def discover_match_markets(query: str) -> list[dict[str, Any]]:
+    """Discover active, open, order-book-backed match markets."""
+
+    rows = PolymarketGammaClient().search_markets(query, limit=100, active=True, closed=False)
+    discovered: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        text = _optional_string(row.get("question")) or _optional_string(row.get("title"))
+        if not text or extract_match_names(text) is None:
+            continue
+        assembled = _event_as_three_way_market(row)
+        if assembled is None and (
+            not _is_priceable_market(row) or len(parse_gamma_list_field(row.get("outcomes"))) != 3
+        ):
+            continue
+        identity = str(row.get("id") or row.get("slug") or text)
+        if identity not in seen:
+            discovered.append(row)
+            seen.add(identity)
+    return discovered
+
+
+def _yes_token(market: dict[str, Any]) -> str | None:
+    try:
+        return extract_yes_token_from_binary_market(market, ["Yes"]).token_id
+    except ValueError:
+        return None
+
+
+def _event_as_three_way_market(event: dict[str, Any]) -> dict[str, Any] | None:
+    title = _optional_string(event.get("title"))
+    names = extract_match_names(title) if title else None
+    slug = _optional_string(event.get("slug"))
+    if names is None or slug is None:
+        return None
+    home, away = names
+    tokens: dict[str, str] = {}
+    for market in extract_event_markets(event):
+        if not _is_priceable_market(market):
+            continue
+        question = (_optional_string(market.get("question")) or "").casefold()
+        token = _yes_token(market)
+        if token is None:
+            continue
+        if "end in a draw" in question:
+            tokens["draw"] = token
+        elif question.startswith(f"will {home.casefold()} win"):
+            tokens["home"] = token
+        elif question.startswith(f"will {away.casefold()} win"):
+            tokens["away"] = token
+    if set(tokens) != {"home", "draw", "away"}:
+        return None
+    return {
+        "id": event.get("id"),
+        "slug": slug,
+        "question": title,
+        "active": event.get("active"),
+        "closed": event.get("closed"),
+        "enableOrderBook": True,
+        "volume": event.get("volume", event.get("volumeNum")),
+        "liquidity": event.get("liquidity", event.get("liquidityNum")),
+        "outcomes": [home, "Draw", away],
+        "clobTokenIds": [tokens["home"], tokens["draw"], tokens["away"]],
+    }
+
+
+def extract_match_market(
+    market: dict[str, Any],
+    aliases: EntityAliases | None = None,
+    valid_teams: set[str] | None = None,
+) -> PolymarketMatchMarket | None:
+    question = _optional_string(market.get("question")) or _optional_string(market.get("title"))
+    names = extract_match_names(question) if question else None
+    slug = _optional_string(market.get("slug"))
+    if names is None or slug is None:
+        return None
+    home_raw, away_raw = names
+    aliases = aliases or EntityAliases(teams={})
+    valid_teams = valid_teams or set()
+    return PolymarketMatchMarket(
+        market_id=_optional_string(market.get("id")),
+        market_slug=slug,
+        question=question,
+        home_raw=home_raw,
+        away_raw=away_raw,
+        home=normalize_team_name(home_raw, aliases, valid_teams),
+        away=normalize_team_name(away_raw, aliases, valid_teams),
+        outcomes=parse_gamma_list_field(market.get("outcomes")),
+        token_ids=parse_gamma_list_field(market.get("clobTokenIds")),
+        active=_optional_bool(market.get("active")),
+        volume=_optional_float(market.get("volume", market.get("volumeNum"))),
+        liquidity=_optional_float(market.get("liquidity", market.get("liquidityNum"))),
+    )
+
+
+def extract_match_outcomes(market: dict[str, Any], fixture: Fixture) -> MatchOutcomeTokens:
+    outcomes = parse_gamma_list_field(market.get("outcomes"))
+    token_ids = parse_gamma_list_field(market.get("clobTokenIds"))
+    if len(outcomes) != 3 or len(token_ids) != 3:
+        raise ValueError("match market must have exactly 3 outcomes and 3 clobTokenIds")
+    outcome_aliases = {
+        "bosnia and herzegovina": "bosnia",
+        "cabo verde": "cape verde",
+        "côte d'ivoire": "ivory coast",
+        "ir iran": "iran",
+        "korea republic": "south korea",
+        "united states": "usa",
+    }
+    normalized = [
+        outcome_aliases.get(outcome.strip().casefold(), outcome.strip().casefold())
+        for outcome in outcomes
+    ]
+    home_aliases = {"home", fixture.team_a.casefold()}
+    away_aliases = {"away", fixture.team_b.casefold()}
+    draw_aliases = {"draw", "tie", "x"}
+    positions: dict[str, int] = {}
+    for index, outcome in enumerate(normalized):
+        if outcome in home_aliases:
+            positions["home"] = index
+        elif outcome in draw_aliases:
+            positions["draw"] = index
+        elif outcome in away_aliases:
+            positions["away"] = index
+    if set(positions) != {"home", "draw", "away"}:
+        raise ValueError(f"could not map HOME/DRAW/AWAY outcomes: {outcomes!r}")
+    return MatchOutcomeTokens(
+        home_token=token_ids[positions["home"]],
+        draw_token=token_ids[positions["draw"]],
+        away_token=token_ids[positions["away"]],
+    )
+
+
+def map_match_market_to_fixture(
+    market: PolymarketMatchMarket, fixtures: list[Fixture]
+) -> MarketFixtureMapping:
+    candidates = [
+        fixture
+        for fixture in fixtures
+        if fixture.team_a == market.home and fixture.team_b == market.away
+    ]
+    status: Literal["matched", "ambiguous", "missing"]
+    if len(candidates) == 1:
+        status = "matched"
+    elif len(candidates) > 1:
+        status = "ambiguous"
+    else:
+        status = "missing"
+    return MarketFixtureMapping(
+        fixture_id=candidates[0].match_id if status == "matched" else None,
+        home=market.home,
+        away=market.away,
+        market_slug=market.market_slug,
+        status=status,
+    )
+
+
 def load_entity_aliases(path: Path | str) -> EntityAliases:
     payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     if not isinstance(payload, dict) or not isinstance(payload.get("teams"), dict):
@@ -352,6 +653,24 @@ def normalize_team_name(raw_name: str, aliases: EntityAliases, valid_teams: set[
         return raw_name
     folded_teams = {team.casefold(): team for team in valid_teams}
     return folded_teams.get(raw_name.casefold())
+
+
+def canonical_match_key(team_a: str, team_b: str, group: str | None = None) -> str:
+    """Build an order-insensitive fixture key using the shared team aliases."""
+
+    aliases_path = Path("data/raw/polymarket/entity_aliases.yaml")
+    aliases = (
+        load_entity_aliases(aliases_path) if aliases_path.exists() else EntityAliases(teams={})
+    )
+    folded_aliases = {key.casefold(): value for key, value in aliases.teams.items()}
+
+    def normalized(name: str) -> str:
+        stripped = name.strip()
+        return folded_aliases.get(stripped.casefold(), stripped).casefold()
+
+    low, high = sorted((normalized(team_a), normalized(team_b)))
+    prefix = f"{group.strip().upper()}|" if group and group.strip() else ""
+    return f"{prefix}{low}|{high}"
 
 
 def _outcome_aliases(value: Any, default: list[str]) -> list[str]:
@@ -513,6 +832,64 @@ CANDIDATE_COLUMNS = [
     "notes",
 ]
 
+MATCH_ODDS_COLUMNS = [
+    "fixture_id",
+    "group",
+    "round",
+    "home",
+    "away",
+    "market_slug",
+    "home_prob_raw",
+    "draw_prob_raw",
+    "away_prob_raw",
+    "home_prob_norm",
+    "draw_prob_norm",
+    "away_prob_norm",
+    "home_bid",
+    "home_ask",
+    "draw_bid",
+    "draw_ask",
+    "away_bid",
+    "away_ask",
+    "volume",
+    "liquidity",
+    "confidence",
+]
+
+EXACT_SCORE_ODDS_COLUMNS = [
+    "fixture_id",
+    "group",
+    "match_round",
+    "team_a",
+    "team_b",
+    "market_team_a",
+    "market_team_b",
+    "score_type",
+    "goals_a",
+    "goals_b",
+    "market_goals_a",
+    "market_goals_b",
+    "market_slug",
+    "market_id",
+    "question",
+    "yes_token_id",
+    "bid",
+    "ask",
+    "mid",
+    "spread",
+    "chosen_probability",
+    "normalized_probability",
+    "price_confidence",
+    "volume",
+    "liquidity",
+    "mapping_status",
+    "errors",
+    "scores_priced_count",
+    "raw_probability_sum",
+    "has_any_other_score_market",
+    "max_score_seen",
+]
+
 
 def process_outcome_prices(
     entry_name: str,
@@ -646,6 +1023,284 @@ def _chosen_probability(price: PolymarketTokenPrice) -> float | None:
     if price.bid is not None:
         return price.bid
     return price.ask
+
+
+def normalize_three_way_probabilities(
+    home: float | None, draw: float | None, away: float | None
+) -> tuple[float | None, float | None, float | None]:
+    values = (home, draw, away)
+    total = sum(value for value in values if value is not None)
+    if total <= 0:
+        return None, None, None
+    return tuple(value / total if value is not None else None for value in values)  # type: ignore[return-value]
+
+
+def _match_confidence(prices: list[PolymarketTokenPrice], max_spread: float) -> str:
+    confidences = [_confidence(price, max_spread) for price in prices]
+    return min(confidences, key={"missing": 0, "low": 1, "medium": 2, "high": 3}.get)
+
+
+def _process_match_markets(
+    *,
+    query: str,
+    manifest_path: Path,
+    gamma: PolymarketGammaClient,
+    clob: PolymarketClobClient,
+    max_spread: float,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    aliases = load_entity_aliases(manifest_path.parent / "entity_aliases.yaml")
+    fixtures_path = manifest_path.parent.parent / "fixtures.csv"
+    teams = load_teams(manifest_path.parent.parent / "teams.csv")
+    fixtures = load_fixtures(fixtures_path, teams)
+    raw_markets = gamma.search_markets(query, limit=100, active=True, closed=False)
+    for fixture in fixtures:
+        raw_markets.extend(
+            gamma.search_markets(
+                f"{fixture.team_a} vs {fixture.team_b}",
+                limit=10,
+                active=True,
+                closed=False,
+            )
+        )
+    candidates: list[dict[str, Any]] = []
+    seen_candidates: set[str] = set()
+    for item in raw_markets:
+        market = _event_as_three_way_market(item) or item
+        text = (
+            _optional_string(market.get("question")) or _optional_string(market.get("title")) or ""
+        )
+        identity = str(market.get("id") or market.get("slug") or text)
+        if (
+            identity not in seen_candidates
+            and _is_priceable_market(market)
+            and extract_match_names(text)
+            and len(parse_gamma_list_field(market.get("outcomes"))) == 3
+        ):
+            candidates.append(market)
+            seen_candidates.add(identity)
+    valid_teams = {fixture.team_a for fixture in fixtures} | {
+        fixture.team_b for fixture in fixtures
+    }
+    rows: list[dict[str, Any]] = []
+    raw_prices: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    mappings = {"matched": 0, "ambiguous": 0, "missing": 0}
+    seen_fixtures: set[str] = set()
+    for raw_market in candidates:
+        market = extract_match_market(raw_market, aliases, valid_teams)
+        if market is None:
+            continue
+        mapping = map_match_market_to_fixture(market, fixtures)
+        mappings[mapping.status] += 1
+        if mapping.status != "matched" or mapping.fixture_id is None:
+            warnings.append(
+                f"{market.market_slug}: fixture mapping is {mapping.status} "
+                f"for {market.home_raw} vs {market.away_raw}"
+            )
+            continue
+        if mapping.fixture_id in seen_fixtures:
+            mappings["matched"] -= 1
+            mappings["ambiguous"] += 1
+            warnings.append(
+                f"{market.market_slug}: duplicate market for fixture {mapping.fixture_id}"
+            )
+            continue
+        fixture = next(item for item in fixtures if item.match_id == mapping.fixture_id)
+        try:
+            tokens = extract_match_outcomes(raw_market, fixture)
+        except ValueError as exc:
+            warnings.append(f"{market.market_slug}: {exc}")
+            continue
+        prices = [
+            clob.fetch_prices_for_token(tokens.home_token),
+            clob.fetch_prices_for_token(tokens.draw_token),
+            clob.fetch_prices_for_token(tokens.away_token),
+        ]
+        raw = tuple(_chosen_probability(price) for price in prices)
+        normalized = normalize_three_way_probabilities(*raw)
+        rows.append(
+            {
+                "fixture_id": fixture.match_id,
+                "group": fixture.group,
+                "round": fixture.match_round,
+                "home": fixture.team_a,
+                "away": fixture.team_b,
+                "market_slug": market.market_slug,
+                "home_prob_raw": raw[0],
+                "draw_prob_raw": raw[1],
+                "away_prob_raw": raw[2],
+                "home_prob_norm": normalized[0],
+                "draw_prob_norm": normalized[1],
+                "away_prob_norm": normalized[2],
+                "home_bid": prices[0].bid,
+                "home_ask": prices[0].ask,
+                "draw_bid": prices[1].bid,
+                "draw_ask": prices[1].ask,
+                "away_bid": prices[2].bid,
+                "away_ask": prices[2].ask,
+                "volume": market.volume,
+                "liquidity": market.liquidity,
+                "confidence": _match_confidence(prices, max_spread),
+            }
+        )
+        raw_prices.append(
+            {
+                "fixture_id": fixture.match_id,
+                "market_slug": market.market_slug,
+                "home": asdict(prices[0]),
+                "draw": asdict(prices[1]),
+                "away": asdict(prices[2]),
+            }
+        )
+        seen_fixtures.add(fixture.match_id)
+    summary = {
+        "markets_discovered": len(candidates),
+        "matched": mappings["matched"],
+        "ambiguous": mappings["ambiguous"],
+        "missing": mappings["missing"],
+        "priced_fixtures": len(rows),
+        "warnings": warnings,
+    }
+    return rows, raw_prices, summary
+
+
+def _process_exact_score_markets(
+    *,
+    query: str,
+    manifest_path: Path,
+    gamma: PolymarketGammaClient,
+    clob: PolymarketClobClient,
+    max_spread: float,
+    max_goals: int = 10,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    aliases = load_entity_aliases(manifest_path.parent / "entity_aliases.yaml")
+    teams = load_teams(manifest_path.parent.parent / "teams.csv")
+    fixtures = load_fixtures(manifest_path.parent.parent / "fixtures.csv", teams)
+    valid_teams = {team.name for team in teams}
+    candidates = gamma.search_markets(query, limit=100, active=True, closed=False)
+    for fixture in fixtures:
+        candidates.extend(
+            gamma.search_markets(
+                f"{fixture.team_a} {fixture.team_b} exact score",
+                limit=50,
+                active=True,
+                closed=False,
+            )
+        )
+    flattened: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        nested = extract_event_markets(candidate)
+        markets = nested if nested else [candidate]
+        for market in markets:
+            identity = str(market.get("id") or market.get("slug") or market.get("question"))
+            if identity not in seen and _is_priceable_market(market):
+                flattened.append(market)
+                seen.add(identity)
+
+    rows: list[dict[str, Any]] = []
+    raw_prices: list[dict[str, Any]] = []
+    for raw_market in flattened:
+        market = extract_exact_score_market(raw_market, aliases, valid_teams)
+        if market is None:
+            continue
+        matching = [
+            fixture
+            for fixture in fixtures
+            if {fixture.team_a, fixture.team_b} == {market.team_a, market.team_b}
+        ]
+        status = "matched" if len(matching) == 1 else "ambiguous" if matching else "missing"
+        fixture = matching[0] if status == "matched" else None
+        errors: list[str] = []
+        goals_a = market.goals_a
+        goals_b = market.goals_b
+        if fixture is not None and market.team_a == fixture.team_b:
+            goals_a, goals_b = goals_b, goals_a
+        if market.score_type == "exact" and (
+            goals_a is None or goals_b is None or goals_a > max_goals or goals_b > max_goals
+        ):
+            errors.append(f"score exceeds max_goals={max_goals}")
+        price = clob.fetch_prices_for_token(market.yes_token_id)
+        chosen = _chosen_probability(price)
+        rows.append(
+            {
+                "fixture_id": fixture.match_id if fixture else None,
+                "group": fixture.group if fixture else None,
+                "match_round": fixture.match_round if fixture else None,
+                "team_a": fixture.team_a if fixture else market.team_a,
+                "team_b": fixture.team_b if fixture else market.team_b,
+                "market_team_a": market.team_a_raw,
+                "market_team_b": market.team_b_raw,
+                "score_type": market.score_type,
+                "goals_a": goals_a,
+                "goals_b": goals_b,
+                "market_goals_a": market.goals_a,
+                "market_goals_b": market.goals_b,
+                "market_slug": market.market_slug,
+                "market_id": market.market_id,
+                "question": market.question,
+                "yes_token_id": market.yes_token_id,
+                "bid": price.bid,
+                "ask": price.ask,
+                "mid": price.mid,
+                "spread": price.spread,
+                "chosen_probability": chosen,
+                "normalized_probability": None,
+                "price_confidence": _confidence(price, max_spread),
+                "volume": market.volume,
+                "liquidity": market.liquidity,
+                "mapping_status": status,
+                "errors": "; ".join([*price.errors, *errors]),
+            }
+        )
+        raw_prices.append(
+            {
+                "market": asdict(market),
+                "fixture_id": fixture.match_id if fixture else None,
+                "price": asdict(price),
+            }
+        )
+
+    for fixture_id in {row["fixture_id"] for row in rows if row["fixture_id"]}:
+        fixture_rows = [row for row in rows if row["fixture_id"] == fixture_id]
+        priced = [
+            row
+            for row in fixture_rows
+            if row["score_type"] == "exact"
+            and row["chosen_probability"] is not None
+            and not row["errors"]
+        ]
+        total = sum(row["chosen_probability"] for row in priced)
+        for row in priced:
+            row["normalized_probability"] = row["chosen_probability"] / total if total else None
+        count = len(priced)
+        has_other = any(row["score_type"] == "other" for row in fixture_rows)
+        max_seen = max(
+            (max(row["goals_a"], row["goals_b"]) for row in priced),
+            default=None,
+        )
+        for row in fixture_rows:
+            row["scores_priced_count"] = count
+            row["raw_probability_sum"] = total
+            row["has_any_other_score_market"] = has_other
+            row["max_score_seen"] = max_seen
+    for row in rows:
+        row.setdefault("scores_priced_count", 0)
+        row.setdefault("raw_probability_sum", 0.0)
+        row.setdefault("has_any_other_score_market", False)
+        row.setdefault("max_score_seen", None)
+    summary = {
+        "markets_discovered": len(flattened),
+        "exact_scores_extracted": sum(row["score_type"] == "exact" for row in rows),
+        "other_scores_extracted": sum(row["score_type"] == "other" for row in rows),
+        "priced_fixtures": len(
+            {row["fixture_id"] for row in rows if row["fixture_id"] and row["chosen_probability"]}
+        ),
+        "warnings": [
+            "Listed exact scores may omit probability mass outside the discovered markets."
+        ],
+    }
+    return rows, raw_prices, summary
 
 
 def _load_valid_team_names(manifest_path: Path) -> set[str]:
@@ -821,6 +1476,84 @@ def fetch_manifest_prices(
                     **summary_base,
                     "status": "skipped",
                     "reason": "market_type filter",
+                }
+            )
+            continue
+        if structure == "match_markets":
+            query = _optional_string(config.get("query"))
+            if not query:
+                entries.append(
+                    {**summary_base, "status": "skipped", "reason": "match_markets requires query"}
+                )
+                continue
+            rows, raw_prices, match_summary = _process_match_markets(
+                query=query,
+                manifest_path=manifest_path,
+                gamma=gamma,
+                clob=clob,
+                max_spread=max_spread,
+            )
+            write_json(
+                output_dir / "raw_prices" / f"{entry_name}_prices.json",
+                {"entry_name": entry_name, "fetched_at": now.isoformat(), "markets": raw_prices},
+            )
+            match_path = output_dir / "processed" / "group_stage_match_odds.csv"
+            _write_csv(match_path, rows, MATCH_ODDS_COLUMNS)
+            entries.append(
+                {
+                    **summary_base,
+                    **match_summary,
+                    "status": "fetched",
+                    "reason": "",
+                    "source": "match_markets",
+                    "processed_csv": str(match_path.relative_to(output_dir)),
+                    "outcomes": len(rows) * 3,
+                    "priced_outcomes": sum(
+                        value is not None
+                        for row in rows
+                        for value in (
+                            row["home_prob_raw"],
+                            row["draw_prob_raw"],
+                            row["away_prob_raw"],
+                        )
+                    ),
+                }
+            )
+            continue
+        if structure == "exact_score_binary_markets":
+            query = _optional_string(config.get("query"))
+            if not query:
+                entries.append(
+                    {
+                        **summary_base,
+                        "status": "skipped",
+                        "reason": "exact_score_binary_markets requires query",
+                    }
+                )
+                continue
+            rows, raw_prices, exact_summary = _process_exact_score_markets(
+                query=query,
+                manifest_path=manifest_path,
+                gamma=gamma,
+                clob=clob,
+                max_spread=max_spread,
+            )
+            write_json(
+                output_dir / "raw_prices" / f"{entry_name}_prices.json",
+                {"entry_name": entry_name, "fetched_at": now.isoformat(), "markets": raw_prices},
+            )
+            exact_path = output_dir / "processed" / "group_stage_exact_score_odds.csv"
+            _write_csv(exact_path, rows, EXACT_SCORE_ODDS_COLUMNS)
+            entries.append(
+                {
+                    **summary_base,
+                    **exact_summary,
+                    "status": "fetched",
+                    "reason": "",
+                    "source": "exact_score_binary_markets",
+                    "processed_csv": str(exact_path.relative_to(output_dir)),
+                    "outcomes": len(rows),
+                    "priced_outcomes": sum(row["chosen_probability"] is not None for row in rows),
                 }
             )
             continue

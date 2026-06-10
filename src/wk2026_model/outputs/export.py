@@ -23,6 +23,17 @@ from wk2026_model.pool.final_standings import (
     expected_points_for_team_at_position,
     select_final_standings_candidates,
 )
+from wk2026_model.pool.probabilities import (
+    Confidence,
+    MarketExactScoreOdds,
+    MarketMatchOdds,
+    ProbabilitySource,
+    ScoreProbabilitySource,
+    calibrate_score_grid,
+    market_odds_by_fixture,
+    select_pool_probabilities,
+    select_score_grid,
+)
 from wk2026_model.simulation.match import predict_match, recommend_pool_score
 from wk2026_model.simulation.tournament import (
     GroupStageSummary,
@@ -127,6 +138,22 @@ POOL_GROUP_PREDICTION_COLUMNS = [
     "p_win_a",
     "p_draw",
     "p_win_b",
+    "probability_source",
+    "market_weight",
+    "source_used",
+    "market_available",
+    "market_confidence",
+    "model_p_home",
+    "model_p_draw",
+    "model_p_away",
+    "market_p_home",
+    "market_p_draw",
+    "market_p_away",
+    "hybrid_p_home",
+    "hybrid_p_draw",
+    "hybrid_p_away",
+    "score_grid_calibrated",
+    "calibration_warning",
     "most_likely_score",
     "most_likely_goals_a",
     "most_likely_goals_b",
@@ -138,20 +165,60 @@ POOL_GROUP_PREDICTION_COLUMNS = [
     "most_likely_score_probability",
     "recommended_score_probability",
     "recommendation_reason",
+    "score_probability_source",
+    "score_source_used",
+    "market_exact_score_available",
+    "market_scores_count",
+    "market_raw_probability_sum",
+    "model_recommended_score",
+    "market_recommended_score",
+    "final_recommended_score",
+    "expected_pool_points_model",
+    "expected_pool_points_market",
+    "expected_pool_points_final",
 ]
 FRONTEND_MATCH_COLUMNS = [
-    "match_id", "group", "match_round", "kickoff_at", "location", "team_a", "team_b",
-    "elo_a", "elo_b", "lambda_a", "lambda_b", "p_win_a", "p_draw", "p_win_b",
-    "most_likely_score", "recommended_score", "expected_pool_points", "strategy",
+    "match_id",
+    "group",
+    "match_round",
+    "kickoff_at",
+    "location",
+    "team_a",
+    "team_b",
+    "elo_a",
+    "elo_b",
+    "lambda_a",
+    "lambda_b",
+    "p_win_a",
+    "p_draw",
+    "p_win_b",
+    "most_likely_score",
+    "recommended_score",
+    "expected_pool_points",
+    "strategy",
     "recommendation_reason",
 ]
 FRONTEND_TEAM_COLUMNS = [
-    "team", "group", "elo", "p_round_of_32", "p_round_of_16", "p_quarter_final",
-    "p_semi_final", "p_final", "p_champion", "p_top4",
+    "team",
+    "group",
+    "elo",
+    "p_round_of_32",
+    "p_round_of_16",
+    "p_quarter_final",
+    "p_semi_final",
+    "p_final",
+    "p_champion",
+    "p_top4",
 ]
 FRONTEND_TOP_SCORER_COLUMNS = [
-    "player", "team", "position", "expected_goals", "p_top_scorer", "p_top_3_goals",
-    "recommended_score_value", "is_recommended",
+    "player",
+    "team",
+    "position",
+    "expected_goals",
+    "p_top_scorer",
+    "p_top_3_goals",
+    "recommended_score_value",
+    "is_recommended",
 ]
 
 
@@ -275,10 +342,19 @@ def _group_match_prediction_rows(
     *,
     strategy: str = "most_likely_score",
     scoring: GroupStageScoringConfig | None = None,
+    probability_source: ProbabilitySource = "model_only",
+    market_odds: list[MarketMatchOdds] | None = None,
+    market_weight: float = 0.70,
+    min_market_confidence: Confidence = "low",
+    allow_missing_market: bool = False,
+    score_probability_source: ScoreProbabilitySource = "model_score_grid",
+    market_exact_score_odds: dict[str, MarketExactScoreOdds] | None = None,
+    market_score_weight: float = 0.70,
 ) -> list[dict[str, Any]]:
     """Bereken exportvelden voor alle groepswedstrijden zonder I/O uit te voeren."""
 
     teams_by_name = {team.name: team for team in teams}
+    market_by_fixture = market_odds_by_fixture(fixtures, market_odds or [])
     rows: list[dict[str, Any]] = []
     for fixture in fixtures:
         if fixture.stage != "group":
@@ -286,22 +362,56 @@ def _group_match_prediction_rows(
         team_a = teams_by_name[fixture.team_a]
         team_b = teams_by_name[fixture.team_b]
         prediction = predict_match(team_a, team_b, config)
+        selection = select_pool_probabilities(
+            (prediction.p_win_a, prediction.p_draw, prediction.p_win_b),
+            market_by_fixture.get(fixture.match_id),
+            probability_source=probability_source,
+            market_weight=market_weight,
+            min_market_confidence=min_market_confidence,
+            allow_missing_market=allow_missing_market,
+        )
         goals_a, goals_b = prediction.most_likely_score
+        raw_grid = score_grid(prediction.lambda_a, prediction.lambda_b, config.max_goals)
+        probability_grid, calibration_warning = calibrate_score_grid(
+            raw_grid,
+            selection.model_probs,
+            selection.selected_probs,
+        )
+        calibrated = selection.selected_probs != selection.model_probs
+        base_grid = probability_grid if calibrated else raw_grid
+        score_selection = select_score_grid(
+            base_grid,
+            (market_exact_score_odds or {}).get(fixture.match_id),
+            source=score_probability_source,
+            market_weight=market_score_weight,
+            min_market_confidence=min_market_confidence,
+            allow_missing_market=allow_missing_market,
+        )
+        exported_grid = score_selection.grid
+        active_scoring = scoring or GroupStageScoringConfig(
+            correct_outcome_points=1.0,
+            exact_score_bonus_points=1.0,
+        )
+        model_recommendation = recommend_pool_score(
+            prediction,
+            strategy=strategy,
+            scoring=active_scoring,
+            max_goals=config.max_goals,
+            probability_grid=base_grid,
+        )
         recommendation = recommend_pool_score(
             prediction,
             strategy=strategy,
-            scoring=scoring
-            or GroupStageScoringConfig(
-                correct_outcome_points=1.0,
-                exact_score_bonus_points=1.0,
-            ),
+            scoring=active_scoring,
             max_goals=config.max_goals,
+            probability_grid=exported_grid,
         )
-        probability_grid = score_grid(
-            prediction.lambda_a,
-            prediction.lambda_b,
-            config.max_goals,
+        market_recommendation = (
+            recommendation
+            if score_selection.source_used in {"market_exact_score", "hybrid_exact_score"}
+            else None
         )
+        market_probs = selection.market_probs or (None, None, None)
         rows.append(
             {
                 "match_id": fixture.match_id,
@@ -317,20 +427,55 @@ def _group_match_prediction_rows(
                 "elo_b": team_b.elo,
                 "lambda_a": prediction.lambda_a,
                 "lambda_b": prediction.lambda_b,
-                "p_win_a": prediction.p_win_a,
-                "p_draw": prediction.p_draw,
-                "p_win_b": prediction.p_win_b,
+                "p_win_a": selection.selected_probs[0],
+                "p_draw": selection.selected_probs[1],
+                "p_win_b": selection.selected_probs[2],
+                "probability_source": selection.probability_source,
+                "market_weight": selection.market_weight,
+                "source_used": selection.source_used,
+                "market_available": selection.market_available,
+                "market_confidence": selection.market_confidence,
+                "model_p_home": selection.model_probs[0],
+                "model_p_draw": selection.model_probs[1],
+                "model_p_away": selection.model_probs[2],
+                "market_p_home": market_probs[0],
+                "market_p_draw": market_probs[1],
+                "market_p_away": market_probs[2],
+                "hybrid_p_home": selection.selected_probs[0],
+                "hybrid_p_draw": selection.selected_probs[1],
+                "hybrid_p_away": selection.selected_probs[2],
+                "score_grid_calibrated": calibrated,
+                "calibration_warning": calibration_warning,
                 "most_likely_score": f"{goals_a}-{goals_b}",
                 "most_likely_goals_a": goals_a,
                 "most_likely_goals_b": goals_b,
                 "strategy": recommendation.strategy,
                 "expected_pool_points": recommendation.expected_pool_points,
-                "most_likely_score_probability": probability_grid[(goals_a, goals_b)],
+                "most_likely_score_probability": exported_grid.get((goals_a, goals_b), 0.0),
                 "recommended_score_probability": recommendation.score_probability,
                 "recommended_score": (f"{recommendation.goals_a}-{recommendation.goals_b}"),
                 "recommended_goals_a": recommendation.goals_a,
                 "recommended_goals_b": recommendation.goals_b,
                 "recommendation_reason": recommendation.reason,
+                "score_probability_source": score_probability_source,
+                "score_source_used": score_selection.source_used,
+                "market_exact_score_available": score_selection.market_available,
+                "market_scores_count": score_selection.market_scores_count,
+                "market_raw_probability_sum": score_selection.market_raw_probability_sum,
+                "model_recommended_score": (
+                    f"{model_recommendation.goals_a}-{model_recommendation.goals_b}"
+                ),
+                "market_recommended_score": (
+                    f"{market_recommendation.goals_a}-{market_recommendation.goals_b}"
+                    if market_recommendation
+                    else None
+                ),
+                "final_recommended_score": (f"{recommendation.goals_a}-{recommendation.goals_b}"),
+                "expected_pool_points_model": model_recommendation.expected_pool_points,
+                "expected_pool_points_market": (
+                    market_recommendation.expected_pool_points if market_recommendation else None
+                ),
+                "expected_pool_points_final": recommendation.expected_pool_points,
             }
         )
     return rows
@@ -359,6 +504,14 @@ def write_pool_group_predictions_csv(
     *,
     strategy: str = "most_likely_score",
     scoring: GroupStageScoringConfig | None = None,
+    probability_source: ProbabilitySource = "model_only",
+    market_odds: list[MarketMatchOdds] | None = None,
+    market_weight: float = 0.70,
+    min_market_confidence: Confidence = "low",
+    allow_missing_market: bool = False,
+    score_probability_source: ScoreProbabilitySource = "model_score_grid",
+    market_exact_score_odds: dict[str, MarketExactScoreOdds] | None = None,
+    market_score_weight: float = 0.70,
 ) -> Path:
     """Schrijf direct invulbare pouleadviezen voor alle groepswedstrijden."""
 
@@ -370,6 +523,14 @@ def write_pool_group_predictions_csv(
         config,
         strategy=strategy,
         scoring=scoring,
+        probability_source=probability_source,
+        market_odds=market_odds,
+        market_weight=market_weight,
+        min_market_confidence=min_market_confidence,
+        allow_missing_market=allow_missing_market,
+        score_probability_source=score_probability_source,
+        market_exact_score_odds=market_exact_score_odds,
+        market_score_weight=market_score_weight,
     )
     pd.DataFrame(rows, columns=POOL_GROUP_PREDICTION_COLUMNS).to_csv(output_path, index=False)
     return output_path
@@ -589,9 +750,7 @@ def write_basic_predictions_summary_json(payload: dict[str, Any], path: str | Pa
     return output_path
 
 
-def write_basic_predictions_summary_markdown(
-    payload: dict[str, Any], path: str | Path
-) -> Path:
+def write_basic_predictions_summary_markdown(payload: dict[str, Any], path: str | Path) -> Path:
     """Schrijf een leesbare Tipset/Brunoson-samenvatting."""
 
     output_path = Path(path)
@@ -647,6 +806,11 @@ def write_basic_predictions_metadata_json(
     scoring_config: str | Path,
     players_path: str | Path,
     limitations: list[str],
+    probability_source: str = "model_only",
+    market_match_odds_path: str | Path | None = None,
+    market_weight: float = 0.70,
+    market_coverage_round1: int = 0,
+    model_fallback_count: int = 0,
     bracket_strategy: str = "official_like",
     bracket_path: str | Path = "configs/bracket_2026.yaml",
     bracket_source: str = "worldcupwiki.com/schedule, secondary source, verify against FIFA",
@@ -665,6 +829,13 @@ def write_basic_predictions_metadata_json(
         "final_standings_ev_method": "scenario",
         "scoring_config": str(scoring_config),
         "players_path": str(players_path),
+        "probability_source": probability_source,
+        "market_match_odds_path": (
+            str(market_match_odds_path) if market_match_odds_path is not None else None
+        ),
+        "market_weight": market_weight,
+        "market_coverage_round1": market_coverage_round1,
+        "model_fallback_count": model_fallback_count,
         "bracket_strategy": bracket_strategy,
         "bracket_path": str(bracket_path),
         "bracket_source": bracket_source,
@@ -696,13 +867,194 @@ def _frontend_records(frame: pd.DataFrame) -> list[dict[str, Any]]:
     ]
 
 
+def _optional_frontend_frame(path: str | Path | None) -> pd.DataFrame:
+    if path is None:
+        return pd.DataFrame()
+    source = Path(path)
+    return pd.read_csv(source) if source.exists() else pd.DataFrame()
+
+
+def _frontend_match_records(
+    matches: pd.DataFrame,
+    metadata: dict[str, Any],
+) -> list[dict[str, Any]]:
+    market_frame = _optional_frontend_frame(metadata.get("market_match_odds_path"))
+    exact_frame = _optional_frontend_frame(metadata.get("market_exact_score_odds_path"))
+    market_by_fixture = (
+        {
+            str(row["fixture_id"]): row
+            for row in market_frame.to_dict("records")
+            if not pd.isna(row.get("fixture_id"))
+        }
+        if not market_frame.empty
+        else {}
+    )
+    exact_by_fixture = (
+        {
+            str(fixture_id): group.sort_values(
+                "normalized_probability", ascending=False, na_position="last"
+            )
+            for fixture_id, group in exact_frame[
+                exact_frame["score_type"].eq("exact")
+            ].groupby("fixture_id")
+        }
+        if not exact_frame.empty
+        else {}
+    )
+    records: list[dict[str, Any]] = []
+    for row in matches.to_dict("records"):
+        fixture_id = str(row["match_id"])
+        market = market_by_fixture.get(fixture_id)
+        exact = exact_by_fixture.get(fixture_id)
+        market_available = bool(row.get("market_available", False)) and market is not None
+        exact_available = bool(row.get("market_exact_score_available", False)) and exact is not None
+        warnings: list[str] = []
+        if row.get("probability_source") != "model_only" and not market_available:
+            warnings.append("Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.")
+        if row.get("score_probability_source") != "model_score_grid" and not exact_available:
+            warnings.append("Geen exact-score markt gevonden.")
+        if row.get("calibration_warning"):
+            warnings.append(str(row["calibration_warning"]))
+
+        top_scores = []
+        if exact_available and exact is not None:
+            for score_row in exact.head(5).to_dict("records"):
+                goals_a = int(score_row["goals_a"])
+                goals_b = int(score_row["goals_b"])
+                top_scores.append(
+                    {
+                        "score": f"{goals_a}-{goals_b}",
+                        "goals_a": goals_a,
+                        "goals_b": goals_b,
+                        "raw_probability": _frontend_json_value(
+                            score_row.get("chosen_probability")
+                        ),
+                        "normalized_probability": _frontend_json_value(
+                            score_row.get("normalized_probability")
+                        ),
+                        "confidence": _frontend_json_value(score_row.get("price_confidence")),
+                        "market_slug": _frontend_json_value(score_row.get("market_slug")),
+                    }
+                )
+
+        model_score = row.get("model_recommended_score") or row["recommended_score"]
+        final_source = row.get("score_source_used") or "model_score_grid"
+        records.append(
+            {
+                **{
+                    key: _frontend_json_value(row.get(key))
+                    for key in FRONTEND_MATCH_COLUMNS
+                },
+                "fixture_id": fixture_id,
+                "recommended_goals_a": int(row["recommended_goals_a"]),
+                "recommended_goals_b": int(row["recommended_goals_b"]),
+                "model": {
+                    "lambda_a": _frontend_json_value(row["lambda_a"]),
+                    "lambda_b": _frontend_json_value(row["lambda_b"]),
+                    "p_win_a": _frontend_json_value(row.get("model_p_home", row["p_win_a"])),
+                    "p_draw": _frontend_json_value(row.get("model_p_draw", row["p_draw"])),
+                    "p_win_b": _frontend_json_value(row.get("model_p_away", row["p_win_b"])),
+                    "recommended_score": model_score,
+                    "expected_pool_points": _frontend_json_value(
+                        row.get("expected_pool_points_model", row["expected_pool_points"])
+                    ),
+                },
+                "market_1x2": {
+                    "available": market_available,
+                    "confidence": _frontend_json_value(
+                        market.get("confidence") if market else None
+                    ),
+                    "p_win_a": _frontend_json_value(
+                        market.get("home_prob_norm") if market else None
+                    ),
+                    "p_draw": _frontend_json_value(
+                        market.get("draw_prob_norm") if market else None
+                    ),
+                    "p_win_b": _frontend_json_value(
+                        market.get("away_prob_norm") if market else None
+                    ),
+                    "raw_p_win_a": _frontend_json_value(
+                        market.get("home_prob_raw") if market else None
+                    ),
+                    "raw_p_draw": _frontend_json_value(
+                        market.get("draw_prob_raw") if market else None
+                    ),
+                    "raw_p_win_b": _frontend_json_value(
+                        market.get("away_prob_raw") if market else None
+                    ),
+                    "source_used": row.get("source_used") if market_available else None,
+                    "market_slug": _frontend_json_value(
+                        market.get("market_slug") if market else None
+                    ),
+                },
+                "hybrid_1x2": {
+                    "available": row.get("source_used") == "hybrid",
+                    "market_weight": (
+                        _frontend_json_value(row.get("market_weight"))
+                        if row.get("source_used") == "hybrid"
+                        else None
+                    ),
+                    "p_win_a": _frontend_json_value(row.get("hybrid_p_home")),
+                    "p_draw": _frontend_json_value(row.get("hybrid_p_draw")),
+                    "p_win_b": _frontend_json_value(row.get("hybrid_p_away")),
+                    "source_used": _frontend_json_value(row.get("source_used")),
+                },
+                "exact_score_market": {
+                    "available": exact_available,
+                    "score_probability_source": row.get(
+                        "score_probability_source", "model_score_grid"
+                    ),
+                    "market_score_weight": metadata.get("market_score_weight"),
+                    "scores_count": int(row.get("market_scores_count") or 0),
+                    "raw_probability_sum": _frontend_json_value(
+                        row.get("market_raw_probability_sum")
+                    ),
+                    "top_scores": top_scores,
+                },
+                "score_recommendations": {
+                    "model_score_grid": {
+                        "score": model_score,
+                        "expected_pool_points": _frontend_json_value(
+                            row.get("expected_pool_points_model", row["expected_pool_points"])
+                        ),
+                    },
+                    "market_exact_score": {
+                        "score": (
+                            row.get("market_recommended_score")
+                            if final_source == "market_exact_score"
+                            else None
+                        ),
+                        "expected_pool_points": (
+                            _frontend_json_value(row.get("expected_pool_points_market"))
+                            if final_source == "market_exact_score"
+                            else None
+                        ),
+                    },
+                    "hybrid_exact_score": {
+                        "score": (
+                            row.get("market_recommended_score")
+                            if final_source == "hybrid_exact_score"
+                            else None
+                        ),
+                        "expected_pool_points": (
+                            _frontend_json_value(row.get("expected_pool_points_market"))
+                            if final_source == "hybrid_exact_score"
+                            else None
+                        ),
+                    },
+                    "final": {"score": row["recommended_score"], "source": final_source},
+                },
+                "warnings": warnings,
+            }
+        )
+    return records
+
+
 def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
     """Bundel bestaande basic-predictionexports voor gebruik door een frontend."""
 
     run_path = Path(run_path)
-    matches = pd.read_csv(run_path / "pool_group_round1_predictions.csv").loc[
-        :, FRONTEND_MATCH_COLUMNS
-    ]
+    matches = pd.read_csv(run_path / "pool_group_round1_predictions.csv")
     matches = matches.sort_values(
         ["kickoff_at", "match_round", "group"], kind="stable", na_position="last"
     )
@@ -710,9 +1062,7 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
     teams = teams.sort_values("p_champion", ascending=False, kind="stable")
 
     top_scorers = pd.read_csv(run_path / "top_scorer_candidates.csv")
-    recommended_players = set(
-        pd.read_csv(run_path / "top_scorer_recommendation.csv")["player"]
-    )
+    recommended_players = set(pd.read_csv(run_path / "top_scorer_recommendation.csv")["player"])
     top_scorers["is_recommended"] = top_scorers["player"].isin(recommended_players)
     top_scorers = top_scorers.loc[:, FRONTEND_TOP_SCORER_COLUMNS].sort_values(
         "recommended_score_value", ascending=False, kind="stable"
@@ -720,8 +1070,7 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
 
     recommendation = pd.read_csv(run_path / "final_standings_recommendation.csv")
     final_standings = {
-        row.position: _frontend_json_value(row.team)
-        for row in recommendation.itertuples()
+        row.position: _frontend_json_value(row.team) for row in recommendation.itertuples()
     }
     final_standings["recommendation"] = _frontend_records(recommendation)
     final_standings["candidates"] = _frontend_records(
@@ -730,15 +1079,61 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
     metadata = json.loads(
         (run_path / "basic_predictions_metadata.json").read_text(encoding="utf-8")
     )
+    metadata["generated_at"] = datetime.now(UTC).isoformat()
+    metadata["market_coverage"] = metadata.get("market_coverage_round1", 0)
+    metadata["fallback_count"] = metadata.get("model_fallback_count", 0)
     payload = {
+        "schema_version": "2.0",
         "metadata": metadata,
-        "matches": _frontend_records(matches),
+        "matches": _frontend_match_records(matches, metadata),
         "teams": _frontend_records(teams),
         "top_scorers": _frontend_records(top_scorers),
         "final_standings": final_standings,
         "market_comparison": [],
     }
     output_path = Path(path)
+    output_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def write_standalone_frontend_data_json(
+    matches_path: str | Path,
+    path: str | Path,
+    *,
+    metadata: dict[str, Any],
+) -> Path:
+    """Schrijf matchdata en behoud bestaande niet-matchsecties indien aanwezig."""
+
+    output_path = Path(path)
+    existing: dict[str, Any] = {}
+    if output_path.exists():
+        existing = json.loads(output_path.read_text(encoding="utf-8"))
+    matches = pd.read_csv(matches_path).sort_values(
+        ["kickoff_at", "match_round", "group"], kind="stable", na_position="last"
+    )
+    payload = {
+        "schema_version": "2.0",
+        "metadata": metadata,
+        "matches": _frontend_match_records(matches, metadata),
+        "teams": existing.get("teams", []),
+        "top_scorers": existing.get("top_scorers", []),
+        "final_standings": existing.get(
+            "final_standings",
+            {
+                "gold": "",
+                "silver": "",
+                "bronze": "",
+                "fourth": "",
+                "recommendation": [],
+                "candidates": [],
+            },
+        ),
+        "market_comparison": existing.get("market_comparison", []),
+    }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
         encoding="utf-8",

@@ -44,6 +44,10 @@ from wk2026_model.outputs.compare import (
     default_comparison_dir,
     export_comparison,
 )
+from wk2026_model.outputs.exact_score_compare import (
+    compare_exact_score_odds,
+    export_exact_score_comparison,
+)
 from wk2026_model.outputs.export import (
     create_run_dir,
     write_basic_predictions_metadata_json,
@@ -57,6 +61,7 @@ from wk2026_model.outputs.export import (
     write_group_stage_summary_csv,
     write_pool_group_predictions_csv,
     write_run_metadata_json,
+    write_standalone_frontend_data_json,
     write_top_scorer_candidates_csv,
     write_top_scorer_metadata_json,
     write_top_scorer_recommendation_csv,
@@ -67,6 +72,11 @@ from wk2026_model.outputs.market_compare import (
     default_market_comparison_dir,
     export_market_comparison,
 )
+from wk2026_model.outputs.match_market_compare import (
+    compare_match_market_to_model,
+    default_match_market_comparison_dir,
+    export_match_market_comparison,
+)
 from wk2026_model.pool.final_standings import (
     POSITIONS,
     FinalStandingsRecommendation,
@@ -75,6 +85,10 @@ from wk2026_model.pool.final_standings import (
     recommend_final_standings,
     recommend_final_standings_from_outcomes,
     select_final_standings_candidates,
+)
+from wk2026_model.pool.probabilities import (
+    load_market_exact_score_odds,
+    load_market_match_odds,
 )
 from wk2026_model.simulation.group import simulate_group_once
 from wk2026_model.simulation.match import predict_match
@@ -119,6 +133,18 @@ class PoolScoreStrategy(StrEnum):
     MAX_EXPECTED_POOL_POINTS = "max_expected_pool_points"
 
 
+class PoolProbabilitySource(StrEnum):
+    MODEL_ONLY = "model_only"
+    MARKET_ONLY = "market_only"
+    HYBRID = "hybrid"
+
+
+class PoolScoreProbabilitySource(StrEnum):
+    MODEL_SCORE_GRID = "model_score_grid"
+    MARKET_EXACT_SCORE = "market_exact_score"
+    HYBRID_EXACT_SCORE = "hybrid_exact_score"
+
+
 class BracketStrategyOption(StrEnum):
     """Beschikbare knock-outbracketstrategieën."""
 
@@ -138,6 +164,12 @@ class ComparisonFocus(StrEnum):
 
 class MarketConfidence(StrEnum):
     MISSING = "missing"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class MarketConfidenceThreshold(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -177,6 +209,11 @@ BASIC_PREDICTIONS_LIMITATIONS = [
     "players.csv is handmatige baseline",
     "Top scorer model gebruikt approximate player goal allocation",
     "Fixtures zijn gebaseerd op secundaire bron en moeten tegen FIFA worden gecontroleerd",
+]
+EXACT_SCORE_MARKET_LIMITATIONS = [
+    "Polymarket exact-score markets may be incomplete or illiquid.",
+    "Normalizing listed scores may overstate them when Any Other Score is missing.",
+    "Exact-score market prices are decision support, not guaranteed truth.",
 ]
 
 
@@ -272,12 +309,39 @@ def polymarket_inspect_command(
 
     if path.suffix.lower() == ".csv":
         try:
-            frame = pd.read_csv(path).sort_values(
-                "chosen_probability", ascending=False, na_position="last"
-            )
+            frame = pd.read_csv(path)
         except (OSError, ValueError, KeyError) as exc:
             typer.echo(f"Processed CSV kon niet worden geladen: {exc}", err=True)
             raise typer.Exit(code=1) from exc
+        if {
+            "fixture_id",
+            "score_type",
+            "goals_a",
+            "goals_b",
+            "chosen_probability",
+        }.issubset(frame.columns):
+            common = {(0, 0), (1, 0), (0, 1), (1, 1)}
+            for fixture_id, group in frame.groupby("fixture_id", dropna=True):
+                first = group.iloc[0]
+                exact = group[
+                    group["score_type"].eq("exact") & group["chosen_probability"].notna()
+                ].sort_values("chosen_probability", ascending=False)
+                typer.echo(f"{first['team_a']} - {first['team_b']} ({fixture_id})")
+                typer.echo(f"  priced exact scores: {len(exact)}")
+                typer.echo(f"  raw probability sum: {exact['chosen_probability'].sum():.6f}")
+                for row in exact.head(10).itertuples():
+                    typer.echo(
+                        f"  {int(row.goals_a)}-{int(row.goals_b)}: {row.chosen_probability:.6f}"
+                    )
+                available = {(int(row.goals_a), int(row.goals_b)) for row in exact.itertuples()}
+                missing = sorted(common - available)
+                if missing:
+                    typer.echo(
+                        "  warning: missing common scores "
+                        + ", ".join(f"{a}-{b}" for a, b in missing)
+                    )
+            return
+        frame = frame.sort_values("chosen_probability", ascending=False, na_position="last")
         if "entity" in frame.columns:
             columns = [
                 "entity",
@@ -422,6 +486,21 @@ def polymarket_fetch_prices_command(
             for item in row["top_10"]:
                 name = item["entity"] or item["raw_entity"] or "<unknown>"
                 typer.echo(f"    {name}: {item['chosen_probability']:.6f}")
+        if row.get("source") == "match_markets":
+            typer.echo(f"  markets discovered: {row['markets_discovered']}")
+            typer.echo(f"  matched: {row['matched']}")
+            typer.echo(f"  ambiguous: {row['ambiguous']}")
+            typer.echo(f"  missing: {row['missing']}")
+            typer.echo(f"  priced fixtures: {row['priced_fixtures']}")
+            for warning in row["warnings"]:
+                typer.echo(f"  warning: {warning}")
+        if row.get("source") == "exact_score_binary_markets":
+            typer.echo(f"  markets discovered: {row['markets_discovered']}")
+            typer.echo(f"  exact scores extracted: {row['exact_scores_extracted']}")
+            typer.echo(f"  other scores extracted: {row['other_scores_extracted']}")
+            typer.echo(f"  priced fixtures: {row['priced_fixtures']}")
+            for warning in row["warnings"]:
+                typer.echo(f"  warning: {warning}")
     typer.echo(f"Markets fetched: {summary['markets_fetched']}")
     typer.echo(f"Outcomes priced: {summary['outcomes_priced']}")
     typer.echo(f"Output: {run_dir}")
@@ -789,9 +868,9 @@ def compare_market_odds_command(
         typer.Option("--prob-column", help="Market probability-kolom voor vergelijking."),
     ] = "normalized_probability",
     min_confidence: Annotated[
-        MarketConfidence,
+        MarketConfidenceThreshold,
         typer.Option("--min-confidence", help="Minimale price confidence."),
-    ] = MarketConfidence.LOW,
+    ] = MarketConfidenceThreshold.LOW,
 ) -> None:
     """Vergelijk Polymarket winner probabilities met model champion probabilities."""
 
@@ -856,6 +935,91 @@ def compare_market_odds_command(
         typer.echo(f"Warning: {warning}")
     typer.echo("")
     typer.echo(f"Report: {report_path if report_path is not None else 'not exported'}")
+
+
+@app.command("compare-match-odds")
+def compare_match_odds_command(
+    run_dir: Annotated[Path, typer.Option("--run-dir")],
+    market_odds: Annotated[Path, typer.Option("--market-odds")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")] = Path(
+        "outputs/match-market-comparisons"
+    ),
+    top: Annotated[int, typer.Option("--top", min=1)] = 10,
+    export: Annotated[bool, typer.Option("--export/--no-export")] = True,
+    match_round: Annotated[int | None, typer.Option("--match-round", min=1)] = None,
+    all_rounds: Annotated[
+        bool, typer.Option("--all-rounds", help="Vergelijk alle beschikbare groepsrondes.")
+    ] = False,
+) -> None:
+    """Vergelijk groepswedstrijd 1X2-marktkansen met modelkansen."""
+
+    try:
+        if match_round is not None and all_rounds:
+            raise ValueError("--match-round en --all-rounds kunnen niet samen")
+        result = compare_match_market_to_model(
+            run_dir,
+            market_odds,
+            top=top,
+            match_round=match_round,
+            all_rounds=all_rounds,
+        )
+        report = (
+            export_match_market_comparison(result, default_match_market_comparison_dir(output_dir))
+            if export
+            else None
+        )
+    except (OSError, ValueError, pd.errors.ParserError) as exc:
+        typer.echo(f"Match odds konden niet worden vergeleken: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    summary = result.summary
+    typer.echo(f"Model fixtures: {summary['model_fixtures']}")
+    typer.echo(f"Market fixtures: {summary['market_fixtures']}")
+    typer.echo(f"Matched fixtures: {summary['matched_fixtures']}")
+    typer.echo(f"Unmatched model fixtures: {len(summary['unmatched_model_fixtures'])}")
+    typer.echo(f"Unmatched market fixtures: {len(summary['unmatched_market_fixtures'])}")
+    typer.echo(f"Ambiguous fixtures: {len(summary['ambiguous_fixtures'])}")
+    typer.echo(f"Reversed matches: {summary['reversed_orientation_count']}")
+    typer.echo(f"Join strategy: {summary['join_strategy']}")
+    typer.echo("")
+    typer.echo("Mean abs delta:")
+    for outcome in ("home", "draw", "away"):
+        value = summary["mean_abs_delta"][outcome]
+        typer.echo(f"{outcome.upper()}: {'unavailable' if value is None else f'{value:.1%}'}")
+    typer.echo("")
+    typer.echo("Top 10 market > model:")
+    for row in summary["market_higher_than_model"]:
+        typer.echo(f"{row['fixture']} | {row['outcome']} | {row['delta']:+.1%}")
+    typer.echo("")
+    typer.echo("Top 10 model > market:")
+    for row in summary["model_higher_than_market"]:
+        typer.echo(f"{row['fixture']} | {row['outcome']} | {row['delta']:+.1%}")
+    for warning in result.warnings:
+        typer.echo(f"Warning: {warning}")
+    typer.echo(f"Report: {report if report is not None else 'not exported'}")
+
+
+@app.command("compare-exact-score-odds")
+def compare_exact_score_odds_command(
+    run_dir: Annotated[Path, typer.Option("--run-dir")],
+    market_score_odds: Annotated[Path, typer.Option("--market-score-odds")],
+    match_round: Annotated[int | None, typer.Option("--match-round", min=1)] = None,
+    output_dir: Annotated[Path, typer.Option("--output-dir")] = Path(
+        "outputs/exact-score-comparisons"
+    ),
+) -> None:
+    """Vergelijk exact-score marktkansen met het Poisson-modelgrid."""
+
+    try:
+        frame, summary = compare_exact_score_odds(
+            run_dir, market_score_odds, match_round=match_round
+        )
+        report_dir = export_exact_score_comparison(frame, summary, output_dir)
+    except (OSError, ValueError, KeyError, pd.errors.ParserError) as exc:
+        typer.echo(f"Exact-score odds konden niet worden vergeleken: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"Fixtures compared: {summary['fixtures_compared']}")
+    typer.echo(f"Average priced scores: {summary['avg_priced_scores_per_fixture']:.2f}")
+    typer.echo(f"Report: {report_dir}")
 
 
 @app.command("validate-data")
@@ -1077,9 +1241,7 @@ def calibrate_market_ratings_command(
     model_run_dir: Annotated[Path, typer.Option("--model-run-dir")],
     config_path: Annotated[Path, typer.Option("--config")] = DEFAULT_MARKET_CALIBRATION_CONFIG,
     scale: Annotated[float | None, typer.Option("--scale")] = None,
-    max_elo_adjustment: Annotated[
-        float | None, typer.Option("--max-elo-adjustment", min=0)
-    ] = None,
+    max_elo_adjustment: Annotated[float | None, typer.Option("--max-elo-adjustment", min=0)] = None,
     output_dir: Annotated[
         Path, typer.Option("--output-dir")
     ] = DEFAULT_MARKET_CALIBRATION_OUTPUT_DIR,
@@ -1244,6 +1406,38 @@ def export_pool_predictions_command(
         Path,
         typer.Option("--output-dir", help="Basismap voor exportruns."),
     ] = DEFAULT_OUTPUT_DIR,
+    probability_source: Annotated[
+        PoolProbabilitySource,
+        typer.Option("--probability-source", help="Bron voor 1X2-kansen."),
+    ] = PoolProbabilitySource.MODEL_ONLY,
+    market_match_odds: Annotated[
+        Path | None,
+        typer.Option("--market-match-odds", help="Lokaal CSV-bestand met match odds."),
+    ] = None,
+    market_weight: Annotated[
+        float,
+        typer.Option("--market-weight", min=0.0, max=1.0),
+    ] = 0.70,
+    min_market_confidence: Annotated[
+        MarketConfidence,
+        typer.Option("--min-market-confidence"),
+    ] = MarketConfidence.LOW,
+    allow_missing_market: Annotated[
+        bool,
+        typer.Option("--allow-missing-market"),
+    ] = False,
+    score_probability_source: Annotated[
+        PoolScoreProbabilitySource,
+        typer.Option("--score-probability-source"),
+    ] = PoolScoreProbabilitySource.MODEL_SCORE_GRID,
+    market_exact_score_odds: Annotated[
+        Path | None,
+        typer.Option("--market-exact-score-odds"),
+    ] = None,
+    market_score_weight: Annotated[
+        float,
+        typer.Option("--market-score-weight", min=0.0, max=1.0),
+    ] = 0.70,
 ) -> None:
     """Exporteer Tipset-pouleadviezen, standaard voor ronde 1 indien beschikbaar."""
 
@@ -1256,11 +1450,32 @@ def export_pool_predictions_command(
         typer.echo("--group moet een letter van A tot en met L zijn.", err=True)
         raise typer.Exit(code=2)
 
+    if probability_source != PoolProbabilitySource.MODEL_ONLY and market_match_odds is None:
+        typer.echo("--market-match-odds is verplicht voor market_only en hybrid.", err=True)
+        raise typer.Exit(code=2)
+    if (
+        score_probability_source != PoolScoreProbabilitySource.MODEL_SCORE_GRID
+        and market_exact_score_odds is None
+    ):
+        typer.echo(
+            "--market-exact-score-odds is verplicht voor market_exact_score en hybrid_exact_score.",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
     config = _config(config_path)
     try:
         scoring = load_pool_scoring_config(scoring_config)
         teams, _ = _configured_teams(config, demo_fallback=False)
         validate_teams(teams, strict=True)
+        market_odds = (
+            load_market_match_odds(market_match_odds) if market_match_odds is not None else None
+        )
+        exact_score_odds = (
+            load_market_exact_score_odds(market_exact_score_odds)
+            if market_exact_score_odds is not None
+            else None
+        )
     except (OSError, ValueError) as exc:
         typer.echo(f"Poulevoorspellingen konden niet worden geladen: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -1296,6 +1511,14 @@ def export_pool_predictions_command(
         run_path / filename,
         strategy=strategy.value,
         scoring=scoring.group_stage,
+        probability_source=probability_source.value,
+        market_odds=market_odds,
+        market_weight=market_weight,
+        min_market_confidence=min_market_confidence.value,
+        allow_missing_market=allow_missing_market,
+        score_probability_source=score_probability_source.value,
+        market_exact_score_odds=exact_score_odds,
+        market_score_weight=market_score_weight,
     )
 
     filter_parts: list[str] = []
@@ -1309,6 +1532,41 @@ def export_pool_predictions_command(
     typer.echo(f"Wedstrijden: {len(filtered_fixtures)}")
     typer.echo(f"Filter: {filter_description}")
     typer.echo(f"Strategie: {strategy.value}")
+    typer.echo(f"Probability source: {probability_source.value}")
+    typer.echo(f"Score probability source: {score_probability_source.value}")
+    exported = pd.read_csv(csv_path)
+    typer.echo(f"Market gebruikt: {int(exported['source_used'].isin(['hybrid', 'market']).sum())}")
+    fallback_count = exported["source_used"].str.startswith("model_fallback").sum()
+    typer.echo(f"Model fallback: {int(fallback_count)}")
+    if probability_source != PoolProbabilitySource.MODEL_ONLY:
+        baseline_path = run_path / ".model_only_baseline.csv"
+        try:
+            baseline = pd.read_csv(
+                write_pool_group_predictions_csv(
+                    filtered_fixtures,
+                    teams,
+                    config.model,
+                    baseline_path,
+                    strategy=strategy.value,
+                    scoring=scoring.group_stage,
+                )
+            )
+        finally:
+            baseline_path.unlink(missing_ok=True)
+        changes = baseline[["match_id", "recommended_score"]].merge(
+            exported[["match_id", "team_a", "team_b", "recommended_score"]],
+            on="match_id",
+            suffixes=("_model", "_selected"),
+        )
+        changes = changes[
+            changes["recommended_score_model"] != changes["recommended_score_selected"]
+        ]
+        typer.echo(f"Gewijzigd versus model_only: {len(changes)} van {len(exported)}")
+        for row in changes.itertuples():
+            typer.echo(
+                f"- {row.team_a} - {row.team_b}: "
+                f"{row.recommended_score_model} -> {row.recommended_score_selected}"
+            )
     typer.echo(
         f"Officiële ronde-informatie: {'aanwezig' if official_rounds_present else 'ontbreekt'}"
     )
@@ -1741,6 +1999,114 @@ def recommend_top_scorers_command(
         )
 
 
+@app.command("export-frontend-data")
+def export_frontend_data_command(
+    config_path: Annotated[Path, typer.Option("--config")] = DEFAULT_CONFIG_PATH,
+    scoring_config: Annotated[Path, typer.Option("--scoring-config")] = DEFAULT_POOL_SCORING_PATH,
+    match_round: Annotated[int | None, typer.Option("--match-round", min=1, max=3)] = None,
+    probability_source: Annotated[
+        PoolProbabilitySource, typer.Option("--probability-source")
+    ] = PoolProbabilitySource.MODEL_ONLY,
+    market_match_odds: Annotated[Path | None, typer.Option("--market-match-odds")] = None,
+    market_weight: Annotated[float, typer.Option("--market-weight", min=0.0, max=1.0)] = 0.70,
+    score_probability_source: Annotated[
+        PoolScoreProbabilitySource, typer.Option("--score-probability-source")
+    ] = PoolScoreProbabilitySource.MODEL_SCORE_GRID,
+    market_exact_score_odds: Annotated[
+        Path | None, typer.Option("--market-exact-score-odds")
+    ] = None,
+    market_score_weight: Annotated[
+        float, typer.Option("--market-score-weight", min=0.0, max=1.0)
+    ] = 0.70,
+    allow_missing_market: Annotated[bool, typer.Option("--allow-missing-market")] = False,
+    output: Annotated[Path, typer.Option("--output")] = Path(
+        "frontend/public/data/frontend_data.json"
+    ),
+) -> None:
+    """Exporteer frontend matchdata met model-, markt- en hybrid-details."""
+
+    if probability_source != PoolProbabilitySource.MODEL_ONLY and market_match_odds is None:
+        typer.echo("--market-match-odds is verplicht voor market_only en hybrid.", err=True)
+        raise typer.Exit(code=2)
+    if (
+        score_probability_source != PoolScoreProbabilitySource.MODEL_SCORE_GRID
+        and market_exact_score_odds is None
+    ):
+        typer.echo(
+            "--market-exact-score-odds is verplicht voor market_exact_score en hybrid_exact_score.",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    config = _config(config_path)
+    temporary_path = output.parent / ".frontend_matches.tmp.csv"
+    try:
+        scoring = load_pool_scoring_config(scoring_config)
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        validate_teams(teams, strict=True)
+        fixtures = _load_export_fixtures(config, teams)
+        if match_round is not None:
+            fixtures = [fixture for fixture in fixtures if fixture.match_round == match_round]
+        market_odds = (
+            load_market_match_odds(market_match_odds) if market_match_odds is not None else None
+        )
+        exact_score_odds = (
+            load_market_exact_score_odds(market_exact_score_odds)
+            if market_exact_score_odds is not None
+            else None
+        )
+        frame = pd.read_csv(
+            write_pool_group_predictions_csv(
+                fixtures,
+                teams,
+                config.model,
+                temporary_path,
+                strategy=PoolScoreStrategy.MAX_EXPECTED_POOL_POINTS.value,
+                scoring=scoring.group_stage,
+                probability_source=probability_source.value,
+                market_odds=market_odds,
+                market_weight=market_weight,
+                allow_missing_market=allow_missing_market,
+                score_probability_source=score_probability_source.value,
+                market_exact_score_odds=exact_score_odds,
+                market_score_weight=market_score_weight,
+            )
+        )
+        market_coverage = int(frame["source_used"].isin(["hybrid", "market"]).sum())
+        exact_coverage = int(
+            frame["score_source_used"].isin(["market_exact_score", "hybrid_exact_score"]).sum()
+        )
+        fallback_count = int(frame["source_used"].str.startswith("model_fallback").sum())
+        metadata = {
+            "probability_source": probability_source.value,
+            "score_probability_source": score_probability_source.value,
+            "market_match_odds_path": (
+                str(market_match_odds) if market_match_odds is not None else None
+            ),
+            "market_exact_score_odds_path": (
+                str(market_exact_score_odds) if market_exact_score_odds is not None else None
+            ),
+            "market_weight": market_weight,
+            "market_score_weight": market_score_weight,
+            "market_coverage": market_coverage,
+            "exact_score_market_coverage": exact_coverage,
+            "fallback_count": fallback_count,
+            "generated_at": datetime.now(UTC).isoformat(),
+        }
+        write_standalone_frontend_data_json(temporary_path, output, metadata=metadata)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Frontenddata kon niet worden geëxporteerd: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+    typer.echo(f"Frontend data: {output}")
+    typer.echo(f"Matches: {len(frame)}")
+    typer.echo(f"1X2 market coverage: {market_coverage}")
+    typer.echo(f"Exact-score market coverage: {exact_coverage}")
+    typer.echo(f"Fallback count: {fallback_count}")
+
+
 @app.command("export-basic-predictions")
 def export_basic_predictions_command(
     config_path: Annotated[
@@ -1791,8 +2157,39 @@ def export_basic_predictions_command(
     ] = DEFAULT_MARKET_CALIBRATION_CONFIG,
     market_probs: Annotated[Path | None, typer.Option("--market-probs")] = None,
     model_run_dir: Annotated[Path | None, typer.Option("--model-run-dir")] = None,
+    probability_source: Annotated[
+        PoolProbabilitySource, typer.Option("--probability-source")
+    ] = PoolProbabilitySource.MODEL_ONLY,
+    market_match_odds: Annotated[Path | None, typer.Option("--market-match-odds")] = None,
+    market_weight: Annotated[float, typer.Option("--market-weight", min=0.0, max=1.0)] = 0.70,
+    min_market_confidence: Annotated[
+        MarketConfidenceThreshold, typer.Option("--min-market-confidence")
+    ] = MarketConfidenceThreshold.LOW,
+    score_probability_source: Annotated[
+        PoolScoreProbabilitySource, typer.Option("--score-probability-source")
+    ] = PoolScoreProbabilitySource.MODEL_SCORE_GRID,
+    market_exact_score_odds: Annotated[
+        Path | None, typer.Option("--market-exact-score-odds")
+    ] = None,
+    market_score_weight: Annotated[
+        float, typer.Option("--market-score-weight", min=0.0, max=1.0)
+    ] = 0.70,
+    allow_missing_market: Annotated[bool, typer.Option("--allow-missing-market")] = False,
 ) -> None:
     """Bereken en exporteer alle basic Tipset/Brunoson-predictions."""
+
+    if probability_source != PoolProbabilitySource.MODEL_ONLY and market_match_odds is None:
+        typer.echo("--market-match-odds is verplicht voor market_only en hybrid.", err=True)
+        raise typer.Exit(code=2)
+    if (
+        score_probability_source != PoolScoreProbabilitySource.MODEL_SCORE_GRID
+        and market_exact_score_odds is None
+    ):
+        typer.echo(
+            "--market-exact-score-odds is verplicht voor market_exact_score en hybrid_exact_score.",
+            err=True,
+        )
+        raise typer.Exit(code=2)
 
     config = _config(config_path)
     try:
@@ -1804,6 +2201,14 @@ def export_basic_predictions_command(
         fixtures = _load_export_fixtures(config, teams)
         players = load_players(players_path, teams)
         scoring = load_pool_scoring_config(scoring_config)
+        market_odds = (
+            load_market_match_odds(market_match_odds) if market_match_odds is not None else None
+        )
+        exact_score_odds = (
+            load_market_exact_score_odds(market_exact_score_odds)
+            if market_exact_score_odds is not None
+            else None
+        )
     except (OSError, ValueError) as exc:
         typer.echo(f"Basic predictions konden niet worden berekend: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -1861,6 +2266,14 @@ def export_basic_predictions_command(
             run_path / "pool_group_round1_predictions.csv",
             strategy=PoolScoreStrategy.MAX_EXPECTED_POOL_POINTS.value,
             scoring=scoring.group_stage,
+            probability_source=probability_source.value,
+            market_odds=market_odds,
+            market_weight=market_weight,
+            min_market_confidence=min_market_confidence.value,
+            allow_missing_market=allow_missing_market,
+            score_probability_source=score_probability_source.value,
+            market_exact_score_odds=exact_score_odds,
+            market_score_weight=market_score_weight,
         )
         round_one_frame = pd.read_csv(pool_path)
     else:
@@ -1874,11 +2287,27 @@ def export_basic_predictions_command(
                     temporary_path,
                     strategy=PoolScoreStrategy.MAX_EXPECTED_POOL_POINTS.value,
                     scoring=scoring.group_stage,
+                    probability_source=probability_source.value,
+                    market_odds=market_odds,
+                    market_weight=market_weight,
+                    min_market_confidence=min_market_confidence.value,
+                    allow_missing_market=allow_missing_market,
+                    score_probability_source=score_probability_source.value,
+                    market_exact_score_odds=exact_score_odds,
+                    market_score_weight=market_score_weight,
                 )
             )
         finally:
             temporary_path.unlink(missing_ok=True)
 
+    basic_limitations = [
+        *BASIC_PREDICTIONS_LIMITATIONS,
+        *(
+            EXACT_SCORE_MARKET_LIMITATIONS
+            if score_probability_source != PoolScoreProbabilitySource.MODEL_SCORE_GRID
+            else []
+        ),
+    ]
     payload = {
         "seed": run_seed,
         "num_simulations": simulation_count,
@@ -1910,7 +2339,7 @@ def export_basic_predictions_command(
             }
             for rank, row in enumerate(top_scorers.players, start=1)
         ],
-        "limitations": BASIC_PREDICTIONS_LIMITATIONS,
+        "limitations": basic_limitations,
     }
 
     if run_path is not None:
@@ -1929,9 +2358,7 @@ def export_basic_predictions_command(
             candidate_pool_size=standings.candidate_pool_size,
         )
         write_top_scorer_recommendation_csv(top_scorers, run_path / "top_scorer_recommendation.csv")
-        write_top_scorer_candidates_csv(
-            scorer_summaries, run_path / "top_scorer_candidates.csv"
-        )
+        write_top_scorer_candidates_csv(scorer_summaries, run_path / "top_scorer_candidates.csv")
         write_basic_predictions_summary_json(payload, run_path / "basic_predictions_summary.json")
         write_basic_predictions_summary_markdown(payload, run_path / "basic_predictions_summary.md")
         write_basic_predictions_metadata_json(
@@ -1940,7 +2367,27 @@ def export_basic_predictions_command(
             num_simulations=simulation_count,
             scoring_config=scoring_config,
             players_path=players_path,
-            limitations=BASIC_PREDICTIONS_LIMITATIONS,
+            limitations=basic_limitations,
+            probability_source=probability_source.value,
+            market_match_odds_path=market_match_odds,
+            market_weight=market_weight,
+            market_coverage_round1=int(
+                round_one_frame["source_used"].isin(["hybrid", "market"]).sum()
+            ),
+            model_fallback_count=int(
+                round_one_frame["source_used"].str.startswith("model_fallback").sum()
+            ),
+            score_probability_source=score_probability_source.value,
+            market_exact_score_odds_path=market_exact_score_odds,
+            market_score_weight=market_score_weight,
+            exact_score_market_coverage=int(
+                round_one_frame["score_source_used"]
+                .isin(["market_exact_score", "hybrid_exact_score"])
+                .sum()
+            ),
+            exact_score_market_fallback_count=int(
+                round_one_frame["score_source_used"].eq("model_fallback").sum()
+            ),
             **_bracket_metadata(bracket_strategy, bracket_path),
             **rating_metadata,
         )
@@ -1948,6 +2395,8 @@ def export_basic_predictions_command(
 
     typer.echo("Basic predictions")
     typer.echo(f"Round 1 matches: {len(round_one_frame)}")
+    typer.echo(f"Probability source: {probability_source.value}")
+    typer.echo(f"Score probability source: {score_probability_source.value}")
     typer.echo(
         "Final standings: "
         + ", ".join((standings.gold, standings.silver, standings.bronze, standings.fourth))

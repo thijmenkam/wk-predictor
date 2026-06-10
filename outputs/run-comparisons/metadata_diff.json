@@ -1,0 +1,18 @@
+{
+  "probability_source": {
+    "old": "model_only",
+    "new": "hybrid"
+  },
+  "market_match_odds_path": {
+    "old": null,
+    "new": "outputs/polymarket/20260609-164729-price-fetch/processed/group_stage_match_odds.csv"
+  },
+  "market_coverage_round1": {
+    "old": 0,
+    "new": 19
+  },
+  "model_fallback_count": {
+    "old": 0,
+    "new": 5
+  }
+}

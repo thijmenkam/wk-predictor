@@ -1,24 +1,16 @@
 {
+  "schema_version": "2.0",
   "metadata": {
-    "run_type": "basic-predictions",
-    "seed": 42,
-    "num_simulations": 10000,
-    "pool_strategy": "max_expected_pool_points",
-    "final_standings_ev_method": "scenario",
-    "scoring_config": "configs/pool_scoring.yaml",
-    "players_path": "data/raw/players.csv",
-    "bracket_strategy": "official_like",
-    "bracket_path": "configs/bracket_2026.yaml",
-    "bracket_source": "worldcupwiki.com/schedule, secondary source, verify against FIFA",
-    "third_place_assignment_method": "greedy_best3_with_allowed_groups",
-    "limitations": [
-      "Third-place assignment uses greedy BEST3 resolver; verify against official FIFA assignment table.",
-      "Expected goals zijn Elo-derived, geen echte xG",
-      "players.csv is handmatige baseline",
-      "Top scorer model gebruikt approximate player goal allocation",
-      "Fixtures zijn gebaseerd op secundaire bron en moeten tegen FIFA worden gecontroleerd"
-    ],
-    "rating_strategy": "elo"
+    "probability_source": "hybrid",
+    "score_probability_source": "hybrid_exact_score",
+    "market_match_odds_path": "outputs/polymarket/20260610-065818-price-fetch/processed/group_stage_match_odds.csv",
+    "market_exact_score_odds_path": "outputs/polymarket/20260610-065818-price-fetch/processed/group_stage_exact_score_odds.csv",
+    "market_weight": 0.7,
+    "market_score_weight": 0.7,
+    "market_coverage": 18,
+    "exact_score_market_coverage": 0,
+    "fallback_count": 6,
+    "generated_at": "2026-06-10T07:07:08.673477+00:00"
   },
   "matches": [
     {
@@ -33,14 +25,76 @@
       "elo_b": 1572.0,
       "lambda_a": 1.659792,
       "lambda_b": 1.057738,
-      "p_win_a": 0.514305,
-      "p_draw": 0.243957,
-      "p_win_b": 0.241738,
+      "p_win_a": 0.638371,
+      "p_draw": 0.215973,
+      "p_win_b": 0.145656,
       "most_likely_score": "1-1",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.623913,
+      "expected_pool_points": 0.774421,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-A-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.659792,
+        "lambda_b": 1.057738,
+        "p_win_a": 0.514305,
+        "p_draw": 0.243957,
+        "p_win_b": 0.241738,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.774421
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.691542,
+        "p_draw": 0.20398,
+        "p_win_b": 0.104478,
+        "raw_p_win_a": 0.695,
+        "raw_p_draw": 0.205,
+        "raw_p_win_b": 0.105,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-mex-rsa-2026-06-11"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.638371,
+        "p_draw": 0.215973,
+        "p_win_b": 0.145656,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.774421
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-A-1-2",
@@ -61,7 +115,70 @@
       "recommended_score": "1-0",
       "expected_pool_points": 0.505199,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-A-1-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.405471,
+        "lambda_b": 1.249136,
+        "p_win_a": 0.406357,
+        "p_draw": 0.2598,
+        "p_win_b": 0.333842,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.505199
+      },
+      "market_1x2": {
+        "available": false,
+        "confidence": null,
+        "p_win_a": null,
+        "p_draw": null,
+        "p_win_b": null,
+        "raw_p_win_a": null,
+        "raw_p_draw": null,
+        "raw_p_win_b": null,
+        "source_used": null,
+        "market_slug": null
+      },
+      "hybrid_1x2": {
+        "available": false,
+        "market_weight": null,
+        "p_win_a": 0.406357,
+        "p_draw": 0.2598,
+        "p_win_b": 0.333842,
+        "source_used": "model_fallback"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.505199
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.",
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-B-1-1",
@@ -82,7 +199,70 @@
       "recommended_score": "1-0",
       "expected_pool_points": 0.488185,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-B-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.372471,
+        "lambda_b": 1.279171,
+        "p_win_a": 0.391377,
+        "p_draw": 0.260572,
+        "p_win_b": 0.348051,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.488185
+      },
+      "market_1x2": {
+        "available": false,
+        "confidence": null,
+        "p_win_a": null,
+        "p_draw": null,
+        "p_win_b": null,
+        "raw_p_win_a": null,
+        "raw_p_draw": null,
+        "raw_p_win_b": null,
+        "source_used": null,
+        "market_slug": null
+      },
+      "hybrid_1x2": {
+        "available": false,
+        "market_weight": null,
+        "p_win_a": 0.391377,
+        "p_draw": 0.260572,
+        "p_win_b": 0.348051,
+        "source_used": "model_fallback"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.488185
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.",
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-D-1-1",
@@ -103,7 +283,70 @@
       "recommended_score": "1-0",
       "expected_pool_points": 0.56206,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-D-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.521311,
+        "lambda_b": 1.154021,
+        "p_win_a": 0.457266,
+        "p_draw": 0.254471,
+        "p_win_b": 0.288262,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.56206
+      },
+      "market_1x2": {
+        "available": false,
+        "confidence": null,
+        "p_win_a": null,
+        "p_draw": null,
+        "p_win_b": null,
+        "raw_p_win_a": null,
+        "raw_p_draw": null,
+        "raw_p_win_b": null,
+        "source_used": null,
+        "market_slug": null
+      },
+      "hybrid_1x2": {
+        "available": false,
+        "market_weight": null,
+        "p_win_a": 0.457266,
+        "p_draw": 0.254471,
+        "p_win_b": 0.288262,
+        "source_used": "model_fallback"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.56206
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.",
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-B-1-2",
@@ -117,14 +360,76 @@
       "elo_b": 1897.0,
       "lambda_a": 1.092745,
       "lambda_b": 1.60662,
-      "p_win_a": 0.258649,
-      "p_draw": 0.248429,
-      "p_win_b": 0.492922,
+      "p_win_a": 0.12189,
+      "p_draw": 0.168699,
+      "p_win_b": 0.709411,
       "most_likely_score": "1-1",
       "recommended_score": "0-1",
-      "expected_pool_points": 0.600964,
+      "expected_pool_points": 0.864906,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-B-1-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "model": {
+        "lambda_a": 1.092745,
+        "lambda_b": 1.60662,
+        "p_win_a": 0.258649,
+        "p_draw": 0.248429,
+        "p_win_b": 0.492922,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.864906
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.063279,
+        "p_draw": 0.134529,
+        "p_win_b": 0.802192,
+        "raw_p_win_a": 0.0635,
+        "raw_p_draw": 0.135,
+        "raw_p_win_b": 0.805,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-qat-che-2026-06-13"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.12189,
+        "p_draw": 0.168699,
+        "p_win_b": 0.709411,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.864906
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-C-1-1",
@@ -145,7 +450,70 @@
       "recommended_score": "1-0",
       "expected_pool_points": 0.553226,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-C-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.502683,
+        "lambda_b": 1.168327,
+        "p_win_a": 0.449267,
+        "p_draw": 0.255574,
+        "p_win_b": 0.295159,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.553226
+      },
+      "market_1x2": {
+        "available": false,
+        "confidence": null,
+        "p_win_a": null,
+        "p_draw": null,
+        "p_win_b": null,
+        "raw_p_win_a": null,
+        "raw_p_draw": null,
+        "raw_p_win_b": null,
+        "source_used": null,
+        "market_slug": null
+      },
+      "hybrid_1x2": {
+        "available": false,
+        "market_weight": null,
+        "p_win_a": 0.449267,
+        "p_draw": 0.255574,
+        "p_win_b": 0.295159,
+        "source_used": "model_fallback"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.553226
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.",
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-C-1-2",
@@ -159,14 +527,76 @@
       "elo_b": 1755.0,
       "lambda_a": 1.047548,
       "lambda_b": 1.675937,
-      "p_win_a": 0.236825,
-      "p_draw": 0.242508,
-      "p_win_b": 0.520667,
+      "p_win_a": 0.179008,
+      "p_draw": 0.229469,
+      "p_win_b": 0.591523,
       "most_likely_score": "1-1",
       "recommended_score": "0-1",
-      "expected_pool_points": 0.630684,
+      "expected_pool_points": 0.716514,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-C-1-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "model": {
+        "lambda_a": 1.047548,
+        "lambda_b": 1.675937,
+        "p_win_a": 0.236825,
+        "p_draw": 0.242508,
+        "p_win_b": 0.520667,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.716514
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.154229,
+        "p_draw": 0.223881,
+        "p_win_b": 0.621891,
+        "raw_p_win_a": 0.155,
+        "raw_p_draw": 0.225,
+        "raw_p_win_b": 0.625,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-hai-sco-2026-06-13"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.179008,
+        "p_draw": 0.229469,
+        "p_win_b": 0.591523,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.716514
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-D-1-2",
@@ -180,14 +610,76 @@
       "elo_b": 1911.0,
       "lambda_a": 1.170385,
       "lambda_b": 1.500041,
-      "p_win_a": 0.296151,
-      "p_draw": 0.255723,
-      "p_win_b": 0.448126,
+      "p_win_a": 0.211961,
+      "p_draw": 0.256114,
+      "p_win_b": 0.531925,
       "most_likely_score": "1-1",
       "recommended_score": "0-1",
-      "expected_pool_points": 0.551963,
+      "expected_pool_points": 0.65518,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-D-1-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "model": {
+        "lambda_a": 1.170385,
+        "lambda_b": 1.500041,
+        "p_win_a": 0.296151,
+        "p_draw": 0.255723,
+        "p_win_b": 0.448126,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.65518
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.175879,
+        "p_draw": 0.256281,
+        "p_win_b": 0.567839,
+        "raw_p_win_a": 0.175,
+        "raw_p_draw": 0.255,
+        "raw_p_win_b": 0.565,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-aus-tur-2026-06-14"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.211961,
+        "p_draw": 0.256114,
+        "p_win_b": 0.531925,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.65518
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-E-1-1",
@@ -201,14 +693,76 @@
       "elo_b": 1432.0,
       "lambda_a": 2.057337,
       "lambda_b": 0.853348,
-      "p_win_a": 0.652928,
-      "p_draw": 0.201109,
-      "p_win_b": 0.145963,
+      "p_win_a": 0.851168,
+      "p_draw": 0.090023,
+      "p_win_b": 0.058809,
       "most_likely_score": "2-0",
       "recommended_score": "2-0",
-      "expected_pool_points": 0.76813,
+      "expected_pool_points": 1.001358,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-E-1-1",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 2.057337,
+        "lambda_b": 0.853348,
+        "p_win_a": 0.652928,
+        "p_draw": 0.201109,
+        "p_win_b": 0.145963,
+        "recommended_score": "2-0",
+        "expected_pool_points": 1.001358
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.936128,
+        "p_draw": 0.042415,
+        "p_win_b": 0.021457,
+        "raw_p_win_a": 0.938,
+        "raw_p_draw": 0.0425,
+        "raw_p_win_b": 0.0215,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-ger-kor-2026-06-14"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.851168,
+        "p_draw": 0.090023,
+        "p_win_b": 0.058809,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-0",
+          "expected_pool_points": 1.001358
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-F-1-1",
@@ -222,14 +776,76 @@
       "elo_b": 1879.0,
       "lambda_a": 1.403,
       "lambda_b": 1.251337,
-      "p_win_a": 0.405242,
-      "p_draw": 0.259871,
-      "p_win_b": 0.334887,
+      "p_win_a": 0.448708,
+      "p_draw": 0.264393,
+      "p_win_b": 0.286898,
       "most_likely_score": "1-1",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.503937,
+      "expected_pool_points": 0.557989,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-F-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.403,
+        "lambda_b": 1.251337,
+        "p_win_a": 0.405242,
+        "p_draw": 0.259871,
+        "p_win_b": 0.334887,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.557989
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.467337,
+        "p_draw": 0.266332,
+        "p_win_b": 0.266332,
+        "raw_p_win_a": 0.465,
+        "raw_p_draw": 0.265,
+        "raw_p_win_b": 0.265,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-nld-jpn-2026-06-14"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.448708,
+        "p_draw": 0.264393,
+        "p_win_b": 0.286898,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.557989
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-E-1-2",
@@ -248,9 +864,72 @@
       "p_win_b": 0.484845,
       "most_likely_score": "1-1",
       "recommended_score": "0-1",
-      "expected_pool_points": 0.59222,
+      "expected_pool_points": 0.592221,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-E-1-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "model": {
+        "lambda_a": 1.10629,
+        "lambda_b": 1.586948,
+        "p_win_a": 0.265199,
+        "p_draw": 0.249955,
+        "p_win_b": 0.484845,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.59222
+      },
+      "market_1x2": {
+        "available": false,
+        "confidence": null,
+        "p_win_a": null,
+        "p_draw": null,
+        "p_win_b": null,
+        "raw_p_win_a": null,
+        "raw_p_draw": null,
+        "raw_p_win_b": null,
+        "source_used": null,
+        "market_slug": null
+      },
+      "hybrid_1x2": {
+        "available": false,
+        "market_weight": null,
+        "p_win_a": 0.265199,
+        "p_draw": 0.249955,
+        "p_win_b": 0.484845,
+        "source_used": "model_fallback"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.59222
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.",
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-F-1-2",
@@ -264,14 +943,76 @@
       "elo_b": 1720.0,
       "lambda_a": 1.411669,
       "lambda_b": 1.243652,
-      "p_win_a": 0.409149,
-      "p_draw": 0.259615,
-      "p_win_b": 0.331237,
+      "p_win_a": 0.474486,
+      "p_draw": 0.276392,
+      "p_win_b": 0.249122,
       "most_likely_score": "1-1",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.508355,
+      "expected_pool_points": 0.589535,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-F-1-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.411669,
+        "lambda_b": 1.243652,
+        "p_win_a": 0.409149,
+        "p_draw": 0.259615,
+        "p_win_b": 0.331237,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.589535
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.502488,
+        "p_draw": 0.283582,
+        "p_win_b": 0.21393,
+        "raw_p_win_a": 0.505,
+        "raw_p_draw": 0.285,
+        "raw_p_win_b": 0.215,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-swe-tun-2026-06-14"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.474486,
+        "p_draw": 0.276392,
+        "p_win_b": 0.249122,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.589535
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-H-1-1",
@@ -285,14 +1026,76 @@
       "elo_b": 1542.0,
       "lambda_a": 2.272436,
       "lambda_b": 0.772574,
-      "p_win_a": 0.712854,
-      "p_draw": 0.175833,
-      "p_win_b": 0.111313,
+      "p_win_a": 0.844204,
+      "p_draw": 0.099068,
+      "p_win_b": 0.056727,
       "most_likely_score": "2-0",
       "recommended_score": "2-0",
-      "expected_pool_points": 0.835727,
+      "expected_pool_points": 0.989744,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-H-1-1",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 2.272436,
+        "lambda_b": 0.772574,
+        "p_win_a": 0.712854,
+        "p_draw": 0.175833,
+        "p_win_b": 0.111313,
+        "recommended_score": "2-0",
+        "expected_pool_points": 0.989744
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.900498,
+        "p_draw": 0.066169,
+        "p_win_b": 0.033333,
+        "raw_p_win_a": 0.905,
+        "raw_p_draw": 0.0665,
+        "raw_p_win_b": 0.0335,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-esp-cvi-2026-06-15"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.844204,
+        "p_draw": 0.099068,
+        "p_win_b": 0.056727,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-0",
+          "expected_pool_points": 0.989744
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-G-1-1",
@@ -306,14 +1109,76 @@
       "elo_b": 1735.0,
       "lambda_a": 1.46482,
       "lambda_b": 1.198526,
-      "p_win_a": 0.432781,
-      "p_draw": 0.25754,
-      "p_win_b": 0.309679,
+      "p_win_a": 0.537297,
+      "p_draw": 0.247909,
+      "p_win_b": 0.214794,
       "most_likely_score": "1-1",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.5349,
+      "expected_pool_points": 0.664078,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-G-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.46482,
+        "lambda_b": 1.198526,
+        "p_win_a": 0.432781,
+        "p_draw": 0.25754,
+        "p_win_b": 0.309679,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.664078
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.58209,
+        "p_draw": 0.243781,
+        "p_win_b": 0.174129,
+        "raw_p_win_a": 0.585,
+        "raw_p_draw": 0.245,
+        "raw_p_win_b": 0.175,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-bel-egy-2026-06-15"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.537297,
+        "p_draw": 0.247909,
+        "p_win_b": 0.214794,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.664078
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-H-1-2",
@@ -327,14 +1192,76 @@
       "elo_b": 1890.0,
       "lambda_a": 1.082218,
       "lambda_b": 1.622247,
-      "p_win_a": 0.25356,
-      "p_draw": 0.247165,
-      "p_win_b": 0.499275,
+      "p_win_a": 0.156168,
+      "p_draw": 0.223901,
+      "p_win_b": 0.619932,
       "most_likely_score": "1-1",
       "recommended_score": "0-1",
-      "expected_pool_points": 0.607813,
+      "expected_pool_points": 0.7547,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-H-1-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "model": {
+        "lambda_a": 1.082218,
+        "lambda_b": 1.622247,
+        "p_win_a": 0.25356,
+        "p_draw": 0.247165,
+        "p_win_b": 0.499275,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.7547
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.114428,
+        "p_draw": 0.21393,
+        "p_win_b": 0.671642,
+        "raw_p_win_a": 0.115,
+        "raw_p_draw": 0.215,
+        "raw_p_win_b": 0.675,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-ksa-ury-2026-06-15"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.156168,
+        "p_draw": 0.223901,
+        "p_win_b": 0.619932,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.7547
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-G-1-2",
@@ -348,14 +1275,76 @@
       "elo_b": 1478.0,
       "lambda_a": 1.671518,
       "lambda_b": 1.050317,
-      "p_win_a": 0.518932,
-      "p_draw": 0.242909,
-      "p_win_b": 0.23816,
+      "p_win_a": 0.514386,
+      "p_draw": 0.27138,
+      "p_win_b": 0.214234,
       "most_likely_score": "1-1",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.62884,
+      "expected_pool_points": 0.623332,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-G-1-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.671518,
+        "lambda_b": 1.050317,
+        "p_win_a": 0.518932,
+        "p_draw": 0.242909,
+        "p_win_b": 0.23816,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.623332
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.512438,
+        "p_draw": 0.283582,
+        "p_win_b": 0.20398,
+        "raw_p_win_a": 0.515,
+        "raw_p_draw": 0.285,
+        "raw_p_win_b": 0.205,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-irn-nzl-2026-06-15"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.514386,
+        "p_draw": 0.27138,
+        "p_win_b": 0.214234,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.623332
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-I-1-1",
@@ -369,14 +1358,76 @@
       "elo_b": 1869.0,
       "lambda_a": 1.570278,
       "lambda_b": 1.118035,
-      "p_win_a": 0.477932,
-      "p_draw": 0.25119,
-      "p_win_b": 0.270878,
+      "p_win_a": 0.606564,
+      "p_draw": 0.225108,
+      "p_win_b": 0.168328,
       "most_likely_score": "1-1",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.584704,
+      "expected_pool_points": 0.742073,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-I-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.570278,
+        "lambda_b": 1.118035,
+        "p_win_a": 0.477932,
+        "p_draw": 0.25119,
+        "p_win_b": 0.270878,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.742073
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.661692,
+        "p_draw": 0.21393,
+        "p_win_b": 0.124378,
+        "raw_p_win_a": 0.665,
+        "raw_p_draw": 0.215,
+        "raw_p_win_b": 0.125,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-fra-sen-2026-06-16"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.606564,
+        "p_draw": 0.225108,
+        "p_win_b": 0.168328,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.742073
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-I-1-2",
@@ -390,14 +1441,76 @@
       "elo_b": 1917.0,
       "lambda_a": 1.045706,
       "lambda_b": 1.678889,
-      "p_win_a": 0.235938,
-      "p_draw": 0.242239,
-      "p_win_b": 0.521823,
+      "p_win_a": 0.112781,
+      "p_draw": 0.167172,
+      "p_win_b": 0.720047,
       "most_likely_score": "1-1",
       "recommended_score": "0-1",
-      "expected_pool_points": 0.631912,
+      "expected_pool_points": 0.871956,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-I-1-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "model": {
+        "lambda_a": 1.045706,
+        "lambda_b": 1.678889,
+        "p_win_a": 0.235938,
+        "p_draw": 0.242239,
+        "p_win_b": 0.521823,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.871956
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.06,
+        "p_draw": 0.135,
+        "p_win_b": 0.805,
+        "raw_p_win_a": 0.06,
+        "raw_p_draw": 0.135,
+        "raw_p_win_b": 0.805,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-irq-nor-2026-06-16"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.112781,
+        "p_draw": 0.167172,
+        "p_win_b": 0.720047,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.871956
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-J-1-1",
@@ -411,14 +1524,76 @@
       "elo_b": 1710.0,
       "lambda_a": 1.890672,
       "lambda_b": 0.928572,
-      "p_win_a": 0.599369,
-      "p_draw": 0.220364,
-      "p_win_b": 0.180267,
+      "p_win_a": 0.66389,
+      "p_draw": 0.208895,
+      "p_win_b": 0.127215,
       "most_likely_score": "1-0",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.712146,
+      "expected_pool_points": 0.788812,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-J-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.890672,
+        "lambda_b": 0.928572,
+        "p_win_a": 0.599369,
+        "p_draw": 0.220364,
+        "p_win_b": 0.180267,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.788812
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.691542,
+        "p_draw": 0.20398,
+        "p_win_b": 0.104478,
+        "raw_p_win_a": 0.695,
+        "raw_p_draw": 0.205,
+        "raw_p_win_b": 0.105,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-arg-alg-2026-06-16"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.66389,
+        "p_draw": 0.208895,
+        "p_win_b": 0.127215,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.788812
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-J-1-2",
@@ -432,14 +1607,76 @@
       "elo_b": 1628.0,
       "lambda_a": 1.552416,
       "lambda_b": 1.130899,
-      "p_win_a": 0.470456,
-      "p_draw": 0.252448,
-      "p_win_b": 0.277096,
+      "p_win_a": 0.658222,
+      "p_draw": 0.191815,
+      "p_win_b": 0.149963,
       "most_likely_score": "1-1",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.576541,
+      "expected_pool_points": 0.806649,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-J-1-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.552416,
+        "lambda_b": 1.130899,
+        "p_win_a": 0.470456,
+        "p_draw": 0.252448,
+        "p_win_b": 0.277096,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.806649
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.738693,
+        "p_draw": 0.165829,
+        "p_win_b": 0.095477,
+        "raw_p_win_a": 0.735,
+        "raw_p_draw": 0.165,
+        "raw_p_win_b": 0.095,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-aut-jor-2026-06-17"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.658222,
+        "p_draw": 0.191815,
+        "p_win_b": 0.149963,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.806649
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-K-1-1",
@@ -453,14 +1690,76 @@
       "elo_b": 1652.0,
       "lambda_a": 1.777721,
       "lambda_b": 0.98757,
-      "p_win_a": 0.559346,
-      "p_draw": 0.232579,
-      "p_win_b": 0.208075,
+      "p_win_a": 0.70064,
+      "p_draw": 0.184699,
+      "p_win_b": 0.114661,
       "most_likely_score": "1-0",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.671266,
+      "expected_pool_points": 0.840833,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-K-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.777721,
+        "lambda_b": 0.98757,
+        "p_win_a": 0.559346,
+        "p_draw": 0.232579,
+        "p_win_b": 0.208075,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.840833
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.761194,
+        "p_draw": 0.164179,
+        "p_win_b": 0.074627,
+        "raw_p_win_a": 0.765,
+        "raw_p_draw": 0.165,
+        "raw_p_win_b": 0.075,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-prt-cdr-2026-06-17"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.70064,
+        "p_draw": 0.184699,
+        "p_win_b": 0.114661,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.840833
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-L-1-1",
@@ -474,14 +1773,76 @@
       "elo_b": 1905.0,
       "lambda_a": 1.4674,
       "lambda_b": 1.196418,
-      "p_win_a": 0.433914,
-      "p_draw": 0.257418,
-      "p_win_b": 0.308668,
+      "p_win_a": 0.519829,
+      "p_draw": 0.253087,
+      "p_win_b": 0.227083,
       "most_likely_score": "1-1",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.536164,
+      "expected_pool_points": 0.642326,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-L-1-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.4674,
+        "lambda_b": 1.196418,
+        "p_win_a": 0.433914,
+        "p_draw": 0.257418,
+        "p_win_b": 0.308668,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.642326
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.55665,
+        "p_draw": 0.251232,
+        "p_win_b": 0.192118,
+        "raw_p_win_a": 0.565,
+        "raw_p_draw": 0.255,
+        "raw_p_win_b": 0.195,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-eng-hrv-2026-06-17"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.519829,
+        "p_draw": 0.253087,
+        "p_win_b": 0.227083,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.642326
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-L-1-2",
@@ -495,14 +1856,76 @@
       "elo_b": 1582.0,
       "lambda_a": 1.39684,
       "lambda_b": 1.256855,
-      "p_win_a": 0.402459,
-      "p_draw": 0.260037,
-      "p_win_b": 0.337504,
+      "p_win_a": 0.444618,
+      "p_draw": 0.269553,
+      "p_win_b": 0.285828,
       "most_likely_score": "1-1",
       "recommended_score": "1-0",
-      "expected_pool_points": 0.500783,
+      "expected_pool_points": 0.553243,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-L-1-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "model": {
+        "lambda_a": 1.39684,
+        "lambda_b": 1.256855,
+        "p_win_a": 0.402459,
+        "p_draw": 0.260037,
+        "p_win_b": 0.337504,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.553243
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.462687,
+        "p_draw": 0.273632,
+        "p_win_b": 0.263682,
+        "raw_p_win_a": 0.465,
+        "raw_p_draw": 0.275,
+        "raw_p_win_b": 0.265,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-gha-pan-2026-06-17"
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.444618,
+        "p_draw": 0.269553,
+        "p_win_b": 0.285828,
+        "source_used": "hybrid"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.553243
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     },
     {
       "match_id": "G-K-1-2",
@@ -521,9 +1944,72 @@
       "p_win_b": 0.571411,
       "most_likely_score": "0-1",
       "recommended_score": "0-1",
-      "expected_pool_points": 0.683713,
+      "expected_pool_points": 0.683715,
       "strategy": "max_expected_pool_points",
-      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score."
+      "recommendation_reason": "Maximizes expected pool points under Tipset scoring: 1 point for correct outcome plus 1 bonus point for exact score.",
+      "fixture_id": "G-K-1-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "model": {
+        "lambda_a": 0.969488,
+        "lambda_b": 1.810879,
+        "p_win_a": 0.199489,
+        "p_draw": 0.229099,
+        "p_win_b": 0.571411,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.683713
+      },
+      "market_1x2": {
+        "available": false,
+        "confidence": null,
+        "p_win_a": null,
+        "p_draw": null,
+        "p_win_b": null,
+        "raw_p_win_a": null,
+        "raw_p_draw": null,
+        "raw_p_win_b": null,
+        "source_used": null,
+        "market_slug": null
+      },
+      "hybrid_1x2": {
+        "available": false,
+        "market_weight": null,
+        "p_win_a": 0.199489,
+        "p_draw": 0.229099,
+        "p_win_b": 0.571411,
+        "source_used": "model_fallback"
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "hybrid_exact_score",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.683713
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_fallback"
+        }
+      },
+      "warnings": [
+        "Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.",
+        "Geen exact-score markt gevonden.",
+        "nan"
+      ]
     }
   ],
   "teams": [

@@ -18,6 +18,57 @@ export type Match = {
   expected_pool_points: number;
   strategy: string;
   recommendation_reason: string | null;
+  fixture_id?: string;
+  recommended_goals_a?: number;
+  recommended_goals_b?: number;
+  model?: ProbabilityView & {
+    lambda_a: number;
+    lambda_b: number;
+    recommended_score: string;
+    expected_pool_points: number;
+  };
+  market_1x2?: ProbabilityView & {
+    available: boolean;
+    confidence: string | null;
+    raw_p_win_a: number | null;
+    raw_p_draw: number | null;
+    raw_p_win_b: number | null;
+    source_used: string | null;
+    market_slug: string | null;
+  };
+  hybrid_1x2?: ProbabilityView & {
+    available: boolean;
+    market_weight: number | null;
+    source_used: string | null;
+  };
+  exact_score_market?: {
+    available: boolean;
+    score_probability_source: string;
+    market_score_weight: number | null;
+    scores_count: number;
+    raw_probability_sum: number | null;
+    top_scores: ExactScore[];
+  };
+  score_recommendations?: {
+    final: { score: string; source: string };
+  };
+  warnings?: string[];
+};
+
+type ProbabilityView = {
+  p_win_a: number | null;
+  p_draw: number | null;
+  p_win_b: number | null;
+};
+
+export type ExactScore = {
+  score: string;
+  goals_a: number;
+  goals_b: number;
+  raw_probability: number | null;
+  normalized_probability: number | null;
+  confidence: string | null;
+  market_slug: string | null;
 };
 
 export type Team = {
@@ -57,6 +108,7 @@ export type FinalStandingRow = {
 export type FinalStandingCandidate = Record<string, string | number | null>;
 
 export type FrontendData = {
+  schema_version?: string;
   metadata: Record<string, unknown> & {
     seed?: number;
     num_simulations?: number;

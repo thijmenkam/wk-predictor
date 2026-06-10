@@ -287,6 +287,33 @@ De huidige implementatie bevat nog geen:
 - bookmakerodds;
 - scraping van externe bronnen.
 
+## Polymarket exact-score grids
+
+Exact-score markets kunnen optioneel als score-gridbron voor ronde-1-pouleadviezen
+worden gebruikt. De default blijft `model_score_grid`.
+
+```bash
+uv run wk2026 polymarket-fetch-prices \
+  --manifest data/raw/polymarket/market_manifest.yaml
+
+uv run wk2026 polymarket-inspect \
+  outputs/polymarket/<LATEST>/processed/group_stage_exact_score_odds.csv
+
+uv run wk2026 export-pool-predictions \
+  --strategy max_expected_pool_points \
+  --match-round 1 \
+  --score-probability-source hybrid_exact_score \
+  --market-exact-score-odds outputs/polymarket/<LATEST>/processed/group_stage_exact_score_odds.csv \
+  --market-score-weight 0.70 \
+  --allow-missing-market \
+  --seed 42
+```
+
+Vergelijk markt- en modelscorekansen met `compare-exact-score-odds`. Polymarket
+exact-score markets kunnen onvolledig of illiquide zijn. Normalisatie over alleen
+gevonden scores kan die scores overschatten als `Any Other Score` ontbreekt. Deze
+marktlaag is beslissingsondersteuning, geen gegarandeerde waarheid.
+
 ## Market-calibrated Elo-experiment
 
 De standaard ratingstrategie blijft `elo`. Market calibration wordt uitsluitend geactiveerd met

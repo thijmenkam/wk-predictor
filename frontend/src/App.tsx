@@ -15,6 +15,10 @@ function pct(value: number) {
   return percentage.format(value);
 }
 
+function optionalPct(value: number | null | undefined) {
+  return value == null ? "—" : pct(value);
+}
+
 function formatKickoff(value: string | null) {
   if (!value) return "TBD";
   const date = new Date(value);
@@ -36,46 +40,55 @@ function EmptyState({ children }: { children: React.ReactNode }) {
   return <div className="empty-state">{children}</div>;
 }
 
+function sourceLabel(match: Match) {
+  const scoreSource = match.score_recommendations?.final.source;
+  const probabilitySource = match.hybrid_1x2?.source_used ?? match.market_1x2?.source_used;
+  if (scoreSource === "model_fallback" || probabilitySource?.startsWith("model_fallback")) {
+    return ["Fallback", "fallback"];
+  }
+  if (scoreSource === "market_exact_score" || probabilitySource === "market") {
+    return ["Market", "market"];
+  }
+  if (scoreSource === "hybrid_exact_score" || probabilitySource === "hybrid") {
+    return ["Hybrid", "hybrid"];
+  }
+  return ["Model", "model"];
+}
+
+function ProbabilityLine({ match, values }: { match: Match; values: { p_win_a: number | null; p_draw: number | null; p_win_b: number | null } }) {
+  return <div className="probability-line"><span>{match.team_a} <b>{optionalPct(values.p_win_a)}</b></span><span>Draw <b>{optionalPct(values.p_draw)}</b></span><span>{match.team_b} <b>{optionalPct(values.p_win_b)}</b></span></div>;
+}
+
 function MatchesTable({ matches }: { matches: Match[] }) {
   return (
-    <TableShell>
-      <table>
-        <thead>
-          <tr>
-            <th>Match</th>
-            <th>Kickoff</th>
-            <th>Probabilities</th>
-            <th>Model score</th>
-            <th>Recommended</th>
-            <th>Expected points</th>
-          </tr>
-        </thead>
-        <tbody>
-          {matches.map((match) => (
-            <tr key={match.match_id} className="match-row">
-              <td data-label="Match">
-                <strong>{match.team_a}</strong>
-                <span className="versus">vs</span>
-                <strong>{match.team_b}</strong>
-                <small>Group {match.group} · Round {match.match_round}</small>
-              </td>
-              <td data-label="Kickoff">
-                {formatKickoff(match.kickoff_at)}
-                <small>{match.location ?? "Location TBD"}</small>
-              </td>
-              <td data-label="Odds" className="probabilities">
-                <span><small>{match.team_a}</small>{pct(match.p_win_a)}</span>
-                <span><small>Draw</small>{pct(match.p_draw)}</span>
-                <span><small>{match.team_b}</small>{pct(match.p_win_b)}</span>
-              </td>
-              <td data-label="Model score">{match.most_likely_score}</td>
-              <td data-label="Recommended"><span className="score">{match.recommended_score}</span></td>
-              <td data-label="Expected points">{decimal.format(match.expected_pool_points)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </TableShell>
+    <div className="match-list">
+      {matches.map((match) => {
+        const [label, kind] = sourceLabel(match);
+        const model = match.model ?? { lambda_a: match.lambda_a, lambda_b: match.lambda_b, p_win_a: match.p_win_a, p_draw: match.p_draw, p_win_b: match.p_win_b, recommended_score: match.most_likely_score, expected_pool_points: match.expected_pool_points };
+        const market = match.market_1x2 ?? { available: false, confidence: null, p_win_a: null, p_draw: null, p_win_b: null, raw_p_win_a: null, raw_p_draw: null, raw_p_win_b: null, source_used: null, market_slug: null };
+        const exact = match.exact_score_market ?? { available: false, score_probability_source: "model_score_grid", market_score_weight: null, scores_count: 0, raw_probability_sum: null, top_scores: [] };
+        return (
+          <article key={match.match_id} className="match-card">
+            <div className="match-summary">
+              <div><strong>{match.team_a} <span className="versus">vs</span> {match.team_b}</strong><small>Group {match.group} · Round {match.match_round} · {formatKickoff(match.kickoff_at)}</small></div>
+              <span className={`source-badge ${kind}`}>{label}</span>
+              <div className="recommended"><small>Recommended</small><span className="score">{match.recommended_score}</span></div>
+              <div><small>Expected points</small><strong>{decimal.format(match.expected_pool_points)}</strong></div>
+            </div>
+            <details>
+              <summary>Prediction details</summary>
+              <div className="detail-grid">
+                <section><h3>Model</h3><p>Lambda: {decimal.format(model.lambda_a)} / {decimal.format(model.lambda_b)}</p><ProbabilityLine match={match} values={model} /><p>Recommended: <b>{model.recommended_score}</b></p></section>
+                <section><h3>Polymarket 1X2</h3>{market.available ? <><ProbabilityLine match={match} values={market} /><p>Confidence: <b>{market.confidence ?? "—"}</b></p><p>Market vs model: {optionalPct((market.p_win_a ?? 0) - (model.p_win_a ?? 0))} / {optionalPct((market.p_draw ?? 0) - (model.p_draw ?? 0))} / {optionalPct((market.p_win_b ?? 0) - (model.p_win_b ?? 0))}</p></> : <p className="fallback-copy">Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.</p>}</section>
+                {match.hybrid_1x2?.available ? <section><h3>Hybrid</h3><ProbabilityLine match={match} values={match.hybrid_1x2} /><p>Market weight: {optionalPct(match.hybrid_1x2.market_weight)}</p><p>Source: {match.hybrid_1x2.source_used}</p></section> : null}
+                <section><h3>Exact-score market</h3>{exact.available ? <div className="exact-scores">{exact.top_scores.map((item) => <div key={item.score} className={item.score === match.recommended_score ? "selected" : ""}><b>{item.score}</b><span>{optionalPct(item.normalized_probability)} normalized</span><span>{optionalPct(item.raw_probability)} raw · {item.confidence ?? "—"}</span></div>)}</div> : <p className="fallback-copy">Geen exact-score markt gevonden.</p>}</section>
+              </div>
+              {match.warnings?.length ? <ul className="warnings">{match.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : null}
+            </details>
+          </article>
+        );
+      })}
+    </div>
   );
 }
 
