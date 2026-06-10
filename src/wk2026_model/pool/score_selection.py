@@ -22,6 +22,8 @@ SCORE_SELECTION_STRATEGIES = (
 )
 DOMINANT_SCORES = {"1-0", "0-1", "1-1"}
 ALTERNATIVE_REASON = "Alternatief gekozen binnen EV-tolerantie voor realistischer scorebeeld."
+DRAW_PROBABILITY_REASON = "Draw gekozen binnen EV-tolerantie vanwege hoge draw probability."
+DRAW_TARGET_REASON = "Draw gekozen binnen EV-tolerantie om realistische draw-rate te bereiken."
 
 
 @dataclass(frozen=True)
@@ -147,6 +149,9 @@ def selection_diagnostics(
     candidate_count: int,
 ) -> dict[str, object]:
     best = candidates[0]
+    best_draw = next(
+        candidate for candidate in candidates if candidate.goals_a == candidate.goals_b
+    )
     changed = selected.score != best.score
     return {
         "best_ev_score": best.score,
@@ -161,7 +166,83 @@ def selection_diagnostics(
         ),
         "realism_score": selected.realism_score,
         "score_rank_by_ev": selected.rank_by_ev,
+        "best_draw_score": best_draw.score,
+        "best_draw_ev": best_draw.ev,
+        "draw_ev_loss": max(0.0, best.ev - best_draw.ev),
+        "draw_candidate": False,
+        "draw_selected_reason": "",
     }
+
+
+def mark_draw_candidate(
+    row: dict[str, object],
+    *,
+    draw_ev_tolerance: float,
+    prefer_draw_if_market_draw_high: bool,
+    market_draw_threshold: float,
+) -> None:
+    """Markeer een draw alleen bij kleine EV-loss en voldoende draw probability."""
+
+    selected_draw_probability = float(row["p_draw"])
+    model_draw_probability = float(row["model_p_draw"])
+    market_or_hybrid_high = (
+        prefer_draw_if_market_draw_high
+        and str(row["source_used"]) in {"market", "hybrid"}
+        and selected_draw_probability >= market_draw_threshold
+    )
+    model_high = model_draw_probability >= market_draw_threshold
+    row["draw_candidate"] = (
+        float(row["draw_ev_loss"]) <= draw_ev_tolerance + 1e-12
+        and (market_or_hybrid_high or model_high)
+    )
+
+
+def apply_draw_target(
+    rows: list[dict[str, object]],
+    *,
+    draw_target_min_rate: float,
+    draw_target_max_rate: float,
+) -> None:
+    """Vul de draw-rate deterministisch aan met de goedkoopste geldige kandidaten."""
+
+    if not rows:
+        return
+    if draw_target_min_rate > draw_target_max_rate:
+        raise ValueError("draw_target_min_rate mag niet hoger zijn dan draw_target_max_rate")
+
+    minimum = ceil(len(rows) * draw_target_min_rate)
+    maximum = int(len(rows) * draw_target_max_rate)
+    target = min(minimum, maximum)
+    draw_count = sum(
+        int(row["recommended_goals_a"]) == int(row["recommended_goals_b"]) for row in rows
+    )
+    if draw_count >= target:
+        return
+
+    candidates = sorted(
+        (
+            float(row["draw_ev_loss"]),
+            str(row["match_id"]),
+            row,
+        )
+        for row in rows
+        if bool(row["draw_candidate"])
+        and int(row["recommended_goals_a"]) != int(row["recommended_goals_b"])
+    )
+    for _, _, row in candidates:
+        if draw_count >= target or draw_count >= maximum:
+            break
+        draw = next(
+            candidate
+            for candidate in row["_score_candidates"]  # type: ignore[union-attr]
+            if candidate.score == row["best_draw_score"]
+        )
+        _apply_candidate(row, draw, "diversified_realistic")
+        row["draw_candidate"] = True
+        row["draw_selected_reason"] = DRAW_TARGET_REASON
+        row["selection_reason"] = DRAW_TARGET_REASON
+        row["recommendation_reason"] = DRAW_TARGET_REASON
+        draw_count += 1
 
 
 def diversify_rows(

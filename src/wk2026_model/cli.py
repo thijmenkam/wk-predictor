@@ -1489,6 +1489,17 @@ def _print_score_selection_report(frame: pd.DataFrame) -> None:
     typer.echo(f"Gewijzigde scores: {len(changed)}")
     typer.echo(f"Totale EV-loss: {total_loss:.4f}")
     typer.echo(f"Gemiddelde EV-loss: {average_loss:.4f}")
+    draw_before = int(
+        frame["best_ev_score"].str.split("-").apply(lambda score: score[0] == score[1]).sum()
+    )
+    draw_after = int((frame["recommended_goals_a"] == frame["recommended_goals_b"]).sum())
+    changed_to_draw = frame[
+        (frame["recommended_goals_a"] == frame["recommended_goals_b"])
+        & (frame["best_ev_score"] != frame["recommended_score"])
+    ]
+    typer.echo(f"Draws voor/na: {draw_before}/{draw_after}")
+    typer.echo(f"Gewijzigd naar draw: {len(changed_to_draw)}")
+    typer.echo(f"EV-loss draw adjustments: {float(changed_to_draw['ev_loss_vs_best'].sum()):.4f}")
     typer.echo("Top gewijzigde matches:")
     for row in (
         changed.sort_values(["ev_loss_vs_best", "match_id"], ascending=[False, True])
@@ -1663,6 +1674,13 @@ def export_pool_predictions_command(
         score_selection_strategy=score_selection_strategy.value,
         ev_tolerance=ev_tolerance,
         max_extra_total_goals=max_extra_total_goals,
+        draw_target_min_rate=config.score_selection.draw_target_min_rate,
+        draw_target_max_rate=config.score_selection.draw_target_max_rate,
+        draw_ev_tolerance=config.score_selection.draw_ev_tolerance,
+        prefer_draw_if_market_draw_high=(
+            config.score_selection.prefer_draw_if_market_draw_high
+        ),
+        market_draw_threshold=config.score_selection.market_draw_threshold,
     )
 
     filter_parts: list[str] = []
@@ -2452,6 +2470,13 @@ def export_basic_predictions_command(
             score_selection_strategy=score_selection_strategy.value,
             ev_tolerance=ev_tolerance,
             max_extra_total_goals=max_extra_total_goals,
+            draw_target_min_rate=config.score_selection.draw_target_min_rate,
+            draw_target_max_rate=config.score_selection.draw_target_max_rate,
+            draw_ev_tolerance=config.score_selection.draw_ev_tolerance,
+            prefer_draw_if_market_draw_high=(
+                config.score_selection.prefer_draw_if_market_draw_high
+            ),
+            market_draw_threshold=config.score_selection.market_draw_threshold,
         )
         round_one_frame = pd.read_csv(pool_path)
     else:
@@ -2476,6 +2501,13 @@ def export_basic_predictions_command(
                     score_selection_strategy=score_selection_strategy.value,
                     ev_tolerance=ev_tolerance,
                     max_extra_total_goals=max_extra_total_goals,
+                    draw_target_min_rate=config.score_selection.draw_target_min_rate,
+                    draw_target_max_rate=config.score_selection.draw_target_max_rate,
+                    draw_ev_tolerance=config.score_selection.draw_ev_tolerance,
+                    prefer_draw_if_market_draw_high=(
+                        config.score_selection.prefer_draw_if_market_draw_high
+                    ),
+                    market_draw_threshold=config.score_selection.market_draw_threshold,
                 )
             )
         finally:
@@ -2509,6 +2541,11 @@ def export_basic_predictions_command(
                 "selection_reason": row.selection_reason,
                 "realism_score": row.realism_score,
                 "score_rank_by_ev": row.score_rank_by_ev,
+                "best_draw_score": row.best_draw_score,
+                "best_draw_ev": row.best_draw_ev,
+                "draw_ev_loss": row.draw_ev_loss,
+                "draw_candidate": row.draw_candidate,
+                "draw_selected_reason": row.draw_selected_reason,
             }
             for row in round_one_frame.itertuples()
         ],

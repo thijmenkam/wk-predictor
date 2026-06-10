@@ -19,3 +19,8 @@ score_selection:
   ev_tolerance: 0.02
   max_extra_total_goals: 2
   prefer_realistic_score_distribution: true
+  draw_target_min_rate: 0.18
+  draw_target_max_rate: 0.32
+  draw_ev_tolerance: 0.3
+  prefer_draw_if_market_draw_high: true
+  market_draw_threshold: 0.25

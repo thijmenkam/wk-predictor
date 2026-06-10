@@ -40,6 +40,11 @@ class ScoreSelectionConfig(BaseModel):
     ev_tolerance: float = Field(default=0.02, ge=0)
     max_extra_total_goals: int = Field(default=2, ge=0)
     prefer_realistic_score_distribution: bool = True
+    draw_target_min_rate: float = Field(default=0.18, ge=0, le=1)
+    draw_target_max_rate: float = Field(default=0.32, ge=0, le=1)
+    draw_ev_tolerance: float = Field(default=0.3, ge=0)
+    prefer_draw_if_market_draw_high: bool = True
+    market_draw_threshold: float = Field(default=0.25, ge=0, le=1)
 
 
 class GroupStageScoringConfig(BaseModel):

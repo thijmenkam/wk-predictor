@@ -35,10 +35,14 @@ from wk2026_model.pool.probabilities import (
     select_score_grid,
 )
 from wk2026_model.pool.score_selection import (
+    DRAW_PROBABILITY_REASON,
     SCORE_SELECTION_STRATEGIES,
+    _apply_candidate,
+    apply_draw_target,
     choose_realistic,
     diversify_rows,
     eligible_candidates,
+    mark_draw_candidate,
     score_candidates,
     selection_diagnostics,
 )
@@ -193,6 +197,11 @@ POOL_GROUP_PREDICTION_COLUMNS = [
     "selection_reason",
     "realism_score",
     "score_rank_by_ev",
+    "best_draw_score",
+    "best_draw_ev",
+    "draw_ev_loss",
+    "draw_candidate",
+    "draw_selected_reason",
 ]
 FRONTEND_MATCH_COLUMNS = [
     "match_id",
@@ -379,6 +388,11 @@ def _group_match_prediction_rows(
     score_selection_strategy: str = "max_ev",
     ev_tolerance: float = 0.02,
     max_extra_total_goals: int = 2,
+    draw_target_min_rate: float = 0.18,
+    draw_target_max_rate: float = 0.32,
+    draw_ev_tolerance: float = 0.3,
+    prefer_draw_if_market_draw_high: bool = True,
+    market_draw_threshold: float = 0.25,
 ) -> list[dict[str, Any]]:
     """Bereken exportvelden voor alle groepswedstrijden zonder I/O uit te voeren."""
 
@@ -465,8 +479,7 @@ def _group_match_prediction_rows(
             else None
         )
         market_probs = selection.market_probs or (None, None, None)
-        rows.append(
-            {
+        row = {
                 "match_id": fixture.match_id,
                 "stage": fixture.stage,
                 "group": fixture.group,
@@ -532,12 +545,36 @@ def _group_match_prediction_rows(
                 **diagnostics,
                 "_score_candidates": candidates,
             }
+        mark_draw_candidate(
+            row,
+            draw_ev_tolerance=draw_ev_tolerance,
+            prefer_draw_if_market_draw_high=prefer_draw_if_market_draw_high,
+            market_draw_threshold=market_draw_threshold,
         )
+        if (
+            score_selection_strategy == "max_ev_with_realism"
+            and bool(row["draw_candidate"])
+            and selected_candidate.goals_a != selected_candidate.goals_b
+        ):
+            draw = next(
+                candidate for candidate in candidates if candidate.score == row["best_draw_score"]
+            )
+            _apply_candidate(row, draw, "max_ev_with_realism")
+            row["draw_candidate"] = True
+            row["draw_selected_reason"] = DRAW_PROBABILITY_REASON
+            row["selection_reason"] = DRAW_PROBABILITY_REASON
+            row["recommendation_reason"] = DRAW_PROBABILITY_REASON
+        rows.append(row)
     if score_selection_strategy == "diversified_realistic":
         diversify_rows(
             rows,
             ev_tolerance=ev_tolerance,
             max_extra_total_goals=max_extra_total_goals,
+        )
+        apply_draw_target(
+            rows,
+            draw_target_min_rate=draw_target_min_rate,
+            draw_target_max_rate=draw_target_max_rate,
         )
     for row in rows:
         row.pop("_score_candidates", None)
@@ -578,6 +615,11 @@ def write_pool_group_predictions_csv(
     score_selection_strategy: str = "max_ev",
     ev_tolerance: float = 0.02,
     max_extra_total_goals: int = 2,
+    draw_target_min_rate: float = 0.18,
+    draw_target_max_rate: float = 0.32,
+    draw_ev_tolerance: float = 0.3,
+    prefer_draw_if_market_draw_high: bool = True,
+    market_draw_threshold: float = 0.25,
 ) -> Path:
     """Schrijf direct invulbare pouleadviezen voor alle groepswedstrijden."""
 
@@ -600,6 +642,11 @@ def write_pool_group_predictions_csv(
         score_selection_strategy=score_selection_strategy,
         ev_tolerance=ev_tolerance,
         max_extra_total_goals=max_extra_total_goals,
+        draw_target_min_rate=draw_target_min_rate,
+        draw_target_max_rate=draw_target_max_rate,
+        draw_ev_tolerance=draw_ev_tolerance,
+        prefer_draw_if_market_draw_high=prefer_draw_if_market_draw_high,
+        market_draw_threshold=market_draw_threshold,
     )
     pd.DataFrame(rows, columns=POOL_GROUP_PREDICTION_COLUMNS).to_csv(output_path, index=False)
     return output_path

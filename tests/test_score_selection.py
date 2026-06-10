@@ -8,9 +8,12 @@ from wk2026_model.data.loaders import load_fixtures, load_teams
 from wk2026_model.outputs.export import write_pool_group_predictions_csv
 from wk2026_model.pool.score_selection import (
     ALTERNATIVE_REASON,
+    DRAW_TARGET_REASON,
+    apply_draw_target,
     choose_realistic,
     diversify_rows,
     eligible_candidates,
+    mark_draw_candidate,
     score_candidates,
     selection_diagnostics,
 )
@@ -123,7 +126,65 @@ def test_max_ev_export_preserves_current_score_and_exports_diagnostics(
     assert {
         "best_ev_score",
         "best_ev",
+        "best_draw_score",
+        "best_draw_ev",
+        "draw_ev_loss",
+        "draw_candidate",
+        "draw_selected_reason",
         "recommended_ev",
         "selection_reason",
         "realism_score",
     }.issubset(explicit.columns)
+
+
+def _draw_row(match_id: str, *, draw_ev_loss: float, p_draw: float = 0.30) -> dict:
+    candidates = _candidates()
+    best = candidates[0]
+    diagnostics = selection_diagnostics(
+        candidates, best, strategy="diversified_realistic", candidate_count=3
+    )
+    diagnostics["draw_ev_loss"] = draw_ev_loss
+    row = {
+        "match_id": match_id,
+        "p_draw": p_draw,
+        "model_p_draw": p_draw,
+        "source_used": "model",
+        "recommended_score": best.score,
+        "recommended_goals_a": best.goals_a,
+        "recommended_goals_b": best.goals_b,
+        "expected_pool_points": best.ev,
+        "recommended_score_probability": best.probability,
+        "recommendation_reason": diagnostics["selection_reason"],
+        "final_recommended_score": best.score,
+        "expected_pool_points_final": best.ev,
+        "_score_candidates": candidates,
+        **diagnostics,
+    }
+    mark_draw_candidate(
+        row,
+        draw_ev_tolerance=0.025,
+        prefer_draw_if_market_draw_high=True,
+        market_draw_threshold=0.25,
+    )
+    return row
+
+
+def test_draw_candidate_requires_close_ev_and_high_draw_probability() -> None:
+    close = _draw_row("close", draw_ev_loss=0.02)
+    too_far = _draw_row("far", draw_ev_loss=0.03)
+    low_probability = _draw_row("low", draw_ev_loss=0.02, p_draw=0.20)
+
+    assert close["draw_candidate"] is True
+    assert too_far["draw_candidate"] is False
+    assert low_probability["draw_candidate"] is False
+
+
+def test_batch_draw_target_uses_lowest_ev_loss_and_respects_maximum() -> None:
+    rows = [_draw_row(f"M-{index}", draw_ev_loss=0.001 * (index + 1)) for index in range(8)]
+
+    apply_draw_target(rows, draw_target_min_rate=0.25, draw_target_max_rate=0.25)
+
+    selected = [row for row in rows if row["recommended_goals_a"] == row["recommended_goals_b"]]
+    assert len(selected) == 2
+    assert [row["match_id"] for row in selected] == ["M-0", "M-1"]
+    assert all(row["draw_selected_reason"] == DRAW_TARGET_REASON for row in selected)
