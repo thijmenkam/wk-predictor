@@ -1,3 +1,8 @@
+# Polymarket
+
+This document describes read-only discovery and local artifact processing.
+Prediction commands never depend on a live API call.
+
 Verdiep de Polymarket-integratie zodat we systematisch alle relevante WK 2026 markten kunnen ontdekken, classificeren en inspecteren, zonder scraping, zonder trading en zonder prediction defaults te wijzigen.
 
 Context:

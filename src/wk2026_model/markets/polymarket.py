@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from csv import DictReader, DictWriter
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -15,6 +15,37 @@ import yaml
 
 from wk2026_model.data.loaders import load_fixtures, load_teams
 from wk2026_model.data.schemas import Fixture
+from wk2026_model.markets.market_models import (
+    EntityAliases,
+    MarketFixtureMapping,
+    MatchOutcomeTokens,
+    PolymarketExactScoreMarket,
+    PolymarketMarketCandidate,
+    PolymarketMatchMarket,
+    PolymarketOutcomeToken,
+    PolymarketTokenPrice,
+)
+from wk2026_model.markets.polymarket_mapping import (
+    canonical_match_key,
+    load_entity_aliases,
+    map_match_market_to_fixture,
+    normalize_team_name,
+)
+
+__all__ = [
+    "EntityAliases",
+    "MarketFixtureMapping",
+    "MatchOutcomeTokens",
+    "PolymarketExactScoreMarket",
+    "PolymarketMarketCandidate",
+    "PolymarketMatchMarket",
+    "PolymarketOutcomeToken",
+    "PolymarketTokenPrice",
+    "canonical_match_key",
+    "load_entity_aliases",
+    "map_match_market_to_fixture",
+    "normalize_team_name",
+]
 
 
 class PolymarketError(RuntimeError):
@@ -191,102 +222,6 @@ class PolymarketGammaClient:
         if not isinstance(payload, dict):
             raise PolymarketParseError(f"{self.base_url}/events/slug/{slug}", repr(payload)[:500])
         return payload
-
-
-@dataclass(frozen=True)
-class PolymarketOutcomeToken:
-    outcome: str
-    token_id: str
-    market_slug: str
-    market_id: str | None
-    question: str | None
-
-
-@dataclass(frozen=True)
-class PolymarketTokenPrice:
-    token_id: str
-    bid: float | None
-    ask: float | None
-    mid: float | None
-    spread: float | None
-    raw_buy: dict[str, Any] | None
-    raw_sell: dict[str, Any] | None
-    errors: list[str]
-
-
-@dataclass(frozen=True)
-class PolymarketMarketCandidate:
-    market_id: str | None
-    slug: str | None
-    question: str | None
-    title: str | None
-    active: bool | None
-    closed: bool | None
-    archived: bool | None
-    enable_order_book: bool | None
-    volume: float | None
-    liquidity: float | None
-    outcomes_count: int | None
-    clob_token_ids_count: int | None
-    has_clob_tokens: bool
-    raw_outcomes_preview: str | None
-
-
-@dataclass(frozen=True)
-class EntityAliases:
-    teams: dict[str, str]
-
-
-@dataclass(frozen=True)
-class PolymarketMatchMarket:
-    market_id: str | None
-    market_slug: str
-    question: str
-    home_raw: str
-    away_raw: str
-    home: str | None
-    away: str | None
-    outcomes: list[str]
-    token_ids: list[str]
-    active: bool | None
-    volume: float | None
-    liquidity: float | None
-
-
-@dataclass(frozen=True)
-class MatchOutcomeTokens:
-    home_token: str
-    draw_token: str
-    away_token: str
-
-
-@dataclass(frozen=True)
-class MarketFixtureMapping:
-    fixture_id: str | None
-    home: str | None
-    away: str | None
-    market_slug: str
-    status: Literal["matched", "ambiguous", "missing"]
-
-
-@dataclass(frozen=True)
-class PolymarketExactScoreMarket:
-    market_id: str | None
-    market_slug: str | None
-    question: str | None
-    team_a_raw: str
-    team_b_raw: str
-    team_a: str | None
-    team_b: str | None
-    goals_a: int | None
-    goals_b: int | None
-    yes_token_id: str
-    active: bool | None
-    closed: bool | None
-    enable_order_book: bool | None
-    volume: float | None
-    liquidity: float | None
-    score_type: Literal["exact", "other"] = "exact"
 
 
 class PolymarketClobClient:
@@ -670,69 +605,6 @@ def extract_match_outcomes(market: dict[str, Any], fixture: Fixture) -> MatchOut
         draw_token=token_ids[positions["draw"]],
         away_token=token_ids[positions["away"]],
     )
-
-
-def map_match_market_to_fixture(
-    market: PolymarketMatchMarket, fixtures: list[Fixture]
-) -> MarketFixtureMapping:
-    candidates = [
-        fixture
-        for fixture in fixtures
-        if fixture.team_a == market.home and fixture.team_b == market.away
-    ]
-    status: Literal["matched", "ambiguous", "missing"]
-    if len(candidates) == 1:
-        status = "matched"
-    elif len(candidates) > 1:
-        status = "ambiguous"
-    else:
-        status = "missing"
-    return MarketFixtureMapping(
-        fixture_id=candidates[0].match_id if status == "matched" else None,
-        home=market.home,
-        away=market.away,
-        market_slug=market.market_slug,
-        status=status,
-    )
-
-
-def load_entity_aliases(path: Path | str) -> EntityAliases:
-    payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(payload, dict) or not isinstance(payload.get("teams"), dict):
-        raise ValueError("Polymarket entity aliases must contain a teams mapping")
-    return EntityAliases(
-        teams={str(key).strip(): str(value).strip() for key, value in payload["teams"].items()}
-    )
-
-
-def normalize_team_name(raw_name: str, aliases: EntityAliases, valid_teams: set[str]) -> str | None:
-    if raw_name in aliases.teams:
-        return aliases.teams[raw_name]
-    folded_aliases = {key.casefold(): value for key, value in aliases.teams.items()}
-    if raw_name.casefold() in folded_aliases:
-        return folded_aliases[raw_name.casefold()]
-    if raw_name in valid_teams:
-        return raw_name
-    folded_teams = {team.casefold(): team for team in valid_teams}
-    return folded_teams.get(raw_name.casefold())
-
-
-def canonical_match_key(team_a: str, team_b: str, group: str | None = None) -> str:
-    """Build an order-insensitive fixture key using the shared team aliases."""
-
-    aliases_path = Path("data/raw/polymarket/entity_aliases.yaml")
-    aliases = (
-        load_entity_aliases(aliases_path) if aliases_path.exists() else EntityAliases(teams={})
-    )
-    folded_aliases = {key.casefold(): value for key, value in aliases.teams.items()}
-
-    def normalized(name: str) -> str:
-        stripped = name.strip()
-        return folded_aliases.get(stripped.casefold(), stripped).casefold()
-
-    low, high = sorted((normalized(team_a), normalized(team_b)))
-    prefix = f"{group.strip().upper()}|" if group and group.strip() else ""
-    return f"{prefix}{low}|{high}"
 
 
 def _outcome_aliases(value: Any, default: list[str]) -> list[str]:

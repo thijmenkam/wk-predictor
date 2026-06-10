@@ -10,7 +10,7 @@ from typing import Any
 
 import pandas as pd
 
-from wk2026_model.markets.polymarket import canonical_match_key
+from wk2026_model.markets.polymarket_mapping import canonical_match_key, canonical_team_name
 
 COMPARISON_COLUMNS = [
     "fixture_id",
@@ -80,7 +80,7 @@ def _optional_round(frame: pd.DataFrame, *columns: str) -> pd.Series:
 
 
 def _normalized_team(name: str) -> str:
-    return canonical_match_key(name, name).split("|", 1)[0]
+    return canonical_team_name(name)
 
 
 def load_model_fixture_probabilities(run_dir: Path | str) -> pd.DataFrame:

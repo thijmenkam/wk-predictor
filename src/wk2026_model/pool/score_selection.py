@@ -237,7 +237,7 @@ def apply_draw_target(
             for candidate in row["_score_candidates"]  # type: ignore[union-attr]
             if candidate.score == row["best_draw_score"]
         )
-        _apply_candidate(row, draw, "diversified_realistic")
+        apply_candidate(row, draw, "diversified_realistic")
         row["draw_candidate"] = True
         row["draw_selected_reason"] = DRAW_TARGET_REASON
         row["selection_reason"] = DRAW_TARGET_REASON
@@ -290,14 +290,16 @@ def diversify_rows(
             continue
         counts[current] -= 1
         used_matches.add(match_id)
-        _apply_candidate(row, alternative, "diversified_realistic")
+        apply_candidate(row, alternative, "diversified_realistic")
 
 
-def _apply_candidate(
+def apply_candidate(
     row: dict[str, object],
     selected: ScoreCandidate,
     strategy: ScoreSelectionStrategy,
 ) -> None:
+    """Apply one selected candidate and keep all exported diagnostics in sync."""
+
     candidates = row["_score_candidates"]
     eligible_count = int(row["candidate_scores_within_tolerance"])
     diagnostics = selection_diagnostics(
@@ -314,3 +316,8 @@ def _apply_candidate(
     row["recommendation_reason"] = diagnostics["selection_reason"]
     row["final_recommended_score"] = selected.score
     row["expected_pool_points_final"] = selected.ev
+
+
+# Backward-compatible private alias for callers outside the package that may
+# have imported the old helper during the iterative build phase.
+_apply_candidate = apply_candidate

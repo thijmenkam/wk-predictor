@@ -16,6 +16,7 @@ from wk2026_model.config import (
 )
 from wk2026_model.data.schemas import Fixture, Team
 from wk2026_model.models.poisson import score_grid
+from wk2026_model.outputs.export_utils import create_run_dir
 from wk2026_model.pool.final_standings import (
     EXACT_PROBABILITY_FIELDS,
     POSITIONS,
@@ -37,7 +38,7 @@ from wk2026_model.pool.probabilities import (
 from wk2026_model.pool.score_selection import (
     DRAW_PROBABILITY_REASON,
     SCORE_SELECTION_STRATEGIES,
-    _apply_candidate,
+    apply_candidate,
     apply_draw_target,
     choose_realistic,
     diversify_rows,
@@ -52,6 +53,8 @@ from wk2026_model.simulation.tournament import (
     TournamentSummary,
     TournamentTeamSummary,
 )
+
+__all__ = ["create_run_dir"]
 
 if TYPE_CHECKING:
     from wk2026_model.simulation.scorers import (
@@ -255,26 +258,6 @@ FRONTEND_TOP_SCORER_COLUMNS = [
     "recommended_score_value",
     "is_recommended",
 ]
-
-
-def create_run_dir(
-    output_dir: str | Path,
-    run_type: str,
-    seed: int,
-    *,
-    created_at: datetime | None = None,
-) -> Path:
-    """Maak een unieke, herkenbare directory voor één simulatierun."""
-
-    timestamp = (created_at or datetime.now(UTC)).strftime("%Y%m%d-%H%M%S")
-    base_path = Path(output_dir) / f"{timestamp}-{run_type}-seed{seed}"
-    run_path = base_path
-    suffix = 2
-    while run_path.exists():
-        run_path = Path(f"{base_path}-{suffix}")
-        suffix += 1
-    run_path.mkdir(parents=True)
-    return run_path
 
 
 def write_tournament_summary_csv(summary: TournamentSummary, path: str | Path) -> Path:
@@ -559,7 +542,7 @@ def _group_match_prediction_rows(
             draw = next(
                 candidate for candidate in candidates if candidate.score == row["best_draw_score"]
             )
-            _apply_candidate(row, draw, "max_ev_with_realism")
+            apply_candidate(row, draw, "max_ev_with_realism")
             row["draw_candidate"] = True
             row["draw_selected_reason"] = DRAW_PROBABILITY_REASON
             row["selection_reason"] = DRAW_PROBABILITY_REASON
@@ -1274,7 +1257,7 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
         "limitations",
     ]
     metadata = {key: source_metadata.get(key) for key in metadata_keys}
-    metadata["generated_at"] = datetime.now(UTC).isoformat()
+    metadata["generated_at"] = source_metadata.get("generated_at")
     metadata["market_coverage"] = metadata.get("market_coverage_round1", 0)
     metadata["market_coverage"] = source_metadata.get("market_coverage_round1", 0)
     metadata["exact_score_market_coverage"] = source_metadata.get("exact_score_market_coverage", 0)
@@ -1315,7 +1298,7 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
         )
     payload = {
         "schema_version": "2.1",
-        "generated_at": metadata["generated_at"],
+        "generated_at": datetime.now(UTC).isoformat(),
         "source_run_dir": str(run_path),
         "metadata": metadata,
         "coverage": coverage,

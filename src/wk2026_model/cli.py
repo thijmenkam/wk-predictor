@@ -73,6 +73,7 @@ from wk2026_model.outputs.export import (
     write_top_scorer_recommendation_csv,
     write_tournament_summary_csv,
 )
+from wk2026_model.outputs.frontend import export_frontend_data_from_run
 from wk2026_model.outputs.market_compare import (
     compare_market_to_model,
     default_market_comparison_dir,
@@ -2190,8 +2191,7 @@ def export_frontend_data_command(
 
     if run_dir is not None:
         try:
-            write_frontend_data_json(run_dir, output)
-            payload = json.loads(output.read_text(encoding="utf-8"))
+            payload = export_frontend_data_from_run(run_dir, output)
         except (OSError, ValueError, KeyError) as exc:
             typer.echo(f"Frontenddata kon niet worden geëxporteerd: {exc}", err=True)
             raise typer.Exit(code=1) from exc

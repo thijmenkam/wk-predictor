@@ -16,11 +16,8 @@ import yaml
 
 from wk2026_model.data.loaders import load_fixtures, load_teams
 from wk2026_model.data.schemas import Fixture
-from wk2026_model.markets.polymarket import (
-    PolymarketGammaClient,
-    canonical_match_key,
-    extract_event_markets,
-)
+from wk2026_model.markets.polymarket import PolymarketGammaClient, extract_event_markets
+from wk2026_model.markets.polymarket_mapping import canonical_match_key
 
 MarketType = Literal[
     "outright_winner",

@@ -9,7 +9,7 @@ from typing import Literal
 import pandas as pd
 
 from wk2026_model.data.schemas import Fixture
-from wk2026_model.markets.polymarket import canonical_match_key
+from wk2026_model.markets.polymarket_mapping import canonical_match_key
 
 ProbabilitySource = Literal["model_only", "market_only", "hybrid"]
 ScoreProbabilitySource = Literal["model_score_grid", "market_exact_score", "hybrid_exact_score"]
