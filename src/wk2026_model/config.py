@@ -1,7 +1,7 @@
 """Configuratie laden en valideren."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, Field
@@ -47,6 +47,23 @@ class ScoreSelectionConfig(BaseModel):
     market_draw_threshold: float = Field(default=0.25, ge=0, le=1)
 
 
+class ResultsConfig(BaseModel):
+    update_elo: bool = False
+    elo_k_factor: float = Field(default=30, gt=0)
+    home_advantage: float = 0
+
+
+class DixonColesConfig(BaseModel):
+    enabled: bool = False
+    rho: float = -0.10
+    normalize_after_correction: bool = True
+
+
+class ScoreModelConfig(BaseModel):
+    strategy: Literal["poisson", "dixon_coles_correction"] = "poisson"
+    dixon_coles: DixonColesConfig = Field(default_factory=DixonColesConfig)
+
+
 class GroupStageScoringConfig(BaseModel):
     """Punten voor uitslag en exacte score in de groepsfase."""
 
@@ -86,6 +103,8 @@ class ProjectConfig(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
     top_scorers: TopScorerModelConfig = Field(default_factory=TopScorerModelConfig)
     score_selection: ScoreSelectionConfig = Field(default_factory=ScoreSelectionConfig)
+    results: ResultsConfig = Field(default_factory=ResultsConfig)
+    score_model: ScoreModelConfig = Field(default_factory=ScoreModelConfig)
 
 
 def load_config(path: str | Path = "configs/base.yaml") -> ProjectConfig:

@@ -24,3 +24,15 @@ score_selection:
   draw_ev_tolerance: 0.3
   prefer_draw_if_market_draw_high: true
   market_draw_threshold: 0.25
+
+results:
+  update_elo: false
+  elo_k_factor: 30
+  home_advantage: 0
+
+score_model:
+  strategy: poisson
+  dixon_coles:
+    enabled: false
+    rho: -0.10
+    normalize_after_correction: true

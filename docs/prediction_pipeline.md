@@ -6,6 +6,20 @@ The baseline converts Elo difference into expected goals and evaluates an
 independent Poisson score grid. The model produces home-win, draw, away-win,
 and exact-score probabilities.
 
+The default `score_model.strategy` remains `poisson`. The experimental
+`dixon_coles_correction` strategy multiplies only the 0-0, 0-1, 1-0, and 1-1
+cells by the Dixon-Coles tau correction and normalizes the grid afterwards.
+`rho` controls the size and direction of this low-score adjustment; `rho=0`
+is equivalent to the Poisson baseline.
+
+For hybrid predictions the order is Poisson grid, optional Dixon-Coles
+correction, 1X2 market/hybrid bucket recalibration, EV calculation, and score
+selection.
+
+The configured rho is manually chosen and is not fitted to historical data.
+Future work can fit rho together with attack and defence strengths using
+historical international results. Time weighting is not implemented.
+
 ## Polymarket 1X2
 
 Processed local `group_stage_match_odds.csv` data can supply 1X2 probabilities.

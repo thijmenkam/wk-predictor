@@ -1,5 +1,24 @@
 # WK 2026 Predictor
 
+## Voorspellen met gespeelde resultaten
+
+Na ronde 1:
+
+```bash
+uv run wk2026 validate-results --results data/raw/results.csv
+uv run wk2026 show-group-state --results data/raw/results.csv
+uv run wk2026 export-pool-predictions --match-round 2 --results data/raw/results.csv --update-elo-from-results
+```
+
+Na ronde 2:
+
+```bash
+uv run wk2026 export-pool-predictions --match-round 3 --results data/raw/results.csv --update-elo-from-results
+```
+
+Dit is opt-in; zonder `--results` blijven de bestaande pre-tournament defaults
+ongewijzigd. Zie [docs/results_workflow.md](docs/results_workflow.md).
+
 Een lichtgewicht Python-project voor een lokaal WK 2026-voorspelmodel. Het model ondersteunt
 wedstrijdverwachtingen met Elo en onafhankelijke Poisson-verdelingen, reproduceerbare Monte
 Carlo-simulaties, CSV-gedreven team- en fixturedata en een command-line-interface.

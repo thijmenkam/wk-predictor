@@ -35,6 +35,7 @@ from wk2026_model.pool.probabilities import (
     select_pool_probabilities,
     select_score_grid,
 )
+from wk2026_model.pool.scoring import ScoreProbability
 from wk2026_model.pool.score_selection import (
     DRAW_PROBABILITY_REASON,
     SCORE_SELECTION_STRATEGIES,
@@ -46,6 +47,11 @@ from wk2026_model.pool.score_selection import (
     mark_draw_candidate,
     score_candidates,
     selection_diagnostics,
+)
+from wk2026_model.results import GroupStageState
+from wk2026_model.simulation.dixon_coles import (
+    apply_dixon_coles_correction,
+    score_grid_outcomes,
 )
 from wk2026_model.simulation.match import predict_match, recommend_pool_score
 from wk2026_model.simulation.tournament import (
@@ -205,6 +211,28 @@ POOL_GROUP_PREDICTION_COLUMNS = [
     "draw_ev_loss",
     "draw_candidate",
     "draw_selected_reason",
+    "already_played",
+    "result_goals_a",
+    "result_goals_b",
+    "result_score",
+    "points_before_team_a",
+    "points_before_team_b",
+    "group_position_before_team_a",
+    "group_position_before_team_b",
+    "results_context",
+    "elo_updated_from_results",
+    "elo_a_before_results",
+    "elo_b_before_results",
+    "elo_a_after_results",
+    "elo_b_after_results",
+    "score_model_strategy",
+    "dixon_coles_rho",
+    "score_grid_corrected",
+    "poisson_p_draw",
+    "corrected_p_draw",
+    "draw_delta",
+    "poisson_best_score",
+    "corrected_best_score",
 ]
 FRONTEND_MATCH_COLUMNS = [
     "match_id",
@@ -353,6 +381,11 @@ def write_group_stage_summary_csv(summary: GroupStageSummary, path: str | Path) 
     return output_path
 
 
+def _best_score(grid: dict[tuple[int, int], float]) -> str:
+    goals_a, goals_b = max(grid, key=grid.__getitem__)
+    return f"{goals_a}-{goals_b}"
+
+
 def _group_match_prediction_rows(
     fixtures: list[Fixture],
     teams: list[Team],
@@ -376,6 +409,12 @@ def _group_match_prediction_rows(
     draw_ev_tolerance: float = 0.3,
     prefer_draw_if_market_draw_high: bool = True,
     market_draw_threshold: float = 0.25,
+    results_state: GroupStageState | None = None,
+    elo_before_results: dict[str, float] | None = None,
+    elo_updated_from_results: bool = False,
+    score_model_strategy: str = "poisson",
+    dixon_coles_rho: float = -0.10,
+    normalize_dixon_coles: bool = True,
 ) -> list[dict[str, Any]]:
     """Bereken exportvelden voor alle groepswedstrijden zonder I/O uit te voeren."""
 
@@ -390,8 +429,33 @@ def _group_match_prediction_rows(
         team_a = teams_by_name[fixture.team_a]
         team_b = teams_by_name[fixture.team_b]
         prediction = predict_match(team_a, team_b, config)
+        poisson_grid = score_grid(prediction.lambda_a, prediction.lambda_b, config.max_goals)
+        poisson_total = sum(poisson_grid.values())
+        poisson_grid = {
+            score: probability / poisson_total for score, probability in poisson_grid.items()
+        }
+        poisson_items = [
+            ScoreProbability(goals_a, goals_b, probability)
+            for (goals_a, goals_b), probability in poisson_grid.items()
+        ]
+        poisson_probs = score_grid_outcomes(poisson_items)
+        corrected_items = poisson_items
+        if score_model_strategy == "dixon_coles_correction":
+            corrected_items = apply_dixon_coles_correction(
+                poisson_items,
+                prediction.lambda_a,
+                prediction.lambda_b,
+                dixon_coles_rho,
+                normalize=normalize_dixon_coles,
+            )
+        elif score_model_strategy != "poisson":
+            raise ValueError(f"unsupported score model strategy: {score_model_strategy}")
+        corrected_grid = {
+            (item.goals_a, item.goals_b): item.probability for item in corrected_items
+        }
+        corrected_probs = score_grid_outcomes(corrected_items)
         selection = select_pool_probabilities(
-            (prediction.p_win_a, prediction.p_draw, prediction.p_win_b),
+            corrected_probs,
             market_by_fixture.get(fixture.match_id),
             probability_source=probability_source,
             market_weight=market_weight,
@@ -399,14 +463,13 @@ def _group_match_prediction_rows(
             allow_missing_market=allow_missing_market,
         )
         goals_a, goals_b = prediction.most_likely_score
-        raw_grid = score_grid(prediction.lambda_a, prediction.lambda_b, config.max_goals)
         probability_grid, calibration_warning = calibrate_score_grid(
-            raw_grid,
+            corrected_grid,
             selection.model_probs,
             selection.selected_probs,
         )
         calibrated = selection.selected_probs != selection.model_probs
-        base_grid = probability_grid if calibrated else raw_grid
+        base_grid = probability_grid if calibrated else corrected_grid
         score_selection = select_score_grid(
             base_grid,
             (market_exact_score_odds or {}).get(fixture.match_id),
@@ -528,6 +591,56 @@ def _group_match_prediction_rows(
                 **diagnostics,
                 "_score_candidates": candidates,
             }
+        result = (
+            results_state.results_by_match_id.get(fixture.match_id)
+            if results_state is not None
+            else None
+        )
+        ranked = (
+            results_state.ranked_group(fixture.group)
+            if results_state and fixture.group
+            else []
+        )
+        positions = {standing.team: index for index, standing in enumerate(ranked, start=1)}
+        state_rows = results_state.standings.get(fixture.group, {}) if results_state else {}
+        row.update(
+            {
+                "already_played": result is not None,
+                "result_goals_a": result.goals_a if result else None,
+                "result_goals_b": result.goals_b if result else None,
+                "result_score": f"{result.goals_a}-{result.goals_b}" if result else None,
+                "points_before_team_a": (
+                    state_rows[team_a.name].points if team_a.name in state_rows else None
+                ),
+                "points_before_team_b": (
+                    state_rows[team_b.name].points if team_b.name in state_rows else None
+                ),
+                "group_position_before_team_a": positions.get(team_a.name),
+                "group_position_before_team_b": positions.get(team_b.name),
+                "results_context": results_state is not None,
+                "elo_updated_from_results": elo_updated_from_results,
+                "elo_a_before_results": (
+                    elo_before_results.get(team_a.name) if elo_before_results else team_a.elo
+                ),
+                "elo_b_before_results": (
+                    elo_before_results.get(team_b.name) if elo_before_results else team_b.elo
+                ),
+                "elo_a_after_results": team_a.elo,
+                "elo_b_after_results": team_b.elo,
+                "score_model_strategy": score_model_strategy,
+                "dixon_coles_rho": (
+                    dixon_coles_rho
+                    if score_model_strategy == "dixon_coles_correction"
+                    else None
+                ),
+                "score_grid_corrected": score_model_strategy == "dixon_coles_correction",
+                "poisson_p_draw": poisson_probs[1],
+                "corrected_p_draw": corrected_probs[1],
+                "draw_delta": corrected_probs[1] - poisson_probs[1],
+                "poisson_best_score": _best_score(poisson_grid),
+                "corrected_best_score": _best_score(corrected_grid),
+            }
+        )
         mark_draw_candidate(
             row,
             draw_ev_tolerance=draw_ev_tolerance,
@@ -603,6 +716,12 @@ def write_pool_group_predictions_csv(
     draw_ev_tolerance: float = 0.3,
     prefer_draw_if_market_draw_high: bool = True,
     market_draw_threshold: float = 0.25,
+    results_state: GroupStageState | None = None,
+    elo_before_results: dict[str, float] | None = None,
+    elo_updated_from_results: bool = False,
+    score_model_strategy: str = "poisson",
+    dixon_coles_rho: float = -0.10,
+    normalize_dixon_coles: bool = True,
 ) -> Path:
     """Schrijf direct invulbare pouleadviezen voor alle groepswedstrijden."""
 
@@ -630,6 +749,12 @@ def write_pool_group_predictions_csv(
         draw_ev_tolerance=draw_ev_tolerance,
         prefer_draw_if_market_draw_high=prefer_draw_if_market_draw_high,
         market_draw_threshold=market_draw_threshold,
+        results_state=results_state,
+        elo_before_results=elo_before_results,
+        elo_updated_from_results=elo_updated_from_results,
+        score_model_strategy=score_model_strategy,
+        dixon_coles_rho=dixon_coles_rho,
+        normalize_dixon_coles=normalize_dixon_coles,
     )
     pd.DataFrame(rows, columns=POOL_GROUP_PREDICTION_COLUMNS).to_csv(output_path, index=False)
     return output_path
@@ -1088,6 +1213,18 @@ def _frontend_match_records(
                     "expected_pool_points": _frontend_json_value(
                         row.get("expected_pool_points_model", row["expected_pool_points"])
                     ),
+                    "score_model_strategy": _frontend_json_value(
+                        row.get("score_model_strategy", "poisson")
+                    ),
+                    "dixon_coles_rho": _frontend_json_value(row.get("dixon_coles_rho")),
+                    "score_grid_corrected": bool(row.get("score_grid_corrected", False)),
+                    "poisson_p_draw": _frontend_json_value(row.get("poisson_p_draw")),
+                    "corrected_p_draw": _frontend_json_value(row.get("corrected_p_draw")),
+                    "draw_delta": _frontend_json_value(row.get("draw_delta")),
+                    "poisson_best_score": _frontend_json_value(row.get("poisson_best_score")),
+                    "corrected_best_score": _frontend_json_value(
+                        row.get("corrected_best_score")
+                    ),
                 },
                 "market_1x2": {
                     "available": market_available,
@@ -1249,11 +1386,22 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
         "market_weight",
         "score_probability_source",
         "market_score_weight",
+        "score_model_strategy",
+        "dixon_coles_rho",
+        "score_grid_corrected",
         "bracket_strategy",
         "rating_strategy",
         "scoring_config",
         "market_match_odds_path",
         "market_exact_score_odds_path",
+        "results_path",
+        "results_count",
+        "results_rounds_covered",
+        "results_context",
+        "update_elo_from_results",
+        "elo_k_factor",
+        "played_fixtures_count",
+        "remaining_fixtures_count",
         "limitations",
     ]
     metadata = {key: source_metadata.get(key) for key in metadata_keys}

@@ -18,6 +18,7 @@ from wk2026_model.data.schemas import (
     Team,
 )
 from wk2026_model.models.elo import lambdas_from_elo
+from wk2026_model.results import GroupStageState
 from wk2026_model.simulation.match import simulate_match
 
 BracketStrategy = Literal["official_like", "seeded_placeholder"]
@@ -177,16 +178,67 @@ def _simulate_group_stage_once_validated(
     teams: list[Team],
     config: ModelConfig,
     rng: np.random.Generator,
+    initial_state: GroupStageState | None = None,
 ) -> GroupStageResult:
     """Simuleer één groepsfase nadat de dataset eenmaal is gevalideerd."""
 
     grouped = _grouped_teams(teams)
     standings: dict[str, list[GroupStanding]] = {}
     match_goals: list[MatchGoals] = []
+    remaining_by_group: dict[str, list[object]] = defaultdict(list)
+    if initial_state is not None:
+        for fixture in initial_state.remaining_fixtures:
+            if fixture.group is not None:
+                remaining_by_group[fixture.group].append(fixture)
     for group_id in GROUP_IDS:
-        standings[group_id], group_match_goals = _simulate_group_once_with_goals(
-            group_id, grouped[group_id], config, rng
-        )
+        if initial_state is None:
+            standings[group_id], group_match_goals = _simulate_group_once_with_goals(
+                group_id, grouped[group_id], config, rng
+            )
+        else:
+            current = {
+                name: row.model_copy(deep=True)
+                for name, row in initial_state.standings[group_id].items()
+            }
+            group_match_goals = []
+            team_by_name = {team.name: team for team in grouped[group_id]}
+            for fixture in remaining_by_group[group_id]:
+                team_a = team_by_name[fixture.team_a]
+                team_b = team_by_name[fixture.team_b]
+                lambda_a, lambda_b = lambdas_from_elo(
+                    team_a.elo,
+                    team_b.elo,
+                    config.average_match_goals,
+                    config.elo_goal_coefficient,
+                )
+                goals_a, goals_b = simulate_match(lambda_a, lambda_b, rng)
+                row_a, row_b = current[team_a.name], current[team_b.name]
+                row_a.played += 1
+                row_b.played += 1
+                row_a.goals_for += goals_a
+                row_a.goals_against += goals_b
+                row_b.goals_for += goals_b
+                row_b.goals_against += goals_a
+                if goals_a > goals_b:
+                    row_a.points += 3
+                elif goals_b > goals_a:
+                    row_b.points += 3
+                else:
+                    row_a.points += 1
+                    row_b.points += 1
+                group_match_goals.append(
+                    MatchGoals(
+                        fixture.match_id,
+                        "group",
+                        team_a.name,
+                        team_b.name,
+                        goals_a,
+                        goals_b,
+                    )
+                )
+            for row in current.values():
+                row.goal_difference = row.goals_for - row.goals_against
+            standings[group_id] = sorted(current.values(), key=_standing_sort_key)
         match_goals.extend(group_match_goals)
 
     best_third_placed = select_best_third_placed([standings[group_id][2] for group_id in GROUP_IDS])
@@ -209,11 +261,13 @@ def simulate_group_stage_once(
     teams: list[Team],
     config: ModelConfig,
     rng: np.random.Generator,
+    fixtures: list[object] | None = None,
+    initial_state: GroupStageState | None = None,
 ) -> GroupStageResult:
     """Simuleer alle groepen en selecteer de beste acht nummers drie exact."""
 
     validate_teams(teams, strict=True)
-    return _simulate_group_stage_once_validated(teams, config, rng)
+    return _simulate_group_stage_once_validated(teams, config, rng, initial_state)
 
 
 def _fixture_parameters(
@@ -242,12 +296,58 @@ def simulate_group_stage(
     config: ModelConfig,
     num_simulations: int,
     rng: np.random.Generator,
+    initial_state: GroupStageState | None = None,
 ) -> GroupStageSummary:
     """Simuleer de volledige groepsfase herhaaldelijk en aggregeer teamkansen."""
 
     validate_teams(teams, strict=True)
     if num_simulations <= 0:
         raise ValueError("num_simulations must be positive")
+    if initial_state is not None:
+        results = [
+            _simulate_group_stage_once_validated(teams, config, rng, initial_state)
+            for _ in range(num_simulations)
+        ]
+        counts: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+        for result in results:
+            qualified = {team.name for team in result.qualified_teams}
+            best_thirds = {row.team for row in result.best_third_placed}
+            for rows in result.standings.values():
+                for position, row in enumerate(rows):
+                    item = counts[row.team]
+                    item[f"position_{position}"] += 1
+                    item["qualified"] += row.team in qualified
+                    item["top2"] += position < 2
+                    item["third"] += row.team in best_thirds
+                    item["points"] += row.points
+                    item["gf"] += row.goals_for
+                    item["ga"] += row.goals_against
+        denominator = float(num_simulations)
+        return GroupStageSummary(
+            teams=[
+                TeamGroupStageSummary(
+                    team=team.name,
+                    group=team.group,
+                    elo=team.elo,
+                    p_group_1st=counts[team.name]["position_0"] / denominator,
+                    p_group_2nd=counts[team.name]["position_1"] / denominator,
+                    p_group_3rd=counts[team.name]["position_2"] / denominator,
+                    p_group_4th=counts[team.name]["position_3"] / denominator,
+                    p_qualified=counts[team.name]["qualified"] / denominator,
+                    p_qualified_as_top2=counts[team.name]["top2"] / denominator,
+                    p_qualified_as_third=counts[team.name]["third"] / denominator,
+                    avg_points=counts[team.name]["points"] / denominator,
+                    avg_goals_for=counts[team.name]["gf"] / denominator,
+                    avg_goals_against=counts[team.name]["ga"] / denominator,
+                    avg_goal_difference=(
+                        counts[team.name]["gf"] - counts[team.name]["ga"]
+                    )
+                    / denominator,
+                )
+                for team in teams
+            ],
+            num_simulations=num_simulations,
+        )
 
     grouped = _grouped_teams(teams)
     ordered_teams = [team for group_id in GROUP_IDS for team in grouped[group_id]]
@@ -806,8 +906,9 @@ def _simulate_tournament_once_with_trace_validated(
     *,
     bracket_strategy: BracketStrategy = "official_like",
     bracket_path: Path | str = DEFAULT_BRACKET_PATH,
+    initial_state: GroupStageState | None = None,
 ) -> TournamentSimulationTrace:
-    group_stage = _simulate_group_stage_once_validated(teams, config, rng)
+    group_stage = _simulate_group_stage_once_validated(teams, config, rng, initial_state)
     teams_by_name = {team.name: team for team in teams}
     if bracket_strategy == "official_like":
         result, knockout_results = _simulate_bracket_with_results(
@@ -900,6 +1001,7 @@ def _simulate_tournament_once_validated(
     *,
     bracket_strategy: BracketStrategy = "official_like",
     bracket_path: Path | str = DEFAULT_BRACKET_PATH,
+    initial_state: GroupStageState | None = None,
 ) -> TournamentResult:
     return _simulate_tournament_once_with_trace_validated(
         teams,
@@ -907,6 +1009,7 @@ def _simulate_tournament_once_validated(
         rng,
         bracket_strategy=bracket_strategy,
         bracket_path=bracket_path,
+        initial_state=initial_state,
     ).result
 
 
@@ -917,6 +1020,7 @@ def simulate_tournament_once(
     *,
     bracket_strategy: BracketStrategy = "official_like",
     bracket_path: Path | str = DEFAULT_BRACKET_PATH,
+    initial_state: GroupStageState | None = None,
 ) -> TournamentResult:
     """Simuleer groepsfase, alle knock-outrondes, finale en troostfinale eenmaal."""
 
@@ -927,6 +1031,7 @@ def simulate_tournament_once(
         rng,
         bracket_strategy=bracket_strategy,
         bracket_path=bracket_path,
+        initial_state=initial_state,
     )
 
 
@@ -939,6 +1044,7 @@ def simulate_tournament(
     return_outcomes: bool = False,
     bracket_strategy: BracketStrategy = "official_like",
     bracket_path: Path | str = DEFAULT_BRACKET_PATH,
+    initial_state: GroupStageState | None = None,
 ) -> TournamentSummary:
     """Simuleer het toernooi en bewaar desgewenst ieder eindscenario."""
 
@@ -966,6 +1072,7 @@ def simulate_tournament(
             rng,
             bracket_strategy=bracket_strategy,
             bracket_path=bracket_path,
+            initial_state=initial_state,
         )
         if outcomes is not None:
             outcomes.append(

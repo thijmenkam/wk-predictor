@@ -43,6 +43,9 @@ METADATA_KEYS = (
     "market_weight",
     "market_coverage_round1",
     "model_fallback_count",
+    "score_model_strategy",
+    "dixon_coles_rho",
+    "score_grid_corrected",
 )
 POSITIONS = ("gold", "silver", "bronze", "fourth")
 

@@ -97,6 +97,14 @@ from wk2026_model.pool.probabilities import (
     load_market_exact_score_odds,
     load_market_match_odds,
 )
+from wk2026_model.results import (
+    GroupStageState,
+    MatchResult,
+    apply_elo_updates_from_results,
+    build_group_state_from_results,
+    load_results,
+    result_rounds,
+)
 from wk2026_model.simulation.group import simulate_group_once
 from wk2026_model.simulation.match import predict_match
 from wk2026_model.simulation.scorers import (
@@ -124,6 +132,7 @@ DEFAULT_POLYMARKET_DISCOVERY_OUTPUT_DIR = Path("outputs/polymarket-discovery")
 DEFAULT_POLYMARKET_DISCOVERY_CONFIG = Path("configs/polymarket_worldcup_discovery.yaml")
 DEFAULT_MARKET_CALIBRATION_CONFIG = Path("configs/market_calibration.yaml")
 DEFAULT_MARKET_CALIBRATION_OUTPUT_DIR = Path("outputs/market-calibration")
+DEFAULT_RESULTS_PATH = Path("data/raw/results.csv")
 BRACKET_SOURCE = "worldcupwiki.com/schedule, secondary source, verify against FIFA"
 THIRD_PLACE_ASSIGNMENT_METHOD = "greedy_best3_with_allowed_groups"
 
@@ -146,6 +155,11 @@ class ScoreSelectionStrategy(StrEnum):
     MAX_EV = "max_ev"
     MAX_EV_WITH_REALISM = "max_ev_with_realism"
     DIVERSIFIED_REALISTIC = "diversified_realistic"
+
+
+class ScoreModelStrategy(StrEnum):
+    POISSON = "poisson"
+    DIXON_COLES_CORRECTION = "dixon_coles_correction"
 
 
 class PoolProbabilitySource(StrEnum):
@@ -1281,6 +1295,101 @@ def _load_export_fixtures(config: ProjectConfig, teams: list[Team]) -> list[Fixt
         raise typer.Exit(code=1) from exc
 
 
+def _load_results_context(
+    path: Path | None,
+    teams: list[Team],
+    fixtures: list[Fixture],
+    *,
+    update_elo: bool,
+    k_factor: float,
+) -> tuple[list[Team], list[MatchResult], GroupStageState | None, dict[str, float]]:
+    before = {team.name: team.elo for team in teams}
+    if path is None:
+        return teams, [], None, before
+    results = load_results(path, fixtures, teams)
+    state = build_group_state_from_results(teams, fixtures, results)
+    updated = apply_elo_updates_from_results(teams, results, k_factor) if update_elo else teams
+    return updated, results, state, before
+
+
+def _results_metadata(
+    path: Path | None,
+    results: list[MatchResult],
+    state: GroupStageState | None,
+    *,
+    update_elo: bool,
+    k_factor: float,
+) -> dict[str, object]:
+    return {
+        "results_path": str(path) if path is not None else None,
+        "results_count": len(results),
+        "results_rounds_covered": result_rounds(results),
+        "results_context": state is not None,
+        "update_elo_from_results": update_elo,
+        "elo_k_factor": k_factor,
+        "played_fixtures_count": len(state.completed_fixtures) if state else 0,
+        "remaining_fixtures_count": len(state.remaining_fixtures) if state else 72,
+    }
+
+
+@app.command("validate-results")
+def validate_results_command(
+    results_path: Annotated[Path, typer.Option("--results")] = DEFAULT_RESULTS_PATH,
+    config_path: Annotated[Path, typer.Option("--config")] = DEFAULT_CONFIG_PATH,
+) -> None:
+    """Valideer handmatig ingevoerde groepsresultaten tegen de fixtures."""
+
+    if not results_path.exists():
+        typer.echo(f"Results-bestand bestaat niet: {results_path}")
+        return
+    try:
+        config = _config(config_path)
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        fixtures = _load_export_fixtures(config, teams)
+        results = load_results(results_path, fixtures, teams)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Results validation failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"Results: {len(results)}")
+    typer.echo(f"Matched fixtures: {len(results)}")
+    typer.echo("Unmatched results: 0")
+    typer.echo(f"Rounds covered: {','.join(map(str, result_rounds(results))) or '-'}")
+    typer.echo(f"Groups covered: {','.join(sorted({row.group for row in results})) or '-'}")
+    typer.echo("Duplicates: 0")
+    typer.echo("Warnings: 0")
+    typer.echo("Validation passed.")
+
+
+@app.command("show-group-state")
+def show_group_state_command(
+    results_path: Annotated[Path, typer.Option("--results")] = DEFAULT_RESULTS_PATH,
+    config_path: Annotated[Path, typer.Option("--config")] = DEFAULT_CONFIG_PATH,
+) -> None:
+    """Toon actuele groepsstanden en resterende groepswedstrijden."""
+
+    try:
+        config = _config(config_path)
+        teams, _ = _configured_teams(config, demo_fallback=False)
+        fixtures = _load_export_fixtures(config, teams)
+        results = load_results(results_path, fixtures, teams)
+        state = build_group_state_from_results(teams, fixtures, results)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Group state kon niet worden geladen: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    for group in GROUP_IDS:
+        typer.echo(f"\nGroup {group}")
+        typer.echo("Pos Team                 GS  P  DV  V-T")
+        for position, row in enumerate(state.ranked_group(group), start=1):
+            typer.echo(
+                f"{position:>3} {row.team:<20} {row.played:>2} {row.points:>2} "
+                f"{row.goal_difference:>3} {row.goals_for}-{row.goals_against}"
+            )
+        typer.echo("Remaining fixtures:")
+        for fixture in state.remaining_fixtures:
+            if fixture.group == group:
+                typer.echo(f"- {fixture.match_id}: {fixture.team_a} - {fixture.team_b}")
+
+
 def _export_run(
     *,
     run_type: str,
@@ -1591,6 +1700,20 @@ def export_pool_predictions_command(
     ] = ScoreSelectionStrategy.MAX_EV,
     ev_tolerance: Annotated[float, typer.Option("--ev-tolerance", min=0.0)] = 0.02,
     max_extra_total_goals: Annotated[int, typer.Option("--max-extra-total-goals", min=0)] = 2,
+    results_path: Annotated[Path | None, typer.Option("--results")] = None,
+    update_elo_from_results: Annotated[
+        bool, typer.Option("--update-elo-from-results/--no-update-elo-from-results")
+    ] = False,
+    elo_k_factor: Annotated[float, typer.Option("--elo-k-factor", min=0.01)] = 30,
+    include_played: Annotated[
+        bool, typer.Option("--include-played/--skip-played")
+    ] = False,
+    score_model: Annotated[
+        ScoreModelStrategy | None, typer.Option("--score-model")
+    ] = None,
+    dixon_coles_rho: Annotated[
+        float | None, typer.Option("--dixon-coles-rho")
+    ] = None,
 ) -> None:
     """Exporteer Tipset-pouleadviezen, standaard voor ronde 1 indien beschikbaar."""
 
@@ -1617,10 +1740,22 @@ def export_pool_predictions_command(
         raise typer.Exit(code=2)
 
     config = _config(config_path)
+    effective_rho = (
+        config.score_model.dixon_coles.rho if dixon_coles_rho is None else dixon_coles_rho
+    )
+    effective_score_model = score_model or ScoreModelStrategy(config.score_model.strategy)
     try:
         scoring = load_pool_scoring_config(scoring_config)
         teams, _ = _configured_teams(config, demo_fallback=False)
         validate_teams(teams, strict=True)
+        fixtures = _load_export_fixtures(config, teams)
+        teams, results, results_state, elo_before = _load_results_context(
+            results_path,
+            teams,
+            fixtures,
+            update_elo=update_elo_from_results,
+            k_factor=elo_k_factor,
+        )
         market_odds = (
             load_market_match_odds(market_match_odds) if market_match_odds is not None else None
         )
@@ -1633,7 +1768,6 @@ def export_pool_predictions_command(
         typer.echo(f"Poulevoorspellingen konden niet worden geladen: {exc}", err=True)
         raise typer.Exit(code=1) from exc
 
-    fixtures = _load_export_fixtures(config, teams)
     fixtures_with_round = sum(fixture.match_round is not None for fixture in fixtures)
     official_rounds_present = fixtures_with_round > 0
     effective_round = match_round
@@ -1648,6 +1782,12 @@ def export_pool_predictions_command(
     if normalized_group is not None:
         filtered_fixtures = [
             fixture for fixture in filtered_fixtures if fixture.group == normalized_group
+        ]
+    if results_state is not None and not include_played:
+        filtered_fixtures = [
+            fixture
+            for fixture in filtered_fixtures
+            if fixture.match_id not in results_state.results_by_match_id
         ]
 
     run_seed = config.model.random_seed if seed is None else seed
@@ -1682,6 +1822,35 @@ def export_pool_predictions_command(
             config.score_selection.prefer_draw_if_market_draw_high
         ),
         market_draw_threshold=config.score_selection.market_draw_threshold,
+        results_state=results_state,
+        elo_before_results=elo_before,
+        elo_updated_from_results=update_elo_from_results,
+        score_model_strategy=effective_score_model.value,
+        dixon_coles_rho=effective_rho,
+        normalize_dixon_coles=config.score_model.dixon_coles.normalize_after_correction,
+    )
+    metadata = _results_metadata(
+        results_path,
+        results,
+        results_state,
+        update_elo=update_elo_from_results,
+        k_factor=elo_k_factor,
+    )
+    metadata.update(
+        {
+            "score_model_strategy": effective_score_model.value,
+            "dixon_coles_rho": (
+                effective_rho
+                if effective_score_model is ScoreModelStrategy.DIXON_COLES_CORRECTION
+                else None
+            ),
+            "score_grid_corrected": (
+                effective_score_model is ScoreModelStrategy.DIXON_COLES_CORRECTION
+            ),
+        }
+    )
+    (run_path / "run_metadata.json").write_text(
+        json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
     )
 
     filter_parts: list[str] = []
@@ -1703,6 +1872,12 @@ def export_pool_predictions_command(
     typer.echo(f"Market gebruikt: {int(exported['source_used'].isin(['hybrid', 'market']).sum())}")
     fallback_count = exported["source_used"].str.startswith("model_fallback").sum()
     typer.echo(f"Model fallback: {int(fallback_count)}")
+    typer.echo(f"Results loaded: {len(results)}")
+    typer.echo(f"Played fixtures: {len(results_state.completed_fixtures) if results_state else 0}")
+    remaining_count = len(results_state.remaining_fixtures) if results_state else len(fixtures)
+    typer.echo(f"Remaining fixtures: {remaining_count}")
+    typer.echo(f"Update Elo: {'yes' if update_elo_from_results else 'no'}")
+    typer.echo(f"Score model: {effective_score_model.value}")
     if probability_source != PoolProbabilitySource.MODEL_ONLY:
         baseline_path = run_path / ".model_only_baseline.csv"
         try:
@@ -1714,6 +1889,11 @@ def export_pool_predictions_command(
                     baseline_path,
                     strategy=strategy.value,
                     scoring=scoring.group_stage,
+                    score_model_strategy=effective_score_model.value,
+                    dixon_coles_rho=effective_rho,
+                    normalize_dixon_coles=(
+                        config.score_model.dixon_coles.normalize_after_correction
+                    ),
                 )
             )
         finally:
@@ -1776,6 +1956,11 @@ def simulate_group_stage_command(
         bool,
         typer.Option("--export/--no-export", help="Schrijf CSV- en JSON-exportbestanden."),
     ] = False,
+    results_path: Annotated[Path | None, typer.Option("--results")] = None,
+    update_elo_from_results: Annotated[
+        bool, typer.Option("--update-elo-from-results/--no-update-elo-from-results")
+    ] = False,
+    elo_k_factor: Annotated[float, typer.Option("--elo-k-factor", min=0.01)] = 30,
 ) -> None:
     """Simuleer alle twaalf groepen en selecteer exact de beste acht nummers drie."""
 
@@ -1783,6 +1968,14 @@ def simulate_group_stage_command(
     try:
         teams, _ = _configured_teams(config, demo_fallback=False)
         validate_teams(teams, strict=True)
+        fixtures = _load_export_fixtures(config, teams)
+        teams, results, results_state, _ = _load_results_context(
+            results_path,
+            teams,
+            fixtures,
+            update_elo=update_elo_from_results,
+            k_factor=elo_k_factor,
+        )
     except (OSError, ValueError) as exc:
         typer.echo(f"Volledige groepsfase kon niet worden geladen: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -1794,13 +1987,13 @@ def simulate_group_stage_command(
         config.model,
         simulation_count,
         np.random.default_rng(run_seed),
+        initial_state=results_state,
     )
     typer.echo(f"Volledige groepsfase: {simulation_count:,} simulaties\n")
     _print_group_stage_table(summary)
     _print_overall_qualification(summary)
 
     if export:
-        fixtures = _load_export_fixtures(config, teams)
         run_path = _export_run(
             run_type="group-stage",
             config=config,
@@ -1810,6 +2003,13 @@ def simulate_group_stage_command(
             seed=run_seed,
             output_dir=output_dir,
             group_stage_summary=summary,
+            rating_metadata=_results_metadata(
+                results_path,
+                results,
+                results_state,
+                update_elo=update_elo_from_results,
+                k_factor=elo_k_factor,
+            ),
         )
         _print_export_result(
             run_path,
@@ -1889,6 +2089,11 @@ def recommend_final_standings_command(
     ] = DEFAULT_MARKET_CALIBRATION_CONFIG,
     market_probs: Annotated[Path | None, typer.Option("--market-probs")] = None,
     model_run_dir: Annotated[Path | None, typer.Option("--model-run-dir")] = None,
+    results_path: Annotated[Path | None, typer.Option("--results")] = None,
+    update_elo_from_results: Annotated[
+        bool, typer.Option("--update-elo-from-results/--no-update-elo-from-results")
+    ] = False,
+    elo_k_factor: Annotated[float, typer.Option("--elo-k-factor", min=0.01)] = 30,
 ) -> None:
     """Optimaliseer goud, zilver, brons en vierde op verwachte poulepunten."""
 
@@ -1898,6 +2103,23 @@ def recommend_final_standings_command(
         validate_teams(teams, strict=True)
         teams, rating_metadata = _apply_rating_strategy(
             teams, rating_strategy, market_calibration_config, market_probs, model_run_dir
+        )
+        fixtures = _load_export_fixtures(config, teams)
+        teams, results, results_state, _ = _load_results_context(
+            results_path,
+            teams,
+            fixtures,
+            update_elo=update_elo_from_results,
+            k_factor=elo_k_factor,
+        )
+        rating_metadata.update(
+            _results_metadata(
+                results_path,
+                results,
+                results_state,
+                update_elo=update_elo_from_results,
+                k_factor=elo_k_factor,
+            )
         )
         scoring = load_pool_scoring_config(scoring_config)
     except (OSError, ValueError) as exc:
@@ -1915,6 +2137,7 @@ def recommend_final_standings_command(
         return_outcomes=ev_method is FinalStandingsEvMethod.SCENARIO,
         bracket_strategy=bracket_strategy.value,
         bracket_path=bracket_path,
+        initial_state=results_state,
     )
     if ev_method is FinalStandingsEvMethod.SCENARIO:
         if summary.outcomes is None:  # pragma: no cover - guarded by return_outcomes
@@ -2368,6 +2591,17 @@ def export_basic_predictions_command(
     ] = ScoreSelectionStrategy.MAX_EV,
     ev_tolerance: Annotated[float, typer.Option("--ev-tolerance", min=0.0)] = 0.02,
     max_extra_total_goals: Annotated[int, typer.Option("--max-extra-total-goals", min=0)] = 2,
+    results_path: Annotated[Path | None, typer.Option("--results")] = None,
+    update_elo_from_results: Annotated[
+        bool, typer.Option("--update-elo-from-results/--no-update-elo-from-results")
+    ] = False,
+    elo_k_factor: Annotated[float, typer.Option("--elo-k-factor", min=0.01)] = 30,
+    score_model: Annotated[
+        ScoreModelStrategy | None, typer.Option("--score-model")
+    ] = None,
+    dixon_coles_rho: Annotated[
+        float | None, typer.Option("--dixon-coles-rho")
+    ] = None,
 ) -> None:
     """Bereken en exporteer alle basic Tipset/Brunoson-predictions."""
 
@@ -2385,6 +2619,10 @@ def export_basic_predictions_command(
         raise typer.Exit(code=2)
 
     config = _config(config_path)
+    effective_rho = (
+        config.score_model.dixon_coles.rho if dixon_coles_rho is None else dixon_coles_rho
+    )
+    effective_score_model = score_model or ScoreModelStrategy(config.score_model.strategy)
     try:
         teams, _ = _configured_teams(config, demo_fallback=False)
         validate_teams(teams, strict=True)
@@ -2392,6 +2630,22 @@ def export_basic_predictions_command(
             teams, rating_strategy, market_calibration_config, market_probs, model_run_dir
         )
         fixtures = _load_export_fixtures(config, teams)
+        teams, results, results_state, elo_before = _load_results_context(
+            results_path,
+            teams,
+            fixtures,
+            update_elo=update_elo_from_results,
+            k_factor=elo_k_factor,
+        )
+        rating_metadata.update(
+            _results_metadata(
+                results_path,
+                results,
+                results_state,
+                update_elo=update_elo_from_results,
+                k_factor=elo_k_factor,
+            )
+        )
         players = load_players(players_path, teams)
         scoring = load_pool_scoring_config(scoring_config)
         market_odds = (
@@ -2427,6 +2681,7 @@ def export_basic_predictions_command(
         return_outcomes=True,
         bracket_strategy=bracket_strategy.value,
         bracket_path=bracket_path,
+        initial_state=results_state,
     )
     if tournament_summary.outcomes is None:  # pragma: no cover
         raise RuntimeError("scenario EV requires raw tournament outcomes")
@@ -2477,6 +2732,12 @@ def export_basic_predictions_command(
                 config.score_selection.prefer_draw_if_market_draw_high
             ),
             market_draw_threshold=config.score_selection.market_draw_threshold,
+            results_state=results_state,
+            elo_before_results=elo_before,
+            elo_updated_from_results=update_elo_from_results,
+            score_model_strategy=effective_score_model.value,
+            dixon_coles_rho=effective_rho,
+            normalize_dixon_coles=config.score_model.dixon_coles.normalize_after_correction,
         )
         round_one_frame = pd.read_csv(pool_path)
     else:
@@ -2508,6 +2769,11 @@ def export_basic_predictions_command(
                         config.score_selection.prefer_draw_if_market_draw_high
                     ),
                     market_draw_threshold=config.score_selection.market_draw_threshold,
+                    score_model_strategy=effective_score_model.value,
+                    dixon_coles_rho=effective_rho,
+                    normalize_dixon_coles=(
+                        config.score_model.dixon_coles.normalize_after_correction
+                    ),
                 )
             )
         finally:
@@ -2618,6 +2884,15 @@ def export_basic_predictions_command(
             score_selection_strategy=score_selection_strategy.value,
             ev_tolerance=ev_tolerance,
             max_extra_total_goals=max_extra_total_goals,
+            score_model_strategy=effective_score_model.value,
+            dixon_coles_rho=(
+                effective_rho
+                if effective_score_model is ScoreModelStrategy.DIXON_COLES_CORRECTION
+                else None
+            ),
+            score_grid_corrected=(
+                effective_score_model is ScoreModelStrategy.DIXON_COLES_CORRECTION
+            ),
             **_bracket_metadata(bracket_strategy, bracket_path),
             **rating_metadata,
         )
@@ -2687,6 +2962,11 @@ def simulate_tournament_command(
     ] = DEFAULT_MARKET_CALIBRATION_CONFIG,
     market_probs: Annotated[Path | None, typer.Option("--market-probs")] = None,
     model_run_dir: Annotated[Path | None, typer.Option("--model-run-dir")] = None,
+    results_path: Annotated[Path | None, typer.Option("--results")] = None,
+    update_elo_from_results: Annotated[
+        bool, typer.Option("--update-elo-from-results/--no-update-elo-from-results")
+    ] = False,
+    elo_k_factor: Annotated[float, typer.Option("--elo-k-factor", min=0.01)] = 30,
 ) -> None:
     """Simuleer groepsfase, knock-outbracket en eindklassering."""
 
@@ -2696,6 +2976,23 @@ def simulate_tournament_command(
         validate_teams(teams, strict=True)
         teams, rating_metadata = _apply_rating_strategy(
             teams, rating_strategy, market_calibration_config, market_probs, model_run_dir
+        )
+        fixtures = _load_export_fixtures(config, teams)
+        teams, results, results_state, _ = _load_results_context(
+            results_path,
+            teams,
+            fixtures,
+            update_elo=update_elo_from_results,
+            k_factor=elo_k_factor,
+        )
+        rating_metadata.update(
+            _results_metadata(
+                results_path,
+                results,
+                results_state,
+                update_elo=update_elo_from_results,
+                k_factor=elo_k_factor,
+            )
         )
     except (OSError, ValueError) as exc:
         typer.echo(f"Volledig toernooi kon niet worden geladen: {exc}", err=True)
@@ -2711,17 +3008,18 @@ def simulate_tournament_command(
         np.random.default_rng(run_seed),
         bracket_strategy=bracket_strategy.value,
         bracket_path=bracket_path,
+        initial_state=results_state,
     )
     typer.echo(f"Volledig toernooi: {simulation_count:,} simulaties")
     _print_tournament_summary(summary, min(top, len(summary.teams)))
 
     if export:
-        fixtures = _load_export_fixtures(config, teams)
         group_stage_summary = simulate_group_stage(
             teams,
             config.model,
             simulation_count,
             np.random.default_rng(run_seed),
+            initial_state=results_state,
         )
         run_path = _export_run(
             run_type="tournament",
