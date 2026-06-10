@@ -1,0 +1,73 @@
+fixture_id,group,match_round,team_a,team_b,event_found,event_slug,market_count,moneyline_count,exact_score_count,totals_count,spreads_count,btts_count,player_props_count,processable_markets_count
+G-A-1-1,A,1,Mexico,South Africa,True,fifwc-mex-rsa-2026-06-11,3,3,0,0,0,0,0,3
+G-A-1-2,A,1,South Korea,Czechia,True,fifwc-kr-cze-2026-06-11,3,3,0,0,0,0,0,3
+G-B-1-1,B,1,Canada,Bosnia,True,fifwc-can-bih-2026-06-12,3,3,0,0,0,0,0,3
+G-D-1-1,D,1,USA,Paraguay,True,fifwc-usa-par-2026-06-12,3,3,0,0,0,0,0,3
+G-B-1-2,B,1,Qatar,Switzerland,True,fifwc-qat-che-2026-06-13,3,3,0,0,0,0,0,3
+G-C-1-1,C,1,Brazil,Morocco,True,fifwc-bra-mar-2026-06-13,3,3,0,0,0,0,0,3
+G-C-1-2,C,1,Haiti,Scotland,True,fifwc-hai-sco-2026-06-13,3,3,0,0,0,0,0,3
+G-D-1-2,D,1,Australia,Türkiye,True,fifwc-aus-tur-2026-06-14,3,3,0,0,0,0,0,3
+G-E-1-1,E,1,Germany,Curaçao,True,fifwc-ger-kor-2026-06-14,3,3,0,0,0,0,0,3
+G-F-1-1,F,1,Netherlands,Japan,True,fifwc-nld-jpn-2026-06-14,3,3,0,0,0,0,0,3
+G-E-1-2,E,1,Ivory Coast,Ecuador,True,fifwc-civ-ecu-2026-06-14,3,3,0,0,0,0,0,3
+G-F-1-2,F,1,Sweden,Tunisia,True,fifwc-swe-tun-2026-06-14,3,3,0,0,0,0,0,3
+G-H-1-1,H,1,Spain,Cape Verde,True,fifwc-esp-cvi-2026-06-15,3,3,0,0,0,0,0,3
+G-G-1-1,G,1,Belgium,Egypt,True,fifwc-bel-egy-2026-06-15,3,3,0,0,0,0,0,3
+G-H-1-2,H,1,Saudi Arabia,Uruguay,True,fifwc-ksa-ury-2026-06-15,3,3,0,0,0,0,0,3
+G-G-1-2,G,1,Iran,New Zealand,True,fifwc-irn-nzl-2026-06-15,3,3,0,0,0,0,0,3
+G-I-1-1,I,1,France,Senegal,True,fifwc-fra-sen-2026-06-16,3,3,0,0,0,0,0,3
+G-I-1-2,I,1,Iraq,Norway,True,fifwc-irq-nor-2026-06-16,3,3,0,0,0,0,0,3
+G-J-1-1,J,1,Argentina,Algeria,True,fifwc-arg-alg-2026-06-16,3,3,0,0,0,0,0,3
+G-J-1-2,J,1,Austria,Jordan,True,fifwc-aut-jor-2026-06-17,3,3,0,0,0,0,0,3
+G-K-1-1,K,1,Portugal,DR Congo,True,fifwc-prt-cdr-2026-06-17,3,3,0,0,0,0,0,3
+G-L-1-1,L,1,England,Croatia,True,fifwc-eng-hrv-2026-06-17,3,3,0,0,0,0,0,3
+G-L-1-2,L,1,Ghana,Panama,True,fifwc-gha-pan-2026-06-17,3,3,0,0,0,0,0,3
+G-K-1-2,K,1,Uzbekistan,Colombia,True,fifwc-uzb-col-2026-06-17,3,3,0,0,0,0,0,3
+G-A-2-1,A,2,Czechia,South Africa,True,fifwc-cze-rsa-2026-06-18,3,3,0,0,0,0,0,3
+G-B-2-1,B,2,Switzerland,Bosnia,True,fifwc-che-bih-2026-06-18,3,3,0,0,0,0,0,3
+G-B-2-2,B,2,Canada,Qatar,True,fifwc-can-qat-2026-06-18,3,3,0,0,0,0,0,3
+G-A-2-2,A,2,Mexico,South Korea,True,fifwc-mex-kr-2026-06-18,3,3,0,0,0,0,0,3
+G-D-2-1,D,2,USA,Australia,True,fifwc-usa-aus-2026-06-19,3,3,0,0,0,0,0,3
+G-C-2-1,C,2,Scotland,Morocco,True,fifwc-sco-mar-2026-06-19,3,3,0,0,0,0,0,3
+G-C-2-2,C,2,Brazil,Haiti,True,fifwc-bra-hai-2026-06-19,3,3,0,0,0,0,0,3
+G-D-2-2,D,2,Türkiye,Paraguay,True,fifwc-tur-par-2026-06-19,3,3,0,0,0,0,0,3
+G-F-2-1,F,2,Netherlands,Sweden,True,fifwc-nld-swe-2026-06-20,3,3,0,0,0,0,0,3
+G-E-2-1,E,2,Germany,Ivory Coast,True,fifwc-ger-civ-2026-06-20,3,3,0,0,0,0,0,3
+G-E-2-2,E,2,Ecuador,Curaçao,True,fifwc-ecu-kor-2026-06-20,3,3,0,0,0,0,0,3
+G-F-2-2,F,2,Tunisia,Japan,True,fifwc-tun-jpn-2026-06-21,3,3,0,0,0,0,0,3
+G-H-2-1,H,2,Spain,Saudi Arabia,True,fifwc-esp-ksa-2026-06-21,3,3,0,0,0,0,0,3
+G-G-2-1,G,2,Belgium,Iran,True,fifwc-bel-irn-2026-06-21,3,3,0,0,0,0,0,3
+G-H-2-2,H,2,Uruguay,Cape Verde,True,fifwc-ury-cvi-2026-06-21,3,3,0,0,0,0,0,3
+G-G-2-2,G,2,New Zealand,Egypt,True,fifwc-nzl-egy-2026-06-21,3,3,0,0,0,0,0,3
+G-J-2-1,J,2,Argentina,Austria,True,fifwc-arg-aut-2026-06-22,3,3,0,0,0,0,0,3
+G-I-2-1,I,2,France,Iraq,True,fifwc-fra-irq-2026-06-22,3,3,0,0,0,0,0,3
+G-I-2-2,I,2,Norway,Senegal,True,fifwc-nor-sen-2026-06-22,3,3,0,0,0,0,0,3
+G-J-2-2,J,2,Jordan,Algeria,True,fifwc-jor-alg-2026-06-22,3,3,0,0,0,0,0,3
+G-K-2-1,K,2,Portugal,Uzbekistan,True,fifwc-prt-uzb-2026-06-23,3,3,0,0,0,0,0,3
+G-L-2-1,L,2,England,Ghana,True,fifwc-eng-gha-2026-06-23,3,3,0,0,0,0,0,3
+G-L-2-2,L,2,Panama,Croatia,True,fifwc-pan-hrv-2026-06-23,3,3,0,0,0,0,0,3
+G-K-2-2,K,2,Colombia,DR Congo,True,fifwc-col-cdr-2026-06-23,3,3,0,0,0,0,0,3
+G-B-3-1,B,3,Switzerland,Canada,True,fifwc-che-can-2026-06-24,3,3,0,0,0,0,0,3
+G-B-3-2,B,3,Bosnia,Qatar,True,fifwc-bih-qat-2026-06-24,3,3,0,0,0,0,0,3
+G-C-3-1,C,3,Scotland,Brazil,True,fifwc-sco-bra-2026-06-24,3,3,0,0,0,0,0,3
+G-C-3-2,C,3,Morocco,Haiti,True,fifwc-mar-hai-2026-06-24,3,3,0,0,0,0,0,3
+G-A-3-1,A,3,Czechia,Mexico,True,fifwc-cze-mex-2026-06-24,3,3,0,0,0,0,0,3
+G-A-3-2,A,3,South Africa,South Korea,True,fifwc-rsa-kr-2026-06-24,3,3,0,0,0,0,0,3
+G-E-3-1,E,3,Curaçao,Ivory Coast,True,fifwc-kor-civ-2026-06-25,3,3,0,0,0,0,0,3
+G-E-3-2,E,3,Ecuador,Germany,True,fifwc-ecu-ger-2026-06-25,3,3,0,0,0,0,0,3
+G-F-3-1,F,3,Japan,Sweden,True,fifwc-jpn-swe-2026-06-25,3,3,0,0,0,0,0,3
+G-F-3-2,F,3,Tunisia,Netherlands,True,fifwc-tun-nld-2026-06-25,3,3,0,0,0,0,0,3
+G-D-3-1,D,3,Türkiye,USA,True,fifwc-tur-usa-2026-06-25,3,3,0,0,0,0,0,3
+G-D-3-2,D,3,Paraguay,Australia,True,fifwc-par-aus-2026-06-25,3,3,0,0,0,0,0,3
+G-I-3-1,I,3,Norway,France,True,fifwc-nor-fra-2026-06-26,3,3,0,0,0,0,0,3
+G-I-3-2,I,3,Senegal,Iraq,True,fifwc-sen-irq-2026-06-26,3,3,0,0,0,0,0,3
+G-H-3-1,H,3,Cape Verde,Saudi Arabia,True,fifwc-cvi-ksa-2026-06-26,3,3,0,0,0,0,0,3
+G-H-3-2,H,3,Uruguay,Spain,True,fifwc-ury-esp-2026-06-26,3,3,0,0,0,0,0,3
+G-G-3-1,G,3,Egypt,Iran,True,fifwc-egy-irn-2026-06-26,3,3,0,0,0,0,0,3
+G-G-3-2,G,3,New Zealand,Belgium,True,fifwc-nzl-bel-2026-06-26,3,3,0,0,0,0,0,3
+G-L-3-1,L,3,Panama,England,True,fifwc-pan-eng-2026-06-27,3,3,0,0,0,0,0,3
+G-L-3-2,L,3,Croatia,Ghana,True,fifwc-hrv-gha-2026-06-27,3,3,0,0,0,0,0,3
+G-K-3-1,K,3,Colombia,Portugal,True,fifwc-col-prt-2026-06-27,3,3,0,0,0,0,0,3
+G-K-3-2,K,3,DR Congo,Uzbekistan,True,fifwc-cdr-uzb-2026-06-27,3,3,0,0,0,0,0,3
+G-J-3-1,J,3,Algeria,Austria,True,fifwc-alg-aut-2026-06-27,3,3,0,0,0,0,0,3
+G-J-3-2,J,3,Jordan,Argentina,True,fifwc-jor-arg-2026-06-27,3,3,0,0,0,0,0,3

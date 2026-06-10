@@ -1,0 +1,13 @@
+{
+  "match_round": 1,
+  "fixtures": 24,
+  "candidates_found": 5529,
+  "coverage": {
+    "match_1x2": 0,
+    "exact_score": 22,
+    "over_under_goals": 1,
+    "both_teams_to_score": 0,
+    "player_props": 23
+  },
+  "new_processable_markets": 1160
+}

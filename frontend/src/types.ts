@@ -21,6 +21,16 @@ export type Match = {
   fixture_id?: string;
   recommended_goals_a?: number;
   recommended_goals_b?: number;
+  recommendation?: {
+    score: string;
+    goals_a: number;
+    goals_b: number;
+    expected_pool_points: number;
+    source: string;
+    score_probability_source: string;
+    selection_strategy: string | null;
+    selection_reason: string | null;
+  };
   model?: ProbabilityView & {
     lambda_a: number;
     lambda_b: number;
@@ -40,6 +50,13 @@ export type Match = {
     available: boolean;
     market_weight: number | null;
     source_used: string | null;
+  };
+  market_delta?: {
+    home: number | null;
+    draw: number | null;
+    away: number | null;
+    largest_outcome: "home" | "draw" | "away" | null;
+    largest_abs_delta: number | null;
   };
   exact_score_market?: {
     available: boolean;
@@ -109,11 +126,20 @@ export type FinalStandingCandidate = Record<string, string | number | null>;
 
 export type FrontendData = {
   schema_version?: string;
+  generated_at?: string;
+  source_run_dir?: string;
   metadata: Record<string, unknown> & {
     seed?: number;
     num_simulations?: number;
     limitations?: string[];
   };
+  coverage?: {
+    moneyline: CoverageValue;
+    exact_score: CoverageValue;
+    model_fallback: { count: number };
+    source_used_counts: Record<string, number>;
+  };
+  round_1_predictions?: Match[];
   matches: Match[];
   teams: Team[];
   top_scorers: TopScorer[];
@@ -126,4 +152,11 @@ export type FrontendData = {
     candidates: FinalStandingCandidate[];
   };
   market_comparison: Record<string, unknown>[];
+  warnings?: string[];
+};
+
+type CoverageValue = {
+  available: number;
+  total: number;
+  coverage_pct: number;
 };

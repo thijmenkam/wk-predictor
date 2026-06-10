@@ -64,6 +64,22 @@ def test_fetch_markets_builds_base_url_and_parameters(monkeypatch: pytest.Monkey
     assert captured["timeout"] == 5
 
 
+def test_fetch_all_events_paginates_series(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = PolymarketGammaClient()
+    calls: list[int] = []
+
+    def fake_fetch_events(**kwargs: Any) -> list[dict[str, Any]]:
+        calls.append(kwargs["offset"])
+        return [{"slug": "a"}, {"slug": "b"}] if kwargs["offset"] == 0 else [{"slug": "c"}]
+
+    monkeypatch.setattr(client, "fetch_events", fake_fetch_events)
+
+    events = client.fetch_all_events(page_size=2, series_slug="soccer-fifwc")
+
+    assert [event["slug"] for event in events] == ["a", "b", "c"]
+    assert calls == [0, 2]
+
+
 def test_slug_fetch_returns_raw_dict(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(httpx, "get", lambda *args, **kwargs: _response(json_data={"id": "1"}))
 

@@ -1,0 +1,37 @@
+limit_per_query: 100
+
+queries:
+  - "2026 FIFA World Cup"
+  - "World Cup 2026"
+  - "World Cup games"
+  - "Mexico South Africa"
+  - "Mexico vs South Africa"
+  - "correct score World Cup"
+  - "exact score World Cup"
+  - "World Cup goals"
+  - "World Cup over under"
+  - "World Cup both teams to score"
+  - "World Cup group stage"
+
+event_slugs:
+  - "world-cup-winner"
+
+market_type_keywords:
+  exact_score:
+    - "correct score"
+    - "exact score"
+    - "score"
+  over_under_goals:
+    - "over"
+    - "under"
+    - "total goals"
+  both_teams_to_score:
+    - "both teams"
+    - "BTTS"
+  match_1x2:
+    - "draw"
+    - "vs"
+    - "v "
+  team_to_win:
+    - "will"
+    - "win the 2026 fifa world cup"

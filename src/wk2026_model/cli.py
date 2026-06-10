@@ -23,11 +23,17 @@ from wk2026_model.markets.polymarket import (
     PolymarketError,
     PolymarketGammaClient,
     extract_event_markets,
+    fetch_events_csv_prices,
     fetch_manifest,
     fetch_manifest_prices,
     summarize_market_candidate,
     write_json,
     write_market_candidates_csv,
+)
+from wk2026_model.markets.polymarket_discovery import (
+    discover_fixture_markets,
+    discover_sports_events,
+    export_event_deep_discovery,
 )
 from wk2026_model.models.market_calibration import (
     MarketCalibrationConfig,
@@ -113,6 +119,8 @@ DEFAULT_OUTPUT_DIR = Path("outputs/runs")
 DEFAULT_POOL_SCORING_PATH = Path("configs/pool_scoring.yaml")
 DEFAULT_PLAYERS_PATH = Path("data/raw/players.csv")
 DEFAULT_POLYMARKET_OUTPUT_DIR = Path("outputs/polymarket")
+DEFAULT_POLYMARKET_DISCOVERY_OUTPUT_DIR = Path("outputs/polymarket-discovery")
+DEFAULT_POLYMARKET_DISCOVERY_CONFIG = Path("configs/polymarket_worldcup_discovery.yaml")
 DEFAULT_MARKET_CALIBRATION_CONFIG = Path("configs/market_calibration.yaml")
 DEFAULT_MARKET_CALIBRATION_OUTPUT_DIR = Path("outputs/market-calibration")
 BRACKET_SOURCE = "worldcupwiki.com/schedule, secondary source, verify against FIFA"
@@ -298,6 +306,96 @@ def polymarket_fetch_manifest_command(
     typer.echo(f"Output: {run_dir}")
 
 
+@app.command("polymarket-discover-fixture-markets")
+def polymarket_discover_fixture_markets_command(
+    match_round: Annotated[int | None, typer.Option("--match-round", min=1, max=3)] = None,
+    config: Annotated[Path, typer.Option("--config")] = DEFAULT_POLYMARKET_DISCOVERY_CONFIG,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_POLYMARKET_DISCOVERY_OUTPUT_DIR,
+    existing_match_odds: Annotated[
+        Path | None, typer.Option("--existing-match-odds")
+    ] = None,
+) -> None:
+    """Discover en classificeer Gamma-markten per WK-fixture."""
+
+    try:
+        run_dir, summary = discover_fixture_markets(
+            config_path=config,
+            output_dir=output_dir,
+            match_round=match_round,
+            existing_match_odds=existing_match_odds,
+        )
+    except (OSError, ValueError, PolymarketError) as exc:
+        typer.echo(f"Polymarket fixture discovery failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    coverage = summary["coverage"]
+    fixtures = summary["fixtures"]
+    typer.echo("Fixture discovery")
+    typer.echo(f"Round: {summary['match_round'] or 'all'}")
+    typer.echo(f"Fixtures: {fixtures}")
+    typer.echo(f"Candidates found: {summary['candidates_found']}")
+    typer.echo("")
+    typer.echo("Coverage:")
+    typer.echo(f"1X2: {coverage['match_1x2']}/{fixtures}")
+    typer.echo(f"Exact score: {coverage['exact_score']}/{fixtures}")
+    typer.echo(f"Over/under goals: {coverage['over_under_goals']}/{fixtures}")
+    typer.echo(f"BTTS: {coverage['both_teams_to_score']}/{fixtures}")
+    typer.echo(f"Player props: {coverage['player_props']}/{fixtures}")
+    typer.echo(f"New processable markets: {summary['new_processable_markets']}")
+    typer.echo("")
+    typer.echo(f"Output: {run_dir}")
+
+
+@app.command("polymarket-discover-sports-events")
+def polymarket_discover_sports_events_command(
+    series_slug: Annotated[str, typer.Option("--series-slug")] = "soccer-fifwc",
+    match_round: Annotated[int | None, typer.Option("--match-round", min=1, max=3)] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_POLYMARKET_DISCOVERY_OUTPUT_DIR,
+) -> None:
+    """Crawl paginated Gamma sports events and their nested markets."""
+
+    try:
+        run_dir, summary = discover_sports_events(
+            series_slug=series_slug,
+            output_dir=output_dir,
+            match_round=match_round,
+        )
+    except (OSError, ValueError, PolymarketError) as exc:
+        typer.echo(f"Polymarket sports discovery failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"Events: {summary['events']}")
+    typer.echo(f"Fixture event coverage: {summary['event_coverage']}/{summary['fixtures']}")
+    typer.echo(f"Moneyline coverage: {summary['moneyline_coverage']}/{summary['fixtures']}")
+    typer.echo(f"Exact-score coverage: {summary['exact_score_coverage']}/{summary['fixtures']}")
+    typer.echo(f"Output: {run_dir}")
+
+
+@app.command("polymarket-discover-event-deep")
+def polymarket_discover_event_deep_command(
+    event_slug: Annotated[str, typer.Option("--event-slug")],
+    output_dir: Annotated[
+        Path, typer.Option("--output-dir")
+    ] = DEFAULT_POLYMARKET_DISCOVERY_OUTPUT_DIR,
+) -> None:
+    """Inspecteer direct, related en recursief geneste Gamma-eventmarkten."""
+
+    try:
+        run_dir, summary = export_event_deep_discovery(event_slug, output_dir)
+    except (OSError, ValueError, PolymarketError) as exc:
+        typer.echo(f"Polymarket event deep discovery failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"Event: {event_slug}")
+    typer.echo(f"Direct markets: {summary['direct_markets']}")
+    typer.echo(
+        f"Recursive market-like objects: {summary['recursive_market_like_objects']}"
+    )
+    typer.echo(f"With clobTokenIds: {summary['with_clob_token_ids']}")
+    typer.echo(f"Output: {run_dir}")
+
+
 @app.command("polymarket-inspect")
 def polymarket_inspect_command(
     path: Path,
@@ -447,7 +545,8 @@ def polymarket_inspect_command(
 
 @app.command("polymarket-fetch-prices")
 def polymarket_fetch_prices_command(
-    manifest: Annotated[Path, typer.Option("--manifest")],
+    manifest: Annotated[Path | None, typer.Option("--manifest")] = None,
+    events_csv: Annotated[Path | None, typer.Option("--events-csv")] = None,
     output_dir: Annotated[Path, typer.Option("--output-dir")] = DEFAULT_POLYMARKET_OUTPUT_DIR,
     include_query_results: Annotated[
         bool, typer.Option("--include-query-results/--no-include-query-results")
@@ -458,13 +557,23 @@ def polymarket_fetch_prices_command(
     """Haal publieke BUY/SELL CLOB-prijzen op voor expliciete manifest-slugs."""
 
     try:
-        run_dir, summary = fetch_manifest_prices(
-            manifest,
-            output_dir,
-            include_query_results=include_query_results,
-            market_type=market_type,
-            max_spread=max_spread,
-        )
+        if (manifest is None) == (events_csv is None):
+            raise ValueError("provide exactly one of --manifest or --events-csv")
+        if events_csv is not None:
+            run_dir, summary = fetch_events_csv_prices(
+                events_csv,
+                output_dir,
+                max_spread=max_spread,
+            )
+        else:
+            assert manifest is not None
+            run_dir, summary = fetch_manifest_prices(
+                manifest,
+                output_dir,
+                include_query_results=include_query_results,
+                market_type=market_type,
+                max_spread=max_spread,
+            )
     except (OSError, ValueError, PolymarketError) as exc:
         typer.echo(f"Polymarket price fetch failed: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -2001,6 +2110,7 @@ def recommend_top_scorers_command(
 
 @app.command("export-frontend-data")
 def export_frontend_data_command(
+    run_dir: Annotated[Path | None, typer.Option("--run-dir")] = None,
     config_path: Annotated[Path, typer.Option("--config")] = DEFAULT_CONFIG_PATH,
     scoring_config: Annotated[Path, typer.Option("--scoring-config")] = DEFAULT_POOL_SCORING_PATH,
     match_round: Annotated[int | None, typer.Option("--match-round", min=1, max=3)] = None,
@@ -2019,12 +2129,35 @@ def export_frontend_data_command(
         float, typer.Option("--market-score-weight", min=0.0, max=1.0)
     ] = 0.70,
     allow_missing_market: Annotated[bool, typer.Option("--allow-missing-market")] = False,
-    output: Annotated[Path, typer.Option("--output")] = Path(
-        "frontend/public/data/frontend_data.json"
-    ),
+    output: Annotated[Path, typer.Option("--output")] = Path("frontend/public/frontend_data.json"),
 ) -> None:
     """Exporteer frontend matchdata met model-, markt- en hybrid-details."""
 
+    if run_dir is not None:
+        try:
+            write_frontend_data_json(run_dir, output)
+            payload = json.loads(output.read_text(encoding="utf-8"))
+        except (OSError, ValueError, KeyError) as exc:
+            typer.echo(f"Frontenddata kon niet worden geëxporteerd: {exc}", err=True)
+            raise typer.Exit(code=1) from exc
+        typer.echo(f"Frontend data: {output}")
+        typer.echo(f"Matches: {len(payload['round_1_predictions'])}")
+        typer.echo(
+            f"1X2 market coverage: {payload['coverage']['moneyline']['available']}/"
+            f"{payload['coverage']['moneyline']['total']}"
+        )
+        typer.echo(
+            f"Exact-score market coverage: {payload['coverage']['exact_score']['available']}/"
+            f"{payload['coverage']['exact_score']['total']}"
+        )
+        typer.echo(f"Fallback count: {payload['coverage']['model_fallback']['count']}")
+        return
+
+    typer.echo(
+        "No run-dir provided; frontend export will recompute predictions. "
+        "Prefer --run-dir for consistency.",
+        err=True,
+    )
     if probability_source != PoolProbabilitySource.MODEL_ONLY and market_match_odds is None:
         typer.echo("--market-match-odds is verplicht voor market_only en hybrid.", err=True)
         raise typer.Exit(code=2)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from csv import DictWriter
+from csv import DictReader, DictWriter
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -101,9 +101,18 @@ class PolymarketGammaClient:
         for event in payload.get("events", []):
             if isinstance(event, dict):
                 candidates.append(event)
-                candidates.extend(
-                    market for market in event.get("markets", []) if isinstance(market, dict)
-                )
+                event_context = {
+                    key: event.get(key)
+                    for key in ("id", "slug", "title", "question")
+                    if event.get(key) not in (None, "")
+                }
+                for market in event.get("markets", []):
+                    if not isinstance(market, dict):
+                        continue
+                    if market.get("events"):
+                        candidates.append(market)
+                    else:
+                        candidates.append({**market, "events": [event_context]})
         for market in payload.get("markets", []):
             if isinstance(market, dict):
                 candidates.append(market)
@@ -125,6 +134,51 @@ class PolymarketGammaClient:
         if not isinstance(payload, list) or not all(isinstance(row, dict) for row in payload):
             raise PolymarketParseError(f"{self.base_url}/markets", repr(payload)[:500])
         return payload
+
+    def fetch_events(
+        self,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+        active: bool | None = True,
+        closed: bool | None = False,
+        series_slug: str | None = None,
+        tag_slug: str | None = None,
+    ) -> list[dict[str, Any]]:
+        params = _status_params(limit=limit, offset=offset, active=active, closed=closed)
+        if series_slug:
+            params["series_slug"] = series_slug
+        if tag_slug:
+            params["tag_slug"] = tag_slug
+        payload = self._get("/events", params=params)
+        if not isinstance(payload, list) or not all(isinstance(row, dict) for row in payload):
+            raise PolymarketParseError(f"{self.base_url}/events", repr(payload)[:500])
+        return payload
+
+    def fetch_all_events(
+        self,
+        *,
+        page_size: int = 100,
+        active: bool | None = True,
+        closed: bool | None = False,
+        series_slug: str | None = None,
+        tag_slug: str | None = None,
+    ) -> list[dict[str, Any]]:
+        events: list[dict[str, Any]] = []
+        offset = 0
+        while True:
+            page = self.fetch_events(
+                limit=page_size,
+                offset=offset,
+                active=active,
+                closed=closed,
+                series_slug=series_slug,
+                tag_slug=tag_slug,
+            )
+            events.extend(page)
+            if len(page) < page_size:
+                return events
+            offset += page_size
 
     def fetch_market_by_slug(self, slug: str) -> dict[str, Any]:
         payload = self._get(f"/markets/slug/{slug}")
@@ -522,7 +576,14 @@ def _event_as_three_way_market(event: dict[str, Any]) -> dict[str, Any] | None:
         token = _yes_token(market)
         if token is None:
             continue
-        if "end in a draw" in question:
+        threshold = str(market.get("groupItemThreshold") or "").strip()
+        if threshold == "0":
+            tokens["home"] = token
+        elif threshold == "1":
+            tokens["draw"] = token
+        elif threshold == "2":
+            tokens["away"] = token
+        elif "end in a draw" in question:
             tokens["draw"] = token
         elif question.startswith(f"will {home.casefold()} win"):
             tokens["home"] = token
@@ -580,6 +641,7 @@ def extract_match_outcomes(market: dict[str, Any], fixture: Fixture) -> MatchOut
         raise ValueError("match market must have exactly 3 outcomes and 3 clobTokenIds")
     outcome_aliases = {
         "bosnia and herzegovina": "bosnia",
+        "bosnia-herzegovina": "bosnia",
         "cabo verde": "cape verde",
         "côte d'ivoire": "ivory coast",
         "ir iran": "iran",
@@ -1042,26 +1104,30 @@ def _match_confidence(prices: list[PolymarketTokenPrice], max_spread: float) -> 
 
 def _process_match_markets(
     *,
-    query: str,
+    query: str | None,
     manifest_path: Path,
     gamma: PolymarketGammaClient,
     clob: PolymarketClobClient,
     max_spread: float,
+    event_slugs: list[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     aliases = load_entity_aliases(manifest_path.parent / "entity_aliases.yaml")
     fixtures_path = manifest_path.parent.parent / "fixtures.csv"
     teams = load_teams(manifest_path.parent.parent / "teams.csv")
     fixtures = load_fixtures(fixtures_path, teams)
-    raw_markets = gamma.search_markets(query, limit=100, active=True, closed=False)
-    for fixture in fixtures:
-        raw_markets.extend(
-            gamma.search_markets(
-                f"{fixture.team_a} vs {fixture.team_b}",
-                limit=10,
-                active=True,
-                closed=False,
+    if event_slugs is not None:
+        raw_markets = [gamma.fetch_event_by_slug(slug) for slug in event_slugs]
+    else:
+        raw_markets = gamma.search_markets(query or "", limit=100, active=True, closed=False)
+        for fixture in fixtures:
+            raw_markets.extend(
+                gamma.search_markets(
+                    f"{fixture.team_a} vs {fixture.team_b}",
+                    limit=10,
+                    active=True,
+                    closed=False,
+                )
             )
-        )
     candidates: list[dict[str, Any]] = []
     seen_candidates: set[str] = set()
     for item in raw_markets:
@@ -1162,6 +1228,72 @@ def _process_match_markets(
         "warnings": warnings,
     }
     return rows, raw_prices, summary
+
+
+def fetch_events_csv_prices(
+    events_csv: Path,
+    output_root: Path,
+    *,
+    max_spread: float = 0.20,
+    gamma_client: PolymarketGammaClient | None = None,
+    clob_client: PolymarketClobClient | None = None,
+    created_at: datetime | None = None,
+) -> tuple[Path, dict[str, Any]]:
+    with events_csv.open(encoding="utf-8", newline="") as handle:
+        rows = list(DictReader(handle))
+    event_slugs = [
+        str(row.get("event_slug") or "").strip()
+        for row in rows
+        if str(row.get("event_slug") or "").strip()
+    ]
+    if not event_slugs:
+        raise ValueError("events CSV must contain at least one event_slug")
+    now = created_at or datetime.now(UTC)
+    output_dir = output_root / f"{now.strftime('%Y%m%d-%H%M%S')}-price-fetch"
+    output_dir.mkdir(parents=True, exist_ok=False)
+    gamma = gamma_client or PolymarketGammaClient()
+    clob = clob_client or PolymarketClobClient()
+    manifest_path = Path("data/raw/polymarket/market_manifest.yaml")
+    match_rows, raw_prices, match_summary = _process_match_markets(
+        query=None,
+        manifest_path=manifest_path,
+        gamma=gamma,
+        clob=clob,
+        max_spread=max_spread,
+        event_slugs=event_slugs,
+    )
+    write_json(
+        output_dir / "raw_prices" / "sports_events_prices.json",
+        {"fetched_at": now.isoformat(), "events_csv": str(events_csv), "markets": raw_prices},
+    )
+    match_path = output_dir / "processed" / "group_stage_match_odds.csv"
+    _write_csv(match_path, match_rows, MATCH_ODDS_COLUMNS)
+    summary = {
+        "fetched_at": now.isoformat(),
+        "events_csv": str(events_csv),
+        "markets_fetched": len(match_rows),
+        "outcomes_priced": sum(
+            value is not None
+            for row in match_rows
+            for value in (
+                row["home_prob_raw"],
+                row["draw_prob_raw"],
+                row["away_prob_raw"],
+            )
+        ),
+        "entries": [
+            {
+                "entry_name": "sports_events",
+                "status": "fetched",
+                "reason": "",
+                "source": "events_csv",
+                **match_summary,
+                "processed_csv": str(match_path.relative_to(output_dir)),
+            }
+        ],
+    }
+    write_json(output_dir / "fetch_summary.json", summary)
+    return output_dir, summary
 
 
 def _process_exact_score_markets(

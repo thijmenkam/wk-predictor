@@ -41,15 +41,17 @@ function EmptyState({ children }: { children: React.ReactNode }) {
 }
 
 function sourceLabel(match: Match) {
+  const recommendationSource = match.recommendation?.source;
   const scoreSource = match.score_recommendations?.final.source;
   const probabilitySource = match.hybrid_1x2?.source_used ?? match.market_1x2?.source_used;
-  if (scoreSource === "model_fallback" || probabilitySource?.startsWith("model_fallback")) {
-    return ["Fallback", "fallback"];
+  const source = recommendationSource ?? probabilitySource ?? scoreSource ?? "model";
+  if (source.startsWith("model_fallback")) {
+    return ["Model fallback", "fallback"];
   }
-  if (scoreSource === "market_exact_score" || probabilitySource === "market") {
+  if (source === "market" || source === "market_only" || scoreSource === "market_exact_score") {
     return ["Market", "market"];
   }
-  if (scoreSource === "hybrid_exact_score" || probabilitySource === "hybrid") {
+  if (source === "hybrid" || scoreSource === "hybrid_exact_score") {
     return ["Hybrid", "hybrid"];
   }
   return ["Model", "model"];
@@ -59,7 +61,7 @@ function ProbabilityLine({ match, values }: { match: Match; values: { p_win_a: n
   return <div className="probability-line"><span>{match.team_a} <b>{optionalPct(values.p_win_a)}</b></span><span>Draw <b>{optionalPct(values.p_draw)}</b></span><span>{match.team_b} <b>{optionalPct(values.p_win_b)}</b></span></div>;
 }
 
-function MatchesTable({ matches }: { matches: Match[] }) {
+function MatchesTable({ matches, showExactScore }: { matches: Match[]; showExactScore: boolean }) {
   return (
     <div className="match-list">
       {matches.map((match) => {
@@ -72,16 +74,16 @@ function MatchesTable({ matches }: { matches: Match[] }) {
             <div className="match-summary">
               <div><strong>{match.team_a} <span className="versus">vs</span> {match.team_b}</strong><small>Group {match.group} · Round {match.match_round} · {formatKickoff(match.kickoff_at)}</small></div>
               <span className={`source-badge ${kind}`}>{label}</span>
-              <div className="recommended"><small>Recommended</small><span className="score">{match.recommended_score}</span></div>
-              <div><small>Expected points</small><strong>{decimal.format(match.expected_pool_points)}</strong></div>
+              <div className="recommended"><small>Recommended</small><span className="score">{match.recommendation?.score ?? match.recommended_score}</span></div>
+              <div><small>Expected points</small><strong>{decimal.format(match.recommendation?.expected_pool_points ?? match.expected_pool_points)}</strong></div>
             </div>
             <details>
               <summary>Prediction details</summary>
               <div className="detail-grid">
                 <section><h3>Model</h3><p>Lambda: {decimal.format(model.lambda_a)} / {decimal.format(model.lambda_b)}</p><ProbabilityLine match={match} values={model} /><p>Recommended: <b>{model.recommended_score}</b></p></section>
-                <section><h3>Polymarket 1X2</h3>{market.available ? <><ProbabilityLine match={match} values={market} /><p>Confidence: <b>{market.confidence ?? "—"}</b></p><p>Market vs model: {optionalPct((market.p_win_a ?? 0) - (model.p_win_a ?? 0))} / {optionalPct((market.p_draw ?? 0) - (model.p_draw ?? 0))} / {optionalPct((market.p_win_b ?? 0) - (model.p_win_b ?? 0))}</p></> : <p className="fallback-copy">Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.</p>}</section>
+                <section><h3>Polymarket 1X2</h3>{market.available ? <><ProbabilityLine match={match} values={market} /><p>Confidence: <b>{market.confidence ?? "—"}</b></p><p>Largest delta: <b>{match.market_delta?.largest_outcome ?? "—"} {optionalPct(match.market_delta?.largest_abs_delta)}</b></p></> : <p className="fallback-copy">Geen Polymarket 1X2 beschikbaar, model fallback.</p>}</section>
                 {match.hybrid_1x2?.available ? <section><h3>Hybrid</h3><ProbabilityLine match={match} values={match.hybrid_1x2} /><p>Market weight: {optionalPct(match.hybrid_1x2.market_weight)}</p><p>Source: {match.hybrid_1x2.source_used}</p></section> : null}
-                <section><h3>Exact-score market</h3>{exact.available ? <div className="exact-scores">{exact.top_scores.map((item) => <div key={item.score} className={item.score === match.recommended_score ? "selected" : ""}><b>{item.score}</b><span>{optionalPct(item.normalized_probability)} normalized</span><span>{optionalPct(item.raw_probability)} raw · {item.confidence ?? "—"}</span></div>)}</div> : <p className="fallback-copy">Geen exact-score markt gevonden.</p>}</section>
+                {showExactScore ? <section><h3>Exact-score market</h3>{exact.available ? <div className="exact-scores">{exact.top_scores.map((item) => <div key={item.score} className={item.score === match.recommended_score ? "selected" : ""}><b>{item.score}</b><span>{optionalPct(item.normalized_probability)} normalized</span><span>{optionalPct(item.raw_probability)} raw · {item.confidence ?? "—"}</span></div>)}</div> : <p className="fallback-copy">Geen exact-score markt gevonden.</p>}</section> : null}
               </div>
               {match.warnings?.length ? <ul className="warnings">{match.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : null}
             </details>
@@ -142,6 +144,33 @@ function ScorersTable({ scorers }: { scorers: TopScorer[] }) {
   );
 }
 
+function CoverageCard({ data, matches }: { data: FrontendData; matches: Match[] }) {
+  const moneyline = data.coverage?.moneyline;
+  const exact = data.coverage?.exact_score;
+  const probabilitySource = String(data.metadata.probability_source ?? "model");
+  const marketWeight = Number(data.metadata.market_weight ?? 0);
+  return <section className="coverage-card"><div><p className="eyebrow">Data coverage</p><h2>What drives these picks</h2></div><dl>
+    <div><dt>Polymarket 1X2</dt><dd>{moneyline ? `${moneyline.available}/${moneyline.total}` : "Unknown"}</dd></div>
+    <div><dt>Exact-score markets</dt><dd>{exact ? `${exact.available}/${exact.total}` : "Unknown"}</dd></div>
+    <div><dt>Probability source</dt><dd>{probabilitySource}{probabilitySource === "hybrid" ? `, ${Math.round(marketWeight * 100)}% market` : ""}</dd></div>
+    <div><dt>Exact scores</dt><dd>{String(data.metadata.score_probability_source ?? "model_score_grid").replaceAll("_", " ")}</dd></div>
+    <div><dt>Final standings</dt><dd>Simulation</dd></div><div><dt>Top scorers</dt><dd>Simulation</dd></div>
+  </dl>{data.warnings?.map((warning) => <p className="info-banner" key={warning}>{warning}</p>)}
+  {!data.coverage && matches.length ? <p className="legacy-note">Coverage is not available in this older export.</p> : null}</section>;
+}
+
+function LargestDeltas({ matches }: { matches: Match[] }) {
+  const rows = matches.filter((match) => match.market_delta?.largest_abs_delta != null).sort((a, b) => (b.market_delta?.largest_abs_delta ?? 0) - (a.market_delta?.largest_abs_delta ?? 0)).slice(0, 5);
+  if (!rows.length) return null;
+  return <section><div className="section-heading"><div><p className="eyebrow">Model versus market</p><h2>Waar wijkt Polymarket het meest af?</h2></div></div><div className="delta-list">{rows.map((match) => {
+    const outcome = match.market_delta?.largest_outcome ?? "home";
+    const modelValue = outcome === "home" ? match.model?.p_win_a ?? match.p_win_a : outcome === "draw" ? match.model?.p_draw ?? match.p_draw : match.model?.p_win_b ?? match.p_win_b;
+    const marketValue = outcome === "home" ? match.market_1x2?.p_win_a : outcome === "draw" ? match.market_1x2?.p_draw : match.market_1x2?.p_win_b;
+    const delta = match.market_delta?.[outcome];
+    return <article key={match.match_id}><strong>{match.team_a} - {match.team_b}</strong><span>{outcome}</span><span>Model {optionalPct(modelValue)}</span><span>Market {optionalPct(marketValue)}</span><b>{delta == null ? "—" : `${delta >= 0 ? "+" : ""}${decimal.format(delta * 100)} pp`}</b></article>;
+  })}</div></section>;
+}
+
 function App() {
   const [data, setData] = useState<FrontendData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -150,15 +179,16 @@ function App() {
   const [round, setRound] = useState("all");
   const [teamSort, setTeamSort] = useState<TeamSort>("p_champion");
   const [scorerSort, setScorerSort] = useState<ScorerSort>("recommended_score_value");
+  const [fallbackOnly, setFallbackOnly] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/data/frontend_data.json", { signal: controller.signal })
+    fetch("/frontend_data.json", { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error(`Could not load predictions (${response.status})`);
         return response.json() as Promise<FrontendData>;
       })
-      .then(setData)
+      .then((payload) => setData({ ...payload, schema_version: payload.schema_version ?? "1.0", matches: payload.round_1_predictions ?? payload.matches ?? [], teams: payload.teams ?? [], market_comparison: payload.market_comparison ?? [] }))
       .catch((reason: unknown) => {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
         setError(reason instanceof Error ? reason.message : "Could not load predictions");
@@ -167,18 +197,19 @@ function App() {
   }, []);
 
   const groups = useMemo(
-    () => [...new Set(data?.matches.map((match) => match.group) ?? [])].sort(),
+    () => [...new Set(data?.matches?.map((match) => match.group) ?? [])].sort(),
     [data],
   );
   const rounds = useMemo(
-    () => [...new Set(data?.matches.map((match) => match.match_round) ?? [])].sort((a, b) => a - b),
+    () => [...new Set(data?.matches?.map((match) => match.match_round) ?? [])].sort((a, b) => a - b),
     [data],
   );
   const filteredMatches = useMemo(
-    () => data?.matches.filter((match) =>
+    () => data?.matches?.filter((match) =>
       (group === "all" || match.group === group) &&
-      (round === "all" || match.match_round === Number(round))) ?? [],
-    [data, group, round],
+      (round === "all" || match.match_round === Number(round)) &&
+      (!fallbackOnly || sourceLabel(match)[1] === "fallback")) ?? [],
+    [data, group, round, fallbackOnly],
   );
   const sortedTeams = useMemo(
     () => [...(data?.teams ?? [])].sort((a, b) => b[teamSort] - a[teamSort]),
@@ -193,6 +224,8 @@ function App() {
   if (!data) return <main className="center-state"><span className="loader" /><h1>Loading predictions</h1><p>Reading the latest simulation export.</p></main>;
 
   const picks = data.top_scorers.filter((player) => player.is_recommended);
+  const matches = data.matches ?? [];
+  const showExactScore = (data.coverage?.exact_score.available ?? 1) > 0;
   const tabs: { id: Tab; label: string }[] = [
     { id: "basic", label: "Basic predictions" },
     { id: "matches", label: "Matches" },
@@ -212,6 +245,7 @@ function App() {
       </nav>
 
       <main>
+        <CoverageCard data={data} matches={matches} />
         {tab === "basic" ? (
           <>
             <section className="hero">
@@ -231,8 +265,9 @@ function App() {
             </section>
             <section>
               <div className="section-heading"><div><p className="eyebrow">Pool picks</p><h2>Opening round recommendations</h2></div><button className="text-button" onClick={() => setTab("matches")}>View all matches →</button></div>
-              <MatchesTable matches={data.matches.slice(0, 6)} />
+              <MatchesTable matches={matches.slice(0, 6)} showExactScore={showExactScore} />
             </section>
+            <LargestDeltas matches={matches} />
             <section>
               <div className="section-heading"><div><p className="eyebrow">Golden boot</p><h2>Recommended scorers</h2></div></div>
               <div className="scorer-cards">{picks.map((player, index) => <article key={player.player}><span>0{index + 1}</span><div><strong>{player.player}</strong><small>{player.team} · {decimal.format(player.expected_goals)} expected goals</small></div><b>{decimal.format(player.recommended_score_value)} EV</b></article>)}</div>
@@ -245,7 +280,7 @@ function App() {
           </>
         ) : null}
 
-        {tab === "matches" ? <section><div className="page-title"><p className="eyebrow">Fixture model</p><h1>Match predictions</h1><p>Recommended pool scores and model probabilities for every round-one fixture.</p></div><div className="controls"><label>Group<select value={group} onChange={(event) => setGroup(event.target.value)}><option value="all">All groups</option>{groups.map((value) => <option key={value}>{value}</option>)}</select></label><label>Round<select value={round} onChange={(event) => setRound(event.target.value)}><option value="all">All rounds</option>{rounds.map((value) => <option key={value}>{value}</option>)}</select></label><span>{filteredMatches.length} matches</span></div><MatchesTable matches={filteredMatches} /></section> : null}
+        {tab === "matches" ? <section><div className="page-title"><p className="eyebrow">Fixture model</p><h1>Match predictions</h1><p>Recommended pool scores and model probabilities for every round-one fixture.</p></div><div className="controls"><label>Group<select value={group} onChange={(event) => setGroup(event.target.value)}><option value="all">All groups</option>{groups.map((value) => <option key={value}>{value}</option>)}</select></label><label>Round<select value={round} onChange={(event) => setRound(event.target.value)}><option value="all">All rounds</option>{rounds.map((value) => <option key={value}>{value}</option>)}</select></label><label className="checkbox"><input type="checkbox" checked={fallbackOnly} onChange={(event) => setFallbackOnly(event.target.checked)} />Fallback only</label><span>{filteredMatches.length} matches</span></div><MatchesTable matches={filteredMatches} showExactScore={showExactScore} /><LargestDeltas matches={filteredMatches} /></section> : null}
 
         {tab === "teams" ? <section><div className="page-title"><p className="eyebrow">Tournament forecast</p><h1>Team probabilities</h1><p>Progression odds across every stage of the competition.</p></div><div className="controls"><label>Rank teams by<select value={teamSort} onChange={(event) => setTeamSort(event.target.value as TeamSort)}><option value="p_champion">Champion probability</option><option value="p_top4">Top 4 probability</option><option value="p_final">Final probability</option></select></label></div><TeamsTable teams={sortedTeams} /></section> : null}
 

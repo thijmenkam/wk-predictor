@@ -17,3 +17,4 @@ frontend/vite.config.d.ts
 outputs/runs/
 outputs/polymarket/*
 !outputs/polymarket/.gitkeep
+outputs/polymarket-discovery/*-fixture-discovery/raw_search_results.json

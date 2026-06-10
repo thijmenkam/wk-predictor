@@ -1,0 +1,25 @@
+fixture_id,team_a,team_b,has_1x2,has_exact_score,exact_score_markets_count,has_over_under_goals,over_under_markets_count,has_btts,btts_markets_count,has_player_props,player_props_count,total_candidates,warnings
+G-A-1-1,Mexico,South Africa,True,False,0,False,0,False,0,False,0,4,not found
+G-A-1-2,South Korea,Czechia,False,False,0,False,0,False,0,False,0,2,not found
+G-B-1-1,Canada,Bosnia,False,False,0,False,0,False,0,False,0,4,not found
+G-D-1-1,USA,Paraguay,False,False,0,False,0,False,0,False,0,0,not found
+G-B-1-2,Qatar,Switzerland,True,False,0,False,0,False,0,False,0,4,not found
+G-C-1-1,Brazil,Morocco,True,False,0,False,0,False,0,False,0,4,not found
+G-C-1-2,Haiti,Scotland,True,False,0,False,0,False,0,False,0,4,not found
+G-D-1-2,Australia,Türkiye,False,False,0,False,0,False,0,False,0,4,not found
+G-E-1-1,Germany,Curaçao,False,False,0,False,0,False,0,False,0,4,not found
+G-F-1-1,Netherlands,Japan,True,False,0,False,0,False,0,False,0,4,not found
+G-E-1-2,Ivory Coast,Ecuador,False,False,0,False,0,False,0,False,0,0,not found
+G-F-1-2,Sweden,Tunisia,True,False,0,False,0,False,0,False,0,4,not found
+G-H-1-1,Spain,Cape Verde,False,False,0,False,0,False,0,False,0,0,not found
+G-G-1-1,Belgium,Egypt,True,False,0,False,0,False,0,False,0,4,not found
+G-H-1-2,Saudi Arabia,Uruguay,True,False,0,False,0,False,0,False,0,4,not found
+G-G-1-2,Iran,New Zealand,True,False,0,False,0,False,0,False,0,4,not found
+G-I-1-1,France,Senegal,True,False,0,False,0,False,0,False,0,4,not found
+G-I-1-2,Iraq,Norway,True,False,0,False,0,False,0,False,0,4,not found
+G-J-1-1,Argentina,Algeria,True,False,0,False,0,False,0,False,0,4,not found
+G-J-1-2,Austria,Jordan,True,False,0,False,0,False,0,False,0,4,not found
+G-K-1-1,Portugal,DR Congo,True,False,0,False,0,False,0,False,0,4,not found
+G-L-1-1,England,Croatia,True,False,0,False,0,False,0,False,0,6,not found
+G-L-1-2,Ghana,Panama,True,False,0,False,0,False,0,False,0,4,not found
+G-K-1-2,Uzbekistan,Colombia,True,False,0,False,0,False,0,False,0,4,not found

@@ -74,14 +74,19 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
     frontend = json.loads((run_path / "frontend_data.json").read_text())
     assert set(frontend) == {
         "schema_version",
+        "generated_at",
+        "source_run_dir",
         "metadata",
+        "coverage",
+        "round_1_predictions",
         "matches",
         "teams",
         "top_scorers",
         "final_standings",
         "market_comparison",
+        "warnings",
     }
-    assert frontend["schema_version"] == "2.0"
+    assert frontend["schema_version"] == "2.1"
     assert len(frontend["matches"]) == 24
     assert {
         "model",
@@ -95,6 +100,63 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
     assert len(frontend["teams"]) == 48
     assert sum(row["is_recommended"] for row in frontend["top_scorers"]) >= 3
     assert {"gold", "silver", "bronze", "fourth"}.issubset(frontend["final_standings"])
+    assert frontend["coverage"]["exact_score"] == {
+        "available": 0,
+        "total": 24,
+        "coverage_pct": 0.0,
+    }
+    assert len(frontend["warnings"]) == 1
+    assert all(
+        "exact-score" not in warning
+        for match in frontend["matches"]
+        for warning in match["warnings"]
+    )
+
+
+def test_export_frontend_data_from_run_dir_preserves_basic_export(tmp_path: Path) -> None:
+    basic_result = runner.invoke(
+        app,
+        [
+            "export-basic-predictions",
+            "--seed",
+            "42",
+            "--num-simulations",
+            "2",
+            "--output-dir",
+            str(tmp_path / "runs"),
+            "--export",
+        ],
+    )
+    assert basic_result.exit_code == 0, basic_result.stdout
+    run_path = next((tmp_path / "runs").iterdir())
+    output = tmp_path / "frontend_data.json"
+
+    result = runner.invoke(
+        app,
+        ["export-frontend-data", "--run-dir", str(run_path), "--output", str(output)],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    frontend = json.loads(output.read_text())
+    summary = json.loads((run_path / "basic_predictions_summary.json").read_text())
+    assert frontend["schema_version"] == "2.1"
+    assert frontend["source_run_dir"] == str(run_path)
+    assert [
+        row["recommendation"]["score"] for row in frontend["round_1_predictions"]
+    ] == [row["recommended_score"] for row in summary["round_1_predictions"]]
+    assert {
+        position: frontend["final_standings"][position]
+        for position in ("gold", "silver", "bronze", "fourth")
+    } == {
+        position: summary["final_standings"][position]
+        for position in ("gold", "silver", "bronze", "fourth")
+    }
+    assert [row["player"] for row in frontend["top_scorers"] if row["is_recommended"]][
+        :3
+    ] == [row["player"] for row in summary["top_scorers"]]
+    assert frontend["coverage"]["moneyline"]["total"] == 24
+    assert frontend["coverage"]["exact_score"]["available"] == 0
+    assert result.stdout.count("Exact-score market coverage: 0/24") == 1
 
 
 def test_export_frontend_data_writes_market_schema(tmp_path: Path) -> None:
@@ -135,6 +197,7 @@ def test_export_frontend_data_writes_market_schema(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.stdout
+    assert "No run-dir provided" in result.stderr
     payload = json.loads(output.read_text())
     assert payload["schema_version"] == "2.0"
     assert len(payload["matches"]) == 24

@@ -17,6 +17,13 @@ nav button { padding: 15px 16px; border: 0; border-bottom: 3px solid transparent
 nav button.active { color: white; border-color: #b6e63f; }
 main { width: min(1440px, 92vw); margin: 0 auto; }
 section { margin: 80px 0; }
+.coverage-card { margin: 36px 0 0; padding: 28px; background: #e6edcf; border: 1px solid #cad5aa; }
+.coverage-card h2 { font-size: 32px; }
+.coverage-card dl { margin: 24px 0 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: #cad5aa; }
+.coverage-card dl div { padding: 14px; background: #f4f2eb; }
+.coverage-card dt { color: #66766f; font-size: 10px; text-transform: uppercase; }
+.coverage-card dd { margin: 7px 0 0; font-weight: 700; text-transform: capitalize; }
+.info-banner, .legacy-note { margin: 18px 0 0; padding: 12px 14px; background: #faf9f5; color: #4d6259; }
 .hero { min-height: 470px; margin-top: 0; display: grid; grid-template-columns: 1.4fr 0.6fr; align-items: center; gap: 10vw; }
 .eyebrow { margin: 0 0 14px; color: #5e746b; font-size: 12px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
 h1, h2 { margin: 0; letter-spacing: -.045em; line-height: .98; }
@@ -95,6 +102,11 @@ td small { margin-top: 5px; display: block; color: #718078; }
 .controls label { display: flex; flex-direction: column; gap: 7px; color: #63736c; font-size: 12px; font-weight: 700; text-transform: uppercase; }
 .controls select { min-width: 190px; padding: 10px 35px 10px 12px; border: 1px solid #bdc5bf; background: #faf9f5; color: #15251f; }
 .controls > span { margin-left: auto; color: #718078; font-size: 13px; }
+.controls .checkbox { padding: 10px 0; flex-direction: row; align-items: center; text-transform: none; }
+.delta-list { display: grid; gap: 1px; background: #d9ddd6; border: 1px solid #d9ddd6; }
+.delta-list article { padding: 16px; display: grid; grid-template-columns: minmax(220px, 1fr) 80px 120px 120px 80px; gap: 16px; background: #faf9f5; }
+.delta-list article > span { color: #607169; }
+.delta-list article > b { color: #34735d; text-align: right; }
 .center-state { min-height: 100vh; margin: 0; display: grid; place-content: center; justify-items: center; text-align: center; }
 .center-state h1 { margin-top: 24px; font-size: 42px; }
 .center-state p { color: #65756e; }
@@ -116,12 +128,15 @@ footer { padding: 28px 4vw; display: flex; justify-content: space-between; color
   .scorer-cards { grid-template-columns: 1fr; }
   .metadata { padding: 28px 20px; }
   .metadata dl { grid-template-columns: 1fr 1fr; }
+  .coverage-card dl { grid-template-columns: 1fr 1fr; }
   .controls { align-items: stretch; flex-direction: column; }
   .controls select { width: 100%; }
   .controls > span { margin-left: 0; }
   .match-summary { grid-template-columns: 1fr auto; gap: 14px; }
   .recommended { justify-content: flex-start; }
   .detail-grid { grid-template-columns: 1fr; }
+  .delta-list article { grid-template-columns: 1fr 1fr; }
+  .delta-list article strong { grid-column: 1 / -1; }
   .exact-scores div { grid-template-columns: 45px 1fr; }
   .exact-scores div span:last-child { grid-column: 2; }
   .table-shell:has(.match-row) { overflow: visible; border: 0; background: transparent; }

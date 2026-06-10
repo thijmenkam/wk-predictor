@@ -877,9 +877,19 @@ def _optional_frontend_frame(path: str | Path | None) -> pd.DataFrame:
 def _frontend_match_records(
     matches: pd.DataFrame,
     metadata: dict[str, Any],
+    *,
+    read_market_files: bool = False,
 ) -> list[dict[str, Any]]:
-    market_frame = _optional_frontend_frame(metadata.get("market_match_odds_path"))
-    exact_frame = _optional_frontend_frame(metadata.get("market_exact_score_odds_path"))
+    market_frame = (
+        _optional_frontend_frame(metadata.get("market_match_odds_path"))
+        if read_market_files
+        else pd.DataFrame()
+    )
+    exact_frame = (
+        _optional_frontend_frame(metadata.get("market_exact_score_odds_path"))
+        if read_market_files
+        else pd.DataFrame()
+    )
     market_by_fixture = (
         {
             str(row["fixture_id"]): row
@@ -906,7 +916,7 @@ def _frontend_match_records(
         fixture_id = str(row["match_id"])
         market = market_by_fixture.get(fixture_id)
         exact = exact_by_fixture.get(fixture_id)
-        market_available = bool(row.get("market_available", False)) and market is not None
+        market_available = bool(row.get("market_available", False))
         exact_available = bool(row.get("market_exact_score_available", False)) and exact is not None
         warnings: list[str] = []
         if row.get("probability_source") != "model_only" and not market_available:
@@ -948,6 +958,18 @@ def _frontend_match_records(
                 "fixture_id": fixture_id,
                 "recommended_goals_a": int(row["recommended_goals_a"]),
                 "recommended_goals_b": int(row["recommended_goals_b"]),
+                "recommendation": {
+                    "score": row["recommended_score"],
+                    "goals_a": int(row["recommended_goals_a"]),
+                    "goals_b": int(row["recommended_goals_b"]),
+                    "expected_pool_points": _frontend_json_value(row["expected_pool_points"]),
+                    "source": _frontend_json_value(row.get("source_used") or "model"),
+                    "score_probability_source": _frontend_json_value(
+                        row.get("score_source_used") or "model_score_grid"
+                    ),
+                    "selection_strategy": _frontend_json_value(row.get("strategy")),
+                    "selection_reason": _frontend_json_value(row.get("recommendation_reason")),
+                },
                 "model": {
                     "lambda_a": _frontend_json_value(row["lambda_a"]),
                     "lambda_b": _frontend_json_value(row["lambda_b"]),
@@ -962,16 +984,16 @@ def _frontend_match_records(
                 "market_1x2": {
                     "available": market_available,
                     "confidence": _frontend_json_value(
-                        market.get("confidence") if market else None
+                        market.get("confidence") if market else row.get("market_confidence")
                     ),
                     "p_win_a": _frontend_json_value(
-                        market.get("home_prob_norm") if market else None
+                        market.get("home_prob_norm") if market else row.get("market_p_home")
                     ),
                     "p_draw": _frontend_json_value(
-                        market.get("draw_prob_norm") if market else None
+                        market.get("draw_prob_norm") if market else row.get("market_p_draw")
                     ),
                     "p_win_b": _frontend_json_value(
-                        market.get("away_prob_norm") if market else None
+                        market.get("away_prob_norm") if market else row.get("market_p_away")
                     ),
                     "raw_p_win_a": _frontend_json_value(
                         market.get("home_prob_raw") if market else None
@@ -986,6 +1008,9 @@ def _frontend_match_records(
                     "market_slug": _frontend_json_value(
                         market.get("market_slug") if market else None
                     ),
+                    "market_slug_home": None,
+                    "market_slug_draw": None,
+                    "market_slug_away": None,
                 },
                 "hybrid_1x2": {
                     "available": row.get("source_used") == "hybrid",
@@ -999,6 +1024,7 @@ def _frontend_match_records(
                     "p_win_b": _frontend_json_value(row.get("hybrid_p_away")),
                     "source_used": _frontend_json_value(row.get("source_used")),
                 },
+                "market_delta": _frontend_market_delta(row),
                 "exact_score_market": {
                     "available": exact_available,
                     "score_probability_source": row.get(
@@ -1050,6 +1076,35 @@ def _frontend_match_records(
     return records
 
 
+def _frontend_market_delta(row: dict[str, Any]) -> dict[str, Any]:
+    deltas = {
+        "home": (
+            float(row["market_p_home"]) - float(row["model_p_home"])
+            if not pd.isna(row.get("market_p_home")) and not pd.isna(row.get("model_p_home"))
+            else None
+        ),
+        "draw": (
+            float(row["market_p_draw"]) - float(row["model_p_draw"])
+            if not pd.isna(row.get("market_p_draw")) and not pd.isna(row.get("model_p_draw"))
+            else None
+        ),
+        "away": (
+            float(row["market_p_away"]) - float(row["model_p_away"])
+            if not pd.isna(row.get("market_p_away")) and not pd.isna(row.get("model_p_away"))
+            else None
+        ),
+    }
+    available = {key: value for key, value in deltas.items() if value is not None}
+    largest = max(available, key=lambda key: abs(available[key])) if available else None
+    return {
+        **{key: _frontend_json_value(value) for key, value in deltas.items()},
+        "largest_outcome": largest,
+        "largest_abs_delta": (
+            _frontend_json_value(abs(available[largest])) if largest is not None else None
+        ),
+    }
+
+
 def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
     """Bundel bestaande basic-predictionexports voor gebruik door een frontend."""
 
@@ -1076,22 +1131,81 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
     final_standings["candidates"] = _frontend_records(
         pd.read_csv(run_path / "final_standings_candidates.csv")
     )
-    metadata = json.loads(
+    source_metadata = json.loads(
         (run_path / "basic_predictions_metadata.json").read_text(encoding="utf-8")
     )
+    metadata_keys = [
+        "seed",
+        "num_simulations",
+        "probability_source",
+        "market_weight",
+        "score_probability_source",
+        "market_score_weight",
+        "bracket_strategy",
+        "rating_strategy",
+        "scoring_config",
+        "market_match_odds_path",
+        "market_exact_score_odds_path",
+        "limitations",
+    ]
+    metadata = {key: source_metadata.get(key) for key in metadata_keys}
     metadata["generated_at"] = datetime.now(UTC).isoformat()
     metadata["market_coverage"] = metadata.get("market_coverage_round1", 0)
-    metadata["fallback_count"] = metadata.get("model_fallback_count", 0)
+    metadata["market_coverage"] = source_metadata.get("market_coverage_round1", 0)
+    metadata["exact_score_market_coverage"] = source_metadata.get(
+        "exact_score_market_coverage", 0
+    )
+    metadata["fallback_count"] = source_metadata.get("model_fallback_count", 0)
+    match_records = _frontend_match_records(matches, source_metadata)
+    total = len(match_records)
+    moneyline_available = int(source_metadata.get("market_coverage_round1", 0))
+    exact_available = int(source_metadata.get("exact_score_market_coverage", 0))
+    source_counts = matches["source_used"].fillna("model_only").value_counts()
+    coverage = {
+        "moneyline": {
+            "available": moneyline_available,
+            "total": total,
+            "coverage_pct": round(moneyline_available / total * 100, 2) if total else 0,
+        },
+        "exact_score": {
+            "available": exact_available,
+            "total": total,
+            "coverage_pct": round(exact_available / total * 100, 2) if total else 0,
+        },
+        "model_fallback": {"count": int(source_metadata.get("model_fallback_count", 0))},
+        "source_used_counts": {
+            key: int(source_counts.get("market" if key == "market_only" else key, 0))
+            for key in (
+                "model_only",
+                "hybrid",
+                "market_only",
+                "model_fallback",
+                "model_fallback_low_confidence",
+            )
+        },
+    }
+    warnings = []
+    if exact_available == 0:
+        warnings.append(
+            "Polymarket exact-score markets are not available via Gamma/CLOB. "
+            "Exact scores use the model score grid."
+        )
     payload = {
-        "schema_version": "2.0",
+        "schema_version": "2.1",
+        "generated_at": metadata["generated_at"],
+        "source_run_dir": str(run_path),
         "metadata": metadata,
-        "matches": _frontend_match_records(matches, metadata),
+        "coverage": coverage,
+        "round_1_predictions": match_records,
+        "matches": match_records,
         "teams": _frontend_records(teams),
         "top_scorers": _frontend_records(top_scorers),
         "final_standings": final_standings,
         "market_comparison": [],
+        "warnings": warnings,
     }
     output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
         encoding="utf-8",
@@ -1117,7 +1231,7 @@ def write_standalone_frontend_data_json(
     payload = {
         "schema_version": "2.0",
         "metadata": metadata,
-        "matches": _frontend_match_records(matches, metadata),
+        "matches": _frontend_match_records(matches, metadata, read_market_files=True),
         "teams": existing.get("teams", []),
         "top_scorers": existing.get("top_scorers", []),
         "final_standings": existing.get(

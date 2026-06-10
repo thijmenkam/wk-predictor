@@ -1,0 +1,25 @@
+fixture_id,team_a,team_b,has_1x2,has_exact_score,exact_score_markets_count,has_over_under_goals,over_under_markets_count,has_btts,btts_markets_count,has_player_props,player_props_count,total_candidates,warnings
+G-A-1-1,Mexico,South Africa,False,True,3,False,0,False,0,True,1,202,closed; no clob tokens
+G-A-1-2,South Korea,Czechia,False,False,0,False,0,False,0,True,1,200,not found
+G-B-1-1,Canada,Bosnia,False,True,3,False,0,False,0,True,1,202,closed; no clob tokens
+G-D-1-1,USA,Paraguay,False,True,17,False,0,False,0,False,0,259,closed; no clob tokens
+G-B-1-2,Qatar,Switzerland,False,True,49,False,0,False,0,True,1,259,closed
+G-C-1-1,Brazil,Morocco,False,True,51,False,0,False,0,True,1,228,closed; no clob tokens
+G-C-1-2,Haiti,Scotland,False,True,1,False,0,False,0,True,1,200,
+G-D-1-2,Australia,Türkiye,False,False,0,False,0,False,0,True,1,200,not found
+G-E-1-1,Germany,Curaçao,False,True,2,False,0,False,0,True,1,202,closed; no clob tokens
+G-F-1-1,Netherlands,Japan,False,True,49,False,0,False,0,True,1,259,closed
+G-E-1-2,Ivory Coast,Ecuador,False,True,14,False,0,False,0,True,1,232,closed
+G-F-1-2,Sweden,Tunisia,False,True,1,False,0,False,0,True,1,300,
+G-H-1-1,Spain,Cape Verde,False,True,13,False,0,False,0,True,1,302,closed; no clob tokens
+G-G-1-1,Belgium,Egypt,False,True,1,False,0,False,0,True,1,200,
+G-H-1-2,Saudi Arabia,Uruguay,False,True,49,False,0,False,0,True,1,259,closed
+G-G-1-2,Iran,New Zealand,False,True,1,False,0,False,0,True,1,200,
+G-I-1-1,France,Senegal,False,True,49,False,0,False,0,True,1,261,closed
+G-I-1-2,Iraq,Norway,False,True,1,False,0,False,0,True,1,200,
+G-J-1-1,Argentina,Algeria,False,True,3,False,0,False,0,True,1,204,closed; no clob tokens
+G-J-1-2,Austria,Jordan,False,True,12,True,30,False,0,True,1,350,closed
+G-K-1-1,Portugal,DR Congo,False,True,3,False,0,False,0,True,1,202,closed; no clob tokens
+G-L-1-1,England,Croatia,False,True,51,False,0,False,0,True,1,261,closed; no clob tokens
+G-L-1-2,Ghana,Panama,False,True,1,False,0,False,0,True,1,200,
+G-K-1-2,Uzbekistan,Colombia,False,True,1,False,0,False,0,True,1,147,

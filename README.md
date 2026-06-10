@@ -296,6 +296,15 @@ worden gebruikt. De default blijft `model_score_grid`.
 uv run wk2026 polymarket-fetch-prices \
   --manifest data/raw/polymarket/market_manifest.yaml
 
+# Crawl structured FIFA World Cup sports events and nested markets.
+uv run wk2026 polymarket-discover-sports-events \
+  --series-slug soccer-fifwc \
+  --match-round 1
+
+# Fetch all processable 1X2 markets from the discovered event slugs.
+uv run wk2026 polymarket-fetch-prices \
+  --events-csv outputs/polymarket-discovery/<timestamp>-sports-events/sports_events.csv
+
 uv run wk2026 polymarket-inspect \
   outputs/polymarket/<LATEST>/processed/group_stage_exact_score_odds.csv
 
