@@ -111,6 +111,11 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
         for match in frontend["matches"]
         for warning in match["warnings"]
     )
+    assert all(
+        warning.lower() != "nan"
+        for match in frontend["matches"]
+        for warning in match["warnings"]
+    )
 
 
 def test_export_frontend_data_from_run_dir_preserves_basic_export(tmp_path: Path) -> None:

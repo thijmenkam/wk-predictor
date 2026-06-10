@@ -21,9 +21,11 @@ SCORE_SELECTION_STRATEGIES = (
     "diversified_realistic",
 )
 DOMINANT_SCORES = {"1-0", "0-1", "1-1"}
-ALTERNATIVE_REASON = "Alternatief gekozen binnen EV-tolerantie voor realistischer scorebeeld."
-DRAW_PROBABILITY_REASON = "Draw gekozen binnen EV-tolerantie vanwege hoge draw probability."
-DRAW_TARGET_REASON = "Draw gekozen binnen EV-tolerantie om realistische draw-rate te bereiken."
+ALTERNATIVE_REASON = "Alternative selected within the EV tolerance for a more realistic score."
+DRAW_PROBABILITY_REASON = (
+    "Draw selected within the EV tolerance because of the high draw probability."
+)
+DRAW_TARGET_REASON = "Draw selected within the EV tolerance to reach a realistic draw rate."
 
 
 @dataclass(frozen=True)
@@ -162,7 +164,7 @@ def selection_diagnostics(
         "score_selection_strategy": strategy,
         "candidate_scores_within_tolerance": candidate_count,
         "selection_reason": (
-            ALTERNATIVE_REASON if changed else "Beste score op expected pool points."
+            ALTERNATIVE_REASON if changed else "Best score by expected pool points."
         ),
         "realism_score": selected.realism_score,
         "score_rank_by_ev": selected.rank_by_ev,

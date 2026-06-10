@@ -35,7 +35,6 @@ from wk2026_model.pool.probabilities import (
     select_pool_probabilities,
     select_score_grid,
 )
-from wk2026_model.pool.scoring import ScoreProbability
 from wk2026_model.pool.score_selection import (
     DRAW_PROBABILITY_REASON,
     SCORE_SELECTION_STRATEGIES,
@@ -48,6 +47,7 @@ from wk2026_model.pool.score_selection import (
     score_candidates,
     selection_diagnostics,
 )
+from wk2026_model.pool.scoring import ScoreProbability
 from wk2026_model.results import GroupStageState
 from wk2026_model.simulation.dixon_coles import (
     apply_dixon_coles_correction,
@@ -1150,11 +1150,12 @@ def _frontend_match_records(
         exact_available = bool(row.get("market_exact_score_available", False)) and exact is not None
         warnings: list[str] = []
         if row.get("probability_source") != "model_only" and not market_available:
-            warnings.append("Geen Polymarket 1X2-markt gevonden, model fallback gebruikt.")
+            warnings.append("No Polymarket 1X2 market found; model fallback used.")
         if row.get("score_probability_source") != "model_score_grid" and not exact_available:
-            warnings.append("Geen exact-score markt gevonden.")
-        if row.get("calibration_warning"):
-            warnings.append(str(row["calibration_warning"]))
+            warnings.append("No exact-score market found.")
+        calibration_warning = row.get("calibration_warning")
+        if not pd.isna(calibration_warning) and str(calibration_warning).strip():
+            warnings.append(str(calibration_warning))
 
         top_scores = []
         if exact_available and exact is not None:
