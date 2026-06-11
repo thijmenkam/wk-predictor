@@ -205,3 +205,22 @@ def test_simulate_tournament_can_return_raw_outcomes() -> None:
         len({outcome.champion, outcome.runner_up, outcome.third, outcome.fourth}) == 4
         for outcome in summary.outcomes
     )
+
+
+def test_simulate_tournament_loads_bracket_once_per_batch(monkeypatch: pytest.MonkeyPatch) -> None:
+    import wk2026_model.simulation.tournament as tournament
+
+    real_loader = tournament.load_bracket_definition
+    calls = 0
+
+    def counting_loader(path: object):
+        nonlocal calls
+        calls += 1
+        return real_loader(path)
+
+    monkeypatch.setattr(tournament, "load_bracket_definition", counting_loader)
+    tournament.simulate_tournament(
+        _teams(), ModelConfig(), num_simulations=3, rng=np.random.default_rng(42)
+    )
+
+    assert calls == 1

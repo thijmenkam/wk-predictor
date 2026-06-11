@@ -14,6 +14,7 @@ from wk2026_model.simulation.tournament import (
     BracketStrategy,
     TournamentOutcome,
     TournamentResult,
+    _prepare_tournament_simulation,
     _simulate_tournament_once_with_trace_validated,
 )
 
@@ -294,6 +295,7 @@ def simulate_top_scorers(
     top_scorer_counts = dict.fromkeys(scorer_names, 0)
     top_3_counts = dict.fromkeys(scorer_names, 0)
     team_match_counts = {team.name: 0 for team in teams}
+    context = _prepare_tournament_simulation(teams, bracket_strategy, bracket_path)
 
     for _ in range(num_simulations):
         trace = _simulate_tournament_once_with_trace_validated(
@@ -302,6 +304,7 @@ def simulate_top_scorers(
             rng,
             bracket_strategy=bracket_strategy,
             bracket_path=bracket_path,
+            _context=context,
         )
         goals_by_team: defaultdict[str, int] = defaultdict(int)
         matches_by_team: Counter[str] = Counter()
