@@ -14,6 +14,7 @@ from wk2026_model.data.schemas import (
     GROUP_IDS,
     BracketDefinition,
     BracketMatchDefinition,
+    Fixture,
     GroupStanding,
     Team,
 )
@@ -111,6 +112,8 @@ def _simulate_group_once_with_goals(
     teams: list[Team],
     config: ModelConfig,
     rng: np.random.Generator,
+    *,
+    record_match_goals: bool = True,
 ) -> tuple[list[GroupStanding], list[MatchGoals]]:
     """Simuleer een groep en bewaar de onderliggende wedstrijdgoals."""
 
@@ -153,16 +156,17 @@ def _simulate_group_once_with_goals(
             row_a.points += 1
             row_b.points += 1
 
-        match_goals.append(
-            MatchGoals(
-                match_id=f"{group_id}-{match_number}",
-                stage="group",
-                team_a=team_a.name,
-                team_b=team_b.name,
-                goals_a=goals_a,
-                goals_b=goals_b,
+        if record_match_goals:
+            match_goals.append(
+                MatchGoals(
+                    match_id=f"{group_id}-{match_number}",
+                    stage="group",
+                    team_a=team_a.name,
+                    team_b=team_b.name,
+                    goals_a=goals_a,
+                    goals_b=goals_b,
+                )
             )
-        )
 
     for standing in standings.values():
         standing.goal_difference = standing.goals_for - standing.goals_against
@@ -179,13 +183,15 @@ def _simulate_group_stage_once_validated(
     config: ModelConfig,
     rng: np.random.Generator,
     initial_state: GroupStageState | None = None,
+    *,
+    record_match_goals: bool = True,
 ) -> GroupStageResult:
     """Simuleer één groepsfase nadat de dataset eenmaal is gevalideerd."""
 
     grouped = _grouped_teams(teams)
     standings: dict[str, list[GroupStanding]] = {}
     match_goals: list[MatchGoals] = []
-    remaining_by_group: dict[str, list[object]] = defaultdict(list)
+    remaining_by_group: dict[str, list[Fixture]] = defaultdict(list)
     if initial_state is not None:
         for fixture in initial_state.remaining_fixtures:
             if fixture.group is not None:
@@ -193,7 +199,11 @@ def _simulate_group_stage_once_validated(
     for group_id in GROUP_IDS:
         if initial_state is None:
             standings[group_id], group_match_goals = _simulate_group_once_with_goals(
-                group_id, grouped[group_id], config, rng
+                group_id,
+                grouped[group_id],
+                config,
+                rng,
+                record_match_goals=record_match_goals,
             )
         else:
             current = {
@@ -226,16 +236,17 @@ def _simulate_group_stage_once_validated(
                 else:
                     row_a.points += 1
                     row_b.points += 1
-                group_match_goals.append(
-                    MatchGoals(
-                        fixture.match_id,
-                        "group",
-                        team_a.name,
-                        team_b.name,
-                        goals_a,
-                        goals_b,
+                if record_match_goals:
+                    group_match_goals.append(
+                        MatchGoals(
+                            fixture.match_id,
+                            "group",
+                            team_a.name,
+                            team_b.name,
+                            goals_a,
+                            goals_b,
+                        )
                     )
-                )
             for row in current.values():
                 row.goal_difference = row.goals_for - row.goals_against
             standings[group_id] = sorted(current.values(), key=_standing_sort_key)
@@ -431,8 +442,10 @@ def simulate_group_stage(
             ),
             axis=1,
         )
-        best_thirds = np.take_along_axis(third_indices, third_order[:, :8], axis=1)
-        best_third_counts = np.bincount(best_thirds.ravel(), minlength=len(teams))
+        selected_best_thirds = np.take_along_axis(third_indices, third_order[:, :8], axis=1)
+        best_third_counts = np.bincount(
+            selected_best_thirds.ravel(), minlength=len(teams)
+        )
         qualified_counts += best_third_counts
         qualified_third_counts += best_third_counts
         points_totals += points.sum(axis=0)
@@ -521,6 +534,14 @@ class TournamentSimulationTrace:
 
     result: TournamentResult
     matches: list[MatchGoals]
+
+
+@dataclass(frozen=True, slots=True)
+class _TournamentSimulationContext:
+    """Onveranderlijke invoer die voor een Monte Carlo-batch eenmaal wordt voorbereid."""
+
+    teams_by_name: dict[str, Team]
+    bracket: BracketDefinition | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -899,6 +920,25 @@ def _knockout_goals(result: KnockoutResult) -> MatchGoals:
     )
 
 
+def _prepare_tournament_simulation(
+    teams: list[Team],
+    bracket_strategy: BracketStrategy,
+    bracket_path: Path | str,
+) -> _TournamentSimulationContext:
+    """Laad batch-brede team- en bracketdata eenmaal buiten de Monte Carlo-loop."""
+
+    if bracket_strategy == "official_like":
+        bracket = load_bracket_definition(bracket_path)
+    elif bracket_strategy == "seeded_placeholder":
+        bracket = None
+    else:
+        raise ValueError(f"unsupported bracket strategy: {bracket_strategy}")
+    return _TournamentSimulationContext(
+        teams_by_name={team.name: team for team in teams},
+        bracket=bracket,
+    )
+
+
 def _simulate_tournament_once_with_trace_validated(
     teams: list[Team],
     config: ModelConfig,
@@ -907,21 +947,35 @@ def _simulate_tournament_once_with_trace_validated(
     bracket_strategy: BracketStrategy = "official_like",
     bracket_path: Path | str = DEFAULT_BRACKET_PATH,
     initial_state: GroupStageState | None = None,
+    _context: _TournamentSimulationContext | None = None,
+    _record_match_goals: bool = True,
 ) -> TournamentSimulationTrace:
-    group_stage = _simulate_group_stage_once_validated(teams, config, rng, initial_state)
-    teams_by_name = {team.name: team for team in teams}
+    context = _context or _prepare_tournament_simulation(teams, bracket_strategy, bracket_path)
+    group_stage = _simulate_group_stage_once_validated(
+        teams,
+        config,
+        rng,
+        initial_state,
+        record_match_goals=_record_match_goals,
+    )
+    teams_by_name = context.teams_by_name
     if bracket_strategy == "official_like":
+        if context.bracket is None:
+            raise RuntimeError("official bracket was not prepared")
         result, knockout_results = _simulate_bracket_with_results(
             group_stage,
             teams_by_name,
-            load_bracket_definition(bracket_path),
+            context.bracket,
             config,
             rng,
         )
         return TournamentSimulationTrace(
             result=result,
-            matches=group_stage.match_goals
-            + [_knockout_goals(result) for result in knockout_results],
+            matches=(
+                group_stage.match_goals + [_knockout_goals(result) for result in knockout_results]
+                if _record_match_goals
+                else []
+            ),
         )
     if bracket_strategy != "seeded_placeholder":
         raise ValueError(f"unsupported bracket strategy: {bracket_strategy}")
@@ -990,7 +1044,11 @@ def _simulate_tournament_once_with_trace_validated(
             round_of_16=round_of_16,
             quarter_finalists=quarter_finalists,
         ),
-        matches=group_stage.match_goals + [_knockout_goals(result) for result in knockout_results],
+        matches=(
+            group_stage.match_goals + [_knockout_goals(result) for result in knockout_results]
+            if _record_match_goals
+            else []
+        ),
     )
 
 
@@ -1002,6 +1060,7 @@ def _simulate_tournament_once_validated(
     bracket_strategy: BracketStrategy = "official_like",
     bracket_path: Path | str = DEFAULT_BRACKET_PATH,
     initial_state: GroupStageState | None = None,
+    _context: _TournamentSimulationContext | None = None,
 ) -> TournamentResult:
     return _simulate_tournament_once_with_trace_validated(
         teams,
@@ -1010,6 +1069,8 @@ def _simulate_tournament_once_validated(
         bracket_strategy=bracket_strategy,
         bracket_path=bracket_path,
         initial_state=initial_state,
+        _context=_context,
+        _record_match_goals=False,
     ).result
 
 
@@ -1065,6 +1126,7 @@ def simulate_tournament(
     )
     counters: dict[str, defaultdict[str, int]] = {field: defaultdict(int) for field in fields}
     outcomes: list[TournamentOutcome] | None = [] if return_outcomes else None
+    context = _prepare_tournament_simulation(teams, bracket_strategy, bracket_path)
     for _ in range(num_simulations):
         result = _simulate_tournament_once_validated(
             teams,
@@ -1073,6 +1135,7 @@ def simulate_tournament(
             bracket_strategy=bracket_strategy,
             bracket_path=bracket_path,
             initial_state=initial_state,
+            _context=context,
         )
         if outcomes is not None:
             outcomes.append(
