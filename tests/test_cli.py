@@ -31,6 +31,7 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
         "basic_predictions_summary.md",
         "basic_predictions_summary.json",
         "pool_group_round1_predictions.csv",
+        "pool_group_predictions.csv",
         "final_standings_recommendation.csv",
         "top_scorer_recommendation.csv",
         "basic_predictions_metadata.json",
@@ -87,7 +88,9 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
         "warnings",
     }
     assert frontend["schema_version"] == "2.1"
-    assert len(frontend["matches"]) == 24
+    assert len(frontend["round_1_predictions"]) == 24
+    assert len(frontend["matches"]) == 72
+    assert {match["match_round"] for match in frontend["matches"]} == {1, 2, 3}
     assert {
         "model",
         "market_1x2",
@@ -102,7 +105,7 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
     assert {"gold", "silver", "bronze", "fourth"}.issubset(frontend["final_standings"])
     assert frontend["coverage"]["exact_score"] == {
         "available": 0,
-        "total": 24,
+        "total": 72,
         "coverage_pct": 0.0,
     }
     assert len(frontend["warnings"]) == 1
@@ -112,9 +115,7 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
         for warning in match["warnings"]
     )
     assert all(
-        warning.lower() != "nan"
-        for match in frontend["matches"]
-        for warning in match["warnings"]
+        warning.lower() != "nan" for match in frontend["matches"] for warning in match["warnings"]
     )
 
 
@@ -232,9 +233,9 @@ def test_export_frontend_data_from_run_dir_preserves_basic_export(tmp_path: Path
     summary = json.loads((run_path / "basic_predictions_summary.json").read_text())
     assert frontend["schema_version"] == "2.1"
     assert frontend["source_run_dir"] == str(run_path)
-    assert [
-        row["recommendation"]["score"] for row in frontend["round_1_predictions"]
-    ] == [row["recommended_score"] for row in summary["round_1_predictions"]]
+    assert [row["recommendation"]["score"] for row in frontend["round_1_predictions"]] == [
+        row["recommended_score"] for row in summary["round_1_predictions"]
+    ]
     assert {
         position: frontend["final_standings"][position]
         for position in ("gold", "silver", "bronze", "fourth")
@@ -242,12 +243,14 @@ def test_export_frontend_data_from_run_dir_preserves_basic_export(tmp_path: Path
         position: summary["final_standings"][position]
         for position in ("gold", "silver", "bronze", "fourth")
     }
-    assert [row["player"] for row in frontend["top_scorers"] if row["is_recommended"]][
-        :3
-    ] == [row["player"] for row in summary["top_scorers"]]
-    assert frontend["coverage"]["moneyline"]["total"] == 24
+    assert [row["player"] for row in frontend["top_scorers"] if row["is_recommended"]][:3] == [
+        row["player"] for row in summary["top_scorers"]
+    ]
+    assert frontend["coverage"]["moneyline"]["total"] == 72
+    assert len(frontend["round_1_predictions"]) == 24
+    assert len(frontend["matches"]) == 72
     assert frontend["coverage"]["exact_score"]["available"] == 0
-    assert result.stdout.count("Exact-score market coverage: 0/24") == 1
+    assert result.stdout.count("Exact-score market coverage: 0/72") == 1
 
 
 def test_export_frontend_data_writes_market_schema(tmp_path: Path) -> None:

@@ -526,80 +526,78 @@ def _group_match_prediction_rows(
         )
         market_probs = selection.market_probs or (None, None, None)
         row = {
-                "match_id": fixture.match_id,
-                "stage": fixture.stage,
-                "group": fixture.group,
-                "match_round": fixture.match_round,
-                "matchday": fixture.matchday,
-                "kickoff_at": fixture.kickoff_at,
-                "location": fixture.location,
-                "team_a": team_a.name,
-                "team_b": team_b.name,
-                "elo_a": team_a.elo,
-                "elo_b": team_b.elo,
-                "lambda_a": prediction.lambda_a,
-                "lambda_b": prediction.lambda_b,
-                "p_win_a": selection.selected_probs[0],
-                "p_draw": selection.selected_probs[1],
-                "p_win_b": selection.selected_probs[2],
-                "probability_source": selection.probability_source,
-                "market_weight": selection.market_weight,
-                "source_used": selection.source_used,
-                "market_available": selection.market_available,
-                "market_confidence": selection.market_confidence,
-                "model_p_home": selection.model_probs[0],
-                "model_p_draw": selection.model_probs[1],
-                "model_p_away": selection.model_probs[2],
-                "market_p_home": market_probs[0],
-                "market_p_draw": market_probs[1],
-                "market_p_away": market_probs[2],
-                "hybrid_p_home": selection.selected_probs[0],
-                "hybrid_p_draw": selection.selected_probs[1],
-                "hybrid_p_away": selection.selected_probs[2],
-                "score_grid_calibrated": calibrated,
-                "calibration_warning": calibration_warning,
-                "most_likely_score": f"{goals_a}-{goals_b}",
-                "most_likely_goals_a": goals_a,
-                "most_likely_goals_b": goals_b,
-                "strategy": recommendation.strategy,
-                "expected_pool_points": selected_candidate.ev,
-                "most_likely_score_probability": exported_grid.get((goals_a, goals_b), 0.0),
-                "recommended_score_probability": selected_candidate.probability,
-                "recommended_score": selected_candidate.score,
-                "recommended_goals_a": selected_candidate.goals_a,
-                "recommended_goals_b": selected_candidate.goals_b,
-                "recommendation_reason": diagnostics["selection_reason"],
-                "score_probability_source": score_probability_source,
-                "score_source_used": score_selection.source_used,
-                "market_exact_score_available": score_selection.market_available,
-                "market_scores_count": score_selection.market_scores_count,
-                "market_raw_probability_sum": score_selection.market_raw_probability_sum,
-                "model_recommended_score": (
-                    f"{model_recommendation.goals_a}-{model_recommendation.goals_b}"
-                ),
-                "market_recommended_score": (
-                    f"{market_recommendation.goals_a}-{market_recommendation.goals_b}"
-                    if market_recommendation
-                    else None
-                ),
-                "final_recommended_score": selected_candidate.score,
-                "expected_pool_points_model": model_recommendation.expected_pool_points,
-                "expected_pool_points_market": (
-                    market_recommendation.expected_pool_points if market_recommendation else None
-                ),
-                "expected_pool_points_final": selected_candidate.ev,
-                **diagnostics,
-                "_score_candidates": candidates,
-            }
+            "match_id": fixture.match_id,
+            "stage": fixture.stage,
+            "group": fixture.group,
+            "match_round": fixture.match_round,
+            "matchday": fixture.matchday,
+            "kickoff_at": fixture.kickoff_at,
+            "location": fixture.location,
+            "team_a": team_a.name,
+            "team_b": team_b.name,
+            "elo_a": team_a.elo,
+            "elo_b": team_b.elo,
+            "lambda_a": prediction.lambda_a,
+            "lambda_b": prediction.lambda_b,
+            "p_win_a": selection.selected_probs[0],
+            "p_draw": selection.selected_probs[1],
+            "p_win_b": selection.selected_probs[2],
+            "probability_source": selection.probability_source,
+            "market_weight": selection.market_weight,
+            "source_used": selection.source_used,
+            "market_available": selection.market_available,
+            "market_confidence": selection.market_confidence,
+            "model_p_home": selection.model_probs[0],
+            "model_p_draw": selection.model_probs[1],
+            "model_p_away": selection.model_probs[2],
+            "market_p_home": market_probs[0],
+            "market_p_draw": market_probs[1],
+            "market_p_away": market_probs[2],
+            "hybrid_p_home": selection.selected_probs[0],
+            "hybrid_p_draw": selection.selected_probs[1],
+            "hybrid_p_away": selection.selected_probs[2],
+            "score_grid_calibrated": calibrated,
+            "calibration_warning": calibration_warning,
+            "most_likely_score": f"{goals_a}-{goals_b}",
+            "most_likely_goals_a": goals_a,
+            "most_likely_goals_b": goals_b,
+            "strategy": recommendation.strategy,
+            "expected_pool_points": selected_candidate.ev,
+            "most_likely_score_probability": exported_grid.get((goals_a, goals_b), 0.0),
+            "recommended_score_probability": selected_candidate.probability,
+            "recommended_score": selected_candidate.score,
+            "recommended_goals_a": selected_candidate.goals_a,
+            "recommended_goals_b": selected_candidate.goals_b,
+            "recommendation_reason": diagnostics["selection_reason"],
+            "score_probability_source": score_probability_source,
+            "score_source_used": score_selection.source_used,
+            "market_exact_score_available": score_selection.market_available,
+            "market_scores_count": score_selection.market_scores_count,
+            "market_raw_probability_sum": score_selection.market_raw_probability_sum,
+            "model_recommended_score": (
+                f"{model_recommendation.goals_a}-{model_recommendation.goals_b}"
+            ),
+            "market_recommended_score": (
+                f"{market_recommendation.goals_a}-{market_recommendation.goals_b}"
+                if market_recommendation
+                else None
+            ),
+            "final_recommended_score": selected_candidate.score,
+            "expected_pool_points_model": model_recommendation.expected_pool_points,
+            "expected_pool_points_market": (
+                market_recommendation.expected_pool_points if market_recommendation else None
+            ),
+            "expected_pool_points_final": selected_candidate.ev,
+            **diagnostics,
+            "_score_candidates": candidates,
+        }
         result = (
             results_state.results_by_match_id.get(fixture.match_id)
             if results_state is not None
             else None
         )
         ranked = (
-            results_state.ranked_group(fixture.group)
-            if results_state and fixture.group
-            else []
+            results_state.ranked_group(fixture.group) if results_state and fixture.group else []
         )
         positions = {standing.team: index for index, standing in enumerate(ranked, start=1)}
         state_rows = results_state.standings.get(fixture.group, {}) if results_state else {}
@@ -629,9 +627,7 @@ def _group_match_prediction_rows(
                 "elo_b_after_results": team_b.elo,
                 "score_model_strategy": score_model_strategy,
                 "dixon_coles_rho": (
-                    dixon_coles_rho
-                    if score_model_strategy == "dixon_coles_correction"
-                    else None
+                    dixon_coles_rho if score_model_strategy == "dixon_coles_correction" else None
                 ),
                 "score_grid_corrected": score_model_strategy == "dixon_coles_correction",
                 "poisson_p_draw": poisson_probs[1],
@@ -1223,9 +1219,7 @@ def _frontend_match_records(
                     "corrected_p_draw": _frontend_json_value(row.get("corrected_p_draw")),
                     "draw_delta": _frontend_json_value(row.get("draw_delta")),
                     "poisson_best_score": _frontend_json_value(row.get("poisson_best_score")),
-                    "corrected_best_score": _frontend_json_value(
-                        row.get("corrected_best_score")
-                    ),
+                    "corrected_best_score": _frontend_json_value(row.get("corrected_best_score")),
                 },
                 "market_1x2": {
                     "available": market_available,
@@ -1355,8 +1349,17 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
     """Bundel bestaande basic-predictionexports voor gebruik door een frontend."""
 
     run_path = Path(run_path)
-    matches = pd.read_csv(run_path / "pool_group_round1_predictions.csv")
+    round_one_matches = pd.read_csv(run_path / "pool_group_round1_predictions.csv")
+    all_matches_path = run_path / "pool_group_predictions.csv"
+    matches = pd.read_csv(
+        all_matches_path
+        if all_matches_path.exists()
+        else run_path / "pool_group_round1_predictions.csv"
+    )
     matches = matches.sort_values(
+        ["kickoff_at", "match_round", "group"], kind="stable", na_position="last"
+    )
+    round_one_matches = round_one_matches.sort_values(
         ["kickoff_at", "match_round", "group"], kind="stable", na_position="last"
     )
     teams = pd.read_csv(run_path / "tournament_summary.csv").loc[:, FRONTEND_TEAM_COLUMNS]
@@ -1412,6 +1415,7 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
     metadata["exact_score_market_coverage"] = source_metadata.get("exact_score_market_coverage", 0)
     metadata["fallback_count"] = source_metadata.get("model_fallback_count", 0)
     match_records = _frontend_match_records(matches, source_metadata)
+    round_one_records = _frontend_match_records(round_one_matches, source_metadata)
     total = len(match_records)
     moneyline_available = int(source_metadata.get("market_coverage_round1", 0))
     exact_available = int(source_metadata.get("exact_score_market_coverage", 0))
@@ -1451,7 +1455,7 @@ def write_frontend_data_json(run_path: str | Path, path: str | Path) -> Path:
         "source_run_dir": str(run_path),
         "metadata": metadata,
         "coverage": coverage,
-        "round_1_predictions": match_records,
+        "round_1_predictions": round_one_records,
         "matches": match_records,
         "teams": _frontend_records(teams),
         "top_scorers": _frontend_records(top_scorers),

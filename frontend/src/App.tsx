@@ -223,7 +223,7 @@ function App() {
         if (!response.ok) throw new Error(`Could not load predictions (${response.status})`);
         return response.json() as Promise<FrontendData>;
       })
-      .then((payload) => setData({ ...payload, schema_version: payload.schema_version ?? "1.0", matches: payload.round_1_predictions ?? payload.matches ?? [], teams: payload.teams ?? [], market_comparison: payload.market_comparison ?? [] }))
+      .then((payload) => setData({ ...payload, schema_version: payload.schema_version ?? "1.0", matches: payload.matches ?? payload.round_1_predictions ?? [], teams: payload.teams ?? [], market_comparison: payload.market_comparison ?? [] }))
       .catch((reason: unknown) => {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
         setError(reason instanceof Error ? reason.message : "Could not load predictions");
@@ -314,7 +314,7 @@ function App() {
           </>
         ) : null}
 
-        {tab === "matches" ? <section><div className="page-title"><h1>Match predictions</h1><p>Recommended pool scores and model probabilities for every round-one fixture.</p></div><div className="controls"><label>Group<select value={group} onChange={(event) => setGroup(event.target.value)}><option value="all">All groups</option>{groups.map((value) => <option key={value}>{value}</option>)}</select></label><label>Round<select value={round} onChange={(event) => setRound(event.target.value)}><option value="all">All rounds</option>{rounds.map((value) => <option key={value}>{value}</option>)}</select></label><span>{filteredMatches.length} matches</span></div><MatchesTable matches={filteredMatches} showExactScore={showExactScore} /><LargestDeltas matches={filteredMatches} /></section> : null}
+        {tab === "matches" ? <section><div className="page-title"><h1>Match predictions</h1><p>Recommended pool scores and model probabilities for every group-stage fixture.</p></div><div className="controls"><label>Group<select value={group} onChange={(event) => setGroup(event.target.value)}><option value="all">All groups</option>{groups.map((value) => <option key={value}>{value}</option>)}</select></label><label>Round<select value={round} onChange={(event) => setRound(event.target.value)}><option value="all">All rounds</option>{rounds.map((value) => <option key={value}>{value}</option>)}</select></label><span>{filteredMatches.length} matches</span></div><MatchesTable matches={filteredMatches} showExactScore={showExactScore} /><LargestDeltas matches={filteredMatches} /></section> : null}
 
         {tab === "teams" ? <section><div className="page-title"><h1>Team probabilities</h1><p>Progression odds across every stage of the competition.</p></div><div className="controls"><label>Rank teams by<select value={teamSort} onChange={(event) => setTeamSort(event.target.value as TeamSort)}><option value="p_champion">Champion probability</option><option value="p_top4">Top 4 probability</option><option value="p_final">Final probability</option></select></label></div><TeamsTable teams={sortedTeams} /></section> : null}
 
