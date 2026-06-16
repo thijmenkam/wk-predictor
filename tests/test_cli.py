@@ -118,6 +118,92 @@ def test_export_basic_predictions_writes_combined_run(tmp_path: Path) -> None:
     )
 
 
+def test_export_pool_predictions_results_context_changes_round_one_output(tmp_path: Path) -> None:
+    baseline_result = runner.invoke(
+        app,
+        [
+            "export-pool-predictions",
+            "--match-round",
+            "1",
+            "--seed",
+            "7",
+            "--output-dir",
+            str(tmp_path / "baseline"),
+        ],
+    )
+
+    assert baseline_result.exit_code == 0, baseline_result.stdout
+    assert "Wedstrijden: 24" in baseline_result.stdout
+    assert "Results loaded: 0" in baseline_result.stdout
+    baseline_run = next((tmp_path / "baseline").iterdir())
+    baseline_predictions = pd.read_csv(baseline_run / "pool_group_round1_predictions.csv")
+    assert len(baseline_predictions) == 24
+    assert not baseline_predictions["results_context"].any()
+    assert not baseline_predictions["already_played"].any()
+
+    skipped_result = runner.invoke(
+        app,
+        [
+            "export-pool-predictions",
+            "--match-round",
+            "1",
+            "--results",
+            "data/raw/results.csv",
+            "--seed",
+            "7",
+            "--output-dir",
+            str(tmp_path / "skipped"),
+        ],
+    )
+
+    assert skipped_result.exit_code == 0, skipped_result.stdout
+    assert "Wedstrijden: 0" in skipped_result.stdout
+    assert "Results loaded: 24" in skipped_result.stdout
+    assert "Played fixtures: 24" in skipped_result.stdout
+    skipped_run = next((tmp_path / "skipped").iterdir())
+    skipped_predictions = pd.read_csv(skipped_run / "pool_group_round1_predictions.csv")
+    skipped_metadata = json.loads((skipped_run / "run_metadata.json").read_text())
+    assert skipped_predictions.empty
+    assert skipped_metadata["results_context"] is True
+    assert skipped_metadata["results_count"] == 24
+    assert skipped_metadata["played_fixtures_count"] == 24
+    assert skipped_metadata["remaining_fixtures_count"] == 48
+
+    included_result = runner.invoke(
+        app,
+        [
+            "export-pool-predictions",
+            "--match-round",
+            "1",
+            "--results",
+            "data/raw/results.csv",
+            "--include-played",
+            "--update-elo-from-results",
+            "--seed",
+            "7",
+            "--output-dir",
+            str(tmp_path / "included"),
+        ],
+    )
+
+    assert included_result.exit_code == 0, included_result.stdout
+    assert "Wedstrijden: 24" in included_result.stdout
+    assert "Update Elo: yes" in included_result.stdout
+    included_run = next((tmp_path / "included").iterdir())
+    included_predictions = pd.read_csv(included_run / "pool_group_round1_predictions.csv")
+    included_metadata = json.loads((included_run / "run_metadata.json").read_text())
+    mexico = included_predictions.loc[included_predictions["match_id"] == "G-A-1-1"].iloc[0]
+    assert len(included_predictions) == 24
+    assert included_predictions["results_context"].all()
+    assert included_predictions["already_played"].all()
+    assert included_predictions["elo_updated_from_results"].all()
+    assert included_metadata["update_elo_from_results"] is True
+    assert mexico["result_score"] == "2-0"
+    assert mexico["points_before_team_a"] == 3
+    assert mexico["points_before_team_b"] == 0
+    assert mexico["elo_a_after_results"] > mexico["elo_a_before_results"]
+
+
 def test_export_frontend_data_from_run_dir_preserves_basic_export(tmp_path: Path) -> None:
     basic_result = runner.invoke(
         app,
