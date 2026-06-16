@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   build:
+    name: Build frontend artifact
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,12 +37,16 @@ jobs:
       - name: Build frontend
         run: bun run build
 
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/dist
 
   deploy:
+    name: Deploy frontend
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

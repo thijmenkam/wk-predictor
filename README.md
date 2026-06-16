@@ -29,6 +29,21 @@ kwalificeren zich rechtstreeks en de beste acht van de twaalf nummers drie gaan 
 De knock-outfase gebruikt standaard een data-driven, official-like bracket met de vaste
 WK 2026-matchnummers 73 tot en met 104.
 
+
+## Frontend deployment
+
+De frontend wordt automatisch opnieuw gebouwd en uitgerold naar GitHub Pages
+wanneer er rechtstreeks naar `main` wordt gepusht of wanneer een pull request
+naar `main` wordt gemerged. De workflow staat in
+`.github/workflows/deploy-pages.yml`, installeert de frontenddependencies met
+Bun, draait `bun run build`, configureert GitHub Pages en publiceert de inhoud
+van `frontend/dist` als Pages-artifact.
+
+Je kunt dezelfde deployment handmatig opnieuw starten via `workflow_dispatch` in
+GitHub Actions. De gepubliceerde data komt uit de ingecheckte
+`frontend/public/frontend_data.json`; genereer en commit dat bestand expliciet
+wanneer de dashboarddata zelf moet wijzigen.
+
 ## Huidige mogelijkheden
 
 - Laden en valideren van 48 teams in groepen A tot en met L.
