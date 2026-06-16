@@ -1705,15 +1705,9 @@ def export_pool_predictions_command(
         bool, typer.Option("--update-elo-from-results/--no-update-elo-from-results")
     ] = False,
     elo_k_factor: Annotated[float, typer.Option("--elo-k-factor", min=0.01)] = 30,
-    include_played: Annotated[
-        bool, typer.Option("--include-played/--skip-played")
-    ] = False,
-    score_model: Annotated[
-        ScoreModelStrategy | None, typer.Option("--score-model")
-    ] = None,
-    dixon_coles_rho: Annotated[
-        float | None, typer.Option("--dixon-coles-rho")
-    ] = None,
+    include_played: Annotated[bool, typer.Option("--include-played/--skip-played")] = False,
+    score_model: Annotated[ScoreModelStrategy | None, typer.Option("--score-model")] = None,
+    dixon_coles_rho: Annotated[float | None, typer.Option("--dixon-coles-rho")] = None,
 ) -> None:
     """Exporteer Tipset-pouleadviezen, standaard voor ronde 1 indien beschikbaar."""
 
@@ -1818,9 +1812,7 @@ def export_pool_predictions_command(
         draw_target_min_rate=config.score_selection.draw_target_min_rate,
         draw_target_max_rate=config.score_selection.draw_target_max_rate,
         draw_ev_tolerance=config.score_selection.draw_ev_tolerance,
-        prefer_draw_if_market_draw_high=(
-            config.score_selection.prefer_draw_if_market_draw_high
-        ),
+        prefer_draw_if_market_draw_high=(config.score_selection.prefer_draw_if_market_draw_high),
         market_draw_threshold=config.score_selection.market_draw_threshold,
         results_state=results_state,
         elo_before_results=elo_before,
@@ -2419,7 +2411,7 @@ def export_frontend_data_command(
             typer.echo(f"Frontenddata kon niet worden geëxporteerd: {exc}", err=True)
             raise typer.Exit(code=1) from exc
         typer.echo(f"Frontend data: {output}")
-        typer.echo(f"Matches: {len(payload['round_1_predictions'])}")
+        typer.echo(f"Matches: {len(payload['matches'])}")
         typer.echo(
             f"1X2 market coverage: {payload['coverage']['moneyline']['available']}/"
             f"{payload['coverage']['moneyline']['total']}"
@@ -2596,12 +2588,8 @@ def export_basic_predictions_command(
         bool, typer.Option("--update-elo-from-results/--no-update-elo-from-results")
     ] = False,
     elo_k_factor: Annotated[float, typer.Option("--elo-k-factor", min=0.01)] = 30,
-    score_model: Annotated[
-        ScoreModelStrategy | None, typer.Option("--score-model")
-    ] = None,
-    dixon_coles_rho: Annotated[
-        float | None, typer.Option("--dixon-coles-rho")
-    ] = None,
+    score_model: Annotated[ScoreModelStrategy | None, typer.Option("--score-model")] = None,
+    dixon_coles_rho: Annotated[float | None, typer.Option("--dixon-coles-rho")] = None,
 ) -> None:
     """Bereken en exporteer alle basic Tipset/Brunoson-predictions."""
 
@@ -2660,9 +2648,8 @@ def export_basic_predictions_command(
         typer.echo(f"Basic predictions konden niet worden berekend: {exc}", err=True)
         raise typer.Exit(code=1) from exc
 
-    round_one_fixtures = [
-        fixture for fixture in fixtures if fixture.stage == "group" and fixture.match_round == 1
-    ]
+    group_fixtures = [fixture for fixture in fixtures if fixture.stage == "group"]
+    round_one_fixtures = [fixture for fixture in group_fixtures if fixture.match_round == 1]
     if len(round_one_fixtures) != 24:
         typer.echo(
             f"Basic predictions vereisen 24 round 1-fixtures; gevonden: {len(round_one_fixtures)}.",
@@ -2707,11 +2694,11 @@ def export_basic_predictions_command(
     run_path: Path | None = None
     if export:
         run_path = create_run_dir(output_dir, "basic-predictions", run_seed)
-        pool_path = write_pool_group_predictions_csv(
-            round_one_fixtures,
+        all_pool_path = write_pool_group_predictions_csv(
+            group_fixtures,
             teams,
             config.model,
-            run_path / "pool_group_round1_predictions.csv",
+            run_path / "pool_group_predictions.csv",
             strategy=PoolScoreStrategy.MAX_EXPECTED_POOL_POINTS.value,
             scoring=scoring.group_stage,
             probability_source=probability_source.value,
@@ -2739,7 +2726,19 @@ def export_basic_predictions_command(
             dixon_coles_rho=effective_rho,
             normalize_dixon_coles=config.score_model.dixon_coles.normalize_after_correction,
         )
-        round_one_frame = pd.read_csv(pool_path)
+        all_pool_frame = pd.read_csv(all_pool_path)
+        round_one_frame = all_pool_frame.loc[all_pool_frame["match_round"].eq(1)].copy()
+        round_one_frame.to_csv(run_path / "pool_group_round1_predictions.csv", index=False)
+        if len(round_one_frame) != 24:
+            typer.echo(
+                "Basic predictions vereisen 24 round 1-fixtures; "
+                f"gevonden: {len(round_one_frame)}.",
+                err=True,
+            )
+            raise typer.Exit(code=1)
+        # Keep the legacy round-one artifact available for existing integrations.
+        # The frontend reads pool_group_predictions.csv when present so users can
+        # inspect rounds 2 and 3 as well.
     else:
         temporary_path = output_dir / ".basic_predictions_round1.tmp.csv"
         try:
