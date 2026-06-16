@@ -1086,6 +1086,12 @@ def _frontend_json_value(value: Any) -> Any:
     return value
 
 
+def _frontend_int_value(value: Any, default: int = 0) -> int:
+    if pd.isna(value):
+        return default
+    return int(value)
+
+
 def _frontend_records(frame: pd.DataFrame) -> list[dict[str, Any]]:
     return [
         {key: _frontend_json_value(value) for key, value in row.items()}
@@ -1271,7 +1277,7 @@ def _frontend_match_records(
                         "score_probability_source", "model_score_grid"
                     ),
                     "market_score_weight": metadata.get("market_score_weight"),
-                    "scores_count": int(row.get("market_scores_count") or 0),
+                    "scores_count": _frontend_int_value(row.get("market_scores_count")),
                     "raw_probability_sum": _frontend_json_value(
                         row.get("market_raw_probability_sum")
                     ),

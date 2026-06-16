@@ -1,6 +1,6 @@
 {
   "schema_version": "2.1",
-  "generated_at": "2026-06-10T19:58:15.034817+00:00",
+  "generated_at": "2026-06-16T18:02:46.727413+00:00",
   "source_run_dir": "outputs/runs/20260610-195656-basic-predictions-seed42",
   "metadata": {
     "seed": 42,
@@ -9,13 +9,13 @@
     "market_weight": 0.7,
     "score_probability_source": "model_score_grid",
     "market_score_weight": 0.7,
-    "score_model_strategy": "dixon_coles_correction",
+    "score_model_strategy": "mixed_preserved_round1_poisson_rounds2_3_dixon_coles_correction",
     "dixon_coles_rho": -0.1,
-    "score_grid_corrected": true,
+    "score_grid_corrected": "rounds_2_3_only",
     "bracket_strategy": "official_like",
     "rating_strategy": "elo",
     "scoring_config": "configs/pool_scoring.yaml",
-    "market_match_odds_path": "outputs/polymarket/20260610-085818-price-fetch/processed/group_stage_match_odds.csv",
+    "market_match_odds_path": "outputs/polymarket/20260616-181515-price-fetch/processed/group_stage_match_odds.csv",
     "market_exact_score_odds_path": null,
     "results_path": null,
     "results_count": 0,
@@ -32,31 +32,26 @@
       "Top scorer model gebruikt approximate player goal allocation",
       "Fixtures zijn gebaseerd op secundaire bron en moeten tegen FIFA worden gecontroleerd"
     ],
-    "generated_at": null,
-    "market_coverage": 24,
+    "generated_at": "2026-06-16T18:16:26.665388+00:00",
+    "market_coverage": 72,
     "exact_score_market_coverage": 0,
     "fallback_count": 0
   },
   "coverage": {
     "moneyline": {
-      "available": 24,
-      "total": 24,
+      "available": 72,
+      "total": 72,
       "coverage_pct": 100.0
     },
     "exact_score": {
       "available": 0,
-      "total": 24,
+      "total": 72,
       "coverage_pct": 0.0
     },
     "model_fallback": {
-      "count": 0
-    },
-    "source_used_counts": {
-      "model_only": 0,
-      "hybrid": 24,
-      "market_only": 0,
-      "model_fallback": 0,
-      "model_fallback_low_confidence": 0
+      "count": 0,
+      "total": 72,
+      "fallback_pct": 0.0
     }
   },
   "round_1_predictions": [
@@ -181,9 +176,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-A-1-2",
@@ -306,9 +299,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-B-1-1",
@@ -431,9 +422,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-D-1-1",
@@ -556,9 +545,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-B-1-2",
@@ -681,9 +668,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-C-1-1",
@@ -806,9 +791,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-C-1-2",
@@ -931,9 +914,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-D-1-2",
@@ -942,7 +923,7 @@
       "kickoff_at": "2026-06-14T00:00:00-04:00",
       "location": "BC Place, Vancouver",
       "team_a": "Australia",
-      "team_b": "Türkiye",
+      "team_b": "T\u00fcrkiye",
       "elo_a": 1770.0,
       "elo_b": 1911.0,
       "lambda_a": 1.170385,
@@ -1056,9 +1037,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-E-1-1",
@@ -1067,7 +1046,7 @@
       "kickoff_at": "2026-06-14T13:00:00-04:00",
       "location": "NRG Stadium, Houston",
       "team_a": "Germany",
-      "team_b": "Curaçao",
+      "team_b": "Cura\u00e7ao",
       "elo_a": 1932.0,
       "elo_b": 1432.0,
       "lambda_a": 2.057337,
@@ -1181,9 +1160,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-F-1-1",
@@ -1306,9 +1283,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-E-1-2",
@@ -1431,9 +1406,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-F-1-2",
@@ -1556,9 +1529,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-H-1-1",
@@ -1681,9 +1652,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-G-1-1",
@@ -1806,9 +1775,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-H-1-2",
@@ -1931,9 +1898,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-G-1-2",
@@ -2056,9 +2021,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-I-1-1",
@@ -2181,9 +2144,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-I-1-2",
@@ -2306,9 +2267,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-J-1-1",
@@ -2431,9 +2390,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-J-1-2",
@@ -2556,9 +2513,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-K-1-1",
@@ -2681,9 +2636,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-L-1-1",
@@ -2806,9 +2759,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-L-1-2",
@@ -2931,9 +2882,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-K-1-2",
@@ -3056,9 +3005,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     }
   ],
   "matches": [
@@ -3183,9 +3130,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-A-1-2",
@@ -3308,9 +3253,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-B-1-1",
@@ -3433,9 +3376,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-D-1-1",
@@ -3558,9 +3499,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-B-1-2",
@@ -3683,9 +3622,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-C-1-1",
@@ -3808,9 +3745,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-C-1-2",
@@ -3933,9 +3868,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-D-1-2",
@@ -3944,7 +3877,7 @@
       "kickoff_at": "2026-06-14T00:00:00-04:00",
       "location": "BC Place, Vancouver",
       "team_a": "Australia",
-      "team_b": "Türkiye",
+      "team_b": "T\u00fcrkiye",
       "elo_a": 1770.0,
       "elo_b": 1911.0,
       "lambda_a": 1.170385,
@@ -4058,9 +3991,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-E-1-1",
@@ -4069,7 +4000,7 @@
       "kickoff_at": "2026-06-14T13:00:00-04:00",
       "location": "NRG Stadium, Houston",
       "team_a": "Germany",
-      "team_b": "Curaçao",
+      "team_b": "Cura\u00e7ao",
       "elo_a": 1932.0,
       "elo_b": 1432.0,
       "lambda_a": 2.057337,
@@ -4183,9 +4114,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-F-1-1",
@@ -4308,9 +4237,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-E-1-2",
@@ -4433,9 +4360,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-F-1-2",
@@ -4558,9 +4483,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-H-1-1",
@@ -4683,9 +4606,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-G-1-1",
@@ -4808,9 +4729,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-H-1-2",
@@ -4933,9 +4852,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-G-1-2",
@@ -5058,9 +4975,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-I-1-1",
@@ -5183,9 +5098,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-I-1-2",
@@ -5308,9 +5221,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-J-1-1",
@@ -5433,9 +5344,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-J-1-2",
@@ -5558,9 +5467,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-K-1-1",
@@ -5683,9 +5590,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-L-1-1",
@@ -5808,9 +5713,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-L-1-2",
@@ -5933,9 +5836,7 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
     },
     {
       "match_id": "G-K-1-2",
@@ -6058,9 +5959,5911 @@
           "source": "model_score_grid"
         }
       },
-      "warnings": [
-        "nan"
-      ]
+      "warnings": []
+    },
+    {
+      "match_id": "G-A-2-1",
+      "group": "A",
+      "match_round": 2,
+      "kickoff_at": "2026-06-18T12:00:00-04:00",
+      "location": "Mercedes-Benz Stadium, Atlanta",
+      "team_a": "Czechia",
+      "team_b": "South Africa",
+      "elo_a": 1718.0,
+      "elo_b": 1572.0,
+      "lambda_a": 1.506656,
+      "lambda_b": 1.165246,
+      "p_win_a": 0.511255,
+      "p_draw": 0.261497,
+      "p_win_b": 0.227248,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.618443,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.618443,
+      "recommended_ev": 0.618443,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-A-2-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.618443,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.618443,
+        "recommended_ev": 0.618443,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.506656,
+        "lambda_b": 1.165246,
+        "p_win_a": 0.438844,
+        "p_draw": 0.279616,
+        "p_win_b": 0.28154,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.618443,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.255346,
+        "corrected_p_draw": 0.279616,
+        "draw_delta": 0.02427,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.542289,
+        "p_draw": 0.253731,
+        "p_win_b": 0.20398,
+        "raw_p_win_a": 0.545,
+        "raw_p_draw": 0.255,
+        "raw_p_win_b": 0.205,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-cze-rsa-2026-06-18",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.511255,
+        "p_draw": 0.261497,
+        "p_win_b": 0.227248,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.103445,
+        "draw": -0.025884,
+        "away": -0.07756,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.103445
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.618443
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-B-2-1",
+      "group": "B",
+      "match_round": 2,
+      "kickoff_at": "2026-06-18T15:00:00-04:00",
+      "location": "SoFi Stadium, Inglewood",
+      "team_a": "Switzerland",
+      "team_b": "Bosnia",
+      "elo_a": 1897.0,
+      "elo_b": 1708.0,
+      "lambda_a": 1.56476,
+      "lambda_b": 1.121977,
+      "p_win_a": 0.570137,
+      "p_draw": 0.244718,
+      "p_win_b": 0.185145,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.686468,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.686468,
+      "recommended_ev": 0.686468,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-B-2-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.686468,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.686468,
+        "recommended_ev": 0.686468,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.56476,
+        "lambda_b": 1.121977,
+        "p_win_a": 0.463674,
+        "p_draw": 0.275498,
+        "p_win_b": 0.260828,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.686468,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.251586,
+        "corrected_p_draw": 0.275498,
+        "draw_delta": 0.023913,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.615764,
+        "p_draw": 0.231527,
+        "p_win_b": 0.152709,
+        "raw_p_win_a": 0.625,
+        "raw_p_draw": 0.235,
+        "raw_p_win_b": 0.155,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-che-bih-2026-06-18",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.570137,
+        "p_draw": 0.244718,
+        "p_win_b": 0.185145,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.15209,
+        "draw": -0.043971,
+        "away": -0.108118,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.15209
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.686468
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-B-2-2",
+      "group": "B",
+      "match_round": 2,
+      "kickoff_at": "2026-06-18T18:00:00-04:00",
+      "location": "BC Place, Vancouver",
+      "team_a": "Canada",
+      "team_b": "Qatar",
+      "elo_a": 1748.0,
+      "elo_b": 1678.0,
+      "lambda_a": 1.409186,
+      "lambda_b": 1.245843,
+      "p_win_a": 0.646293,
+      "p_draw": 0.199105,
+      "p_win_b": 0.154602,
+      "most_likely_score": "1-1",
+      "recommended_score": "2-1",
+      "expected_pool_points": 0.788323,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-1",
+      "best_ev": 0.788323,
+      "recommended_ev": 0.788323,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-B-2-2",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "2-1",
+        "goals_a": 2,
+        "goals_b": 1,
+        "expected_pool_points": 0.788323,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-1",
+        "best_ev": 0.788323,
+        "recommended_ev": 0.788323,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.409186,
+        "lambda_b": 1.245843,
+        "p_win_a": 0.39569,
+        "p_draw": 0.284374,
+        "p_win_b": 0.319936,
+        "recommended_score": "2-1",
+        "expected_pool_points": 0.788323,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.259691,
+        "corrected_p_draw": 0.284374,
+        "draw_delta": 0.024683,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.753695,
+        "p_draw": 0.162562,
+        "p_win_b": 0.083744,
+        "raw_p_win_a": 0.765,
+        "raw_p_draw": 0.165,
+        "raw_p_win_b": 0.085,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-can-qat-2026-06-18",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.646293,
+        "p_draw": 0.199105,
+        "p_win_b": 0.154602,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.358005,
+        "draw": -0.121812,
+        "away": -0.236193,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.358005
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-1",
+          "expected_pool_points": 0.788323
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-A-2-2",
+      "group": "A",
+      "match_round": 2,
+      "kickoff_at": "2026-06-18T21:00:00-04:00",
+      "location": "Estadio Akron, Zapopan",
+      "team_a": "Mexico",
+      "team_b": "South Korea",
+      "elo_a": 1828.0,
+      "elo_b": 1785.0,
+      "lambda_a": 1.376099,
+      "lambda_b": 1.275799,
+      "p_win_a": 0.448679,
+      "p_draw": 0.282131,
+      "p_win_b": 0.26919,
+      "most_likely_score": "1-1",
+      "recommended_score": "2-1",
+      "expected_pool_points": 0.549083,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-1",
+      "best_ev": 0.549083,
+      "recommended_ev": 0.549083,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-A-2-2",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "2-1",
+        "goals_a": 2,
+        "goals_b": 1,
+        "expected_pool_points": 0.549083,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-1",
+        "best_ev": 0.549083,
+        "recommended_ev": 0.549083,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.376099,
+        "lambda_b": 1.275799,
+        "p_win_a": 0.380654,
+        "p_draw": 0.285266,
+        "p_win_b": 0.334081,
+        "recommended_score": "2-1",
+        "expected_pool_points": 0.549083,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.260505,
+        "corrected_p_draw": 0.285266,
+        "draw_delta": 0.02476,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.477833,
+        "p_draw": 0.280788,
+        "p_win_b": 0.241379,
+        "raw_p_win_a": 0.485,
+        "raw_p_draw": 0.285,
+        "raw_p_win_b": 0.245,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-mex-kr-2026-06-18",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.448679,
+        "p_draw": 0.282131,
+        "p_win_b": 0.26919,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.097179,
+        "draw": -0.004477,
+        "away": -0.092702,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.097179
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-1",
+          "expected_pool_points": 0.549083
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-D-2-1",
+      "group": "D",
+      "match_round": 2,
+      "kickoff_at": "2026-06-19T15:00:00-04:00",
+      "location": "Lumen Field, Seattle",
+      "team_a": "USA",
+      "team_b": "Australia",
+      "elo_a": 1815.0,
+      "elo_b": 1770.0,
+      "lambda_a": 1.378523,
+      "lambda_b": 1.273555,
+      "p_win_a": 0.540157,
+      "p_draw": 0.23682,
+      "p_win_b": 0.223023,
+      "most_likely_score": "1-1",
+      "recommended_score": "2-1",
+      "expected_pool_points": 0.660871,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-1",
+      "best_ev": 0.660871,
+      "recommended_ev": 0.660871,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-D-2-1",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "2-1",
+        "goals_a": 2,
+        "goals_b": 1,
+        "expected_pool_points": 0.660871,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-1",
+        "best_ev": 0.660871,
+        "recommended_ev": 0.660871,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.378523,
+        "lambda_b": 1.273555,
+        "p_win_a": 0.381761,
+        "p_draw": 0.285214,
+        "p_win_b": 0.333025,
+        "recommended_score": "2-1",
+        "expected_pool_points": 0.660871,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.260458,
+        "corrected_p_draw": 0.285214,
+        "draw_delta": 0.024756,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.60804,
+        "p_draw": 0.21608,
+        "p_win_b": 0.175879,
+        "raw_p_win_a": 0.605,
+        "raw_p_draw": 0.215,
+        "raw_p_win_b": 0.175,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-usa-aus-2026-06-19",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.540157,
+        "p_draw": 0.23682,
+        "p_win_b": 0.223023,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.226279,
+        "draw": -0.069134,
+        "away": -0.157145,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.226279
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-1",
+          "expected_pool_points": 0.660871
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-C-2-1",
+      "group": "C",
+      "match_round": 2,
+      "kickoff_at": "2026-06-19T18:00:00-04:00",
+      "location": "Gillette Stadium, Foxborough",
+      "team_a": "Scotland",
+      "team_b": "Morocco",
+      "elo_a": 1755.0,
+      "elo_b": 1848.0,
+      "lambda_a": 1.220881,
+      "lambda_b": 1.437999,
+      "p_win_a": 0.214317,
+      "p_draw": 0.269561,
+      "p_win_b": 0.516122,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.627781,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.627781,
+      "recommended_ev": 0.627781,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-C-2-1",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.627781,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.627781,
+        "recommended_ev": 0.627781,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.220881,
+        "lambda_b": 1.437999,
+        "p_win_a": 0.308088,
+        "p_draw": 0.283281,
+        "p_win_b": 0.408631,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.627781,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.258693,
+        "corrected_p_draw": 0.283281,
+        "draw_delta": 0.024588,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.174129,
+        "p_draw": 0.263682,
+        "p_win_b": 0.562189,
+        "raw_p_win_a": 0.175,
+        "raw_p_draw": 0.265,
+        "raw_p_win_b": 0.565,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-sco-mar-2026-06-19",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.214317,
+        "p_draw": 0.269561,
+        "p_win_b": 0.516122,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.133959,
+        "draw": -0.019599,
+        "away": 0.153558,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.153558
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.627781
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-C-2-2",
+      "group": "C",
+      "match_round": 2,
+      "kickoff_at": "2026-06-19T20:30:00-04:00",
+      "location": "Lincoln Financial Field, Philadelphia",
+      "team_a": "Brazil",
+      "team_b": "Haiti",
+      "elo_a": 1991.0,
+      "elo_b": 1488.0,
+      "lambda_a": 2.062776,
+      "lambda_b": 0.851098,
+      "p_win_a": 0.807791,
+      "p_draw": 0.122426,
+      "p_win_b": 0.069783,
+      "most_likely_score": "2-0",
+      "recommended_score": "2-0",
+      "expected_pool_points": 0.952372,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-0",
+      "best_ev": 0.952372,
+      "recommended_ev": 0.952372,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-C-2-2",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "2-0",
+        "goals_a": 2,
+        "goals_b": 0,
+        "expected_pool_points": 0.952372,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-0",
+        "best_ev": 0.952372,
+        "recommended_ev": 0.952372,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 2.062776,
+        "lambda_b": 0.851098,
+        "p_win_a": 0.645041,
+        "p_draw": 0.219522,
+        "p_win_b": 0.135436,
+        "recommended_score": "2-0",
+        "expected_pool_points": 0.952372,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.200468,
+        "corrected_p_draw": 0.219522,
+        "draw_delta": 0.019054,
+        "poisson_best_score": "2-0",
+        "corrected_best_score": "2-0"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.877541,
+        "p_draw": 0.080813,
+        "p_win_b": 0.041646,
+        "raw_p_win_a": 0.885,
+        "raw_p_draw": 0.0815,
+        "raw_p_win_b": 0.042,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-bra-hai-2026-06-19",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.807791,
+        "p_draw": 0.122426,
+        "p_win_b": 0.069783,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.2325,
+        "draw": -0.138709,
+        "away": -0.09379,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.2325
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-0",
+          "expected_pool_points": 0.952372
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-D-2-2",
+      "group": "D",
+      "match_round": 2,
+      "kickoff_at": "2026-06-19T23:00:00-04:00",
+      "location": "Levi's Stadium, Santa Clara",
+      "team_a": "T\u00fcrkiye",
+      "team_b": "Paraguay",
+      "elo_a": 1911.0,
+      "elo_b": 1658.0,
+      "lambda_a": 1.655416,
+      "lambda_b": 1.060534,
+      "p_win_a": 0.481133,
+      "p_draw": 0.278777,
+      "p_win_b": 0.240089,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.57514,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.57514,
+      "recommended_ev": 0.57514,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-D-2-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.57514,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.57514,
+        "recommended_ev": 0.57514,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.655416,
+        "lambda_b": 1.060534,
+        "p_win_a": 0.500958,
+        "p_draw": 0.267567,
+        "p_win_b": 0.231475,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.57514,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.244343,
+        "corrected_p_draw": 0.267567,
+        "draw_delta": 0.023224,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.472637,
+        "p_draw": 0.283582,
+        "p_win_b": 0.243781,
+        "raw_p_win_a": 0.475,
+        "raw_p_draw": 0.285,
+        "raw_p_win_b": 0.245,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-tur-par-2026-06-19",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.481133,
+        "p_draw": 0.278777,
+        "p_win_b": 0.240089,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.028321,
+        "draw": 0.016015,
+        "away": 0.012306,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.028321
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.57514
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-F-2-1",
+      "group": "F",
+      "match_round": 2,
+      "kickoff_at": "2026-06-20T13:00:00-04:00",
+      "location": "NRG Stadium, Houston",
+      "team_a": "Netherlands",
+      "team_b": "Sweden",
+      "elo_a": 1944.0,
+      "elo_b": 1792.0,
+      "lambda_a": 1.514632,
+      "lambda_b": 1.15911,
+      "p_win_a": 0.526221,
+      "p_draw": 0.254377,
+      "p_win_b": 0.219402,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.636139,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.636139,
+      "recommended_ev": 0.636139,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-F-2-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.636139,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.636139,
+        "recommended_ev": 0.636139,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.514632,
+        "lambda_b": 1.15911,
+        "p_win_a": 0.442294,
+        "p_draw": 0.279102,
+        "p_win_b": 0.278604,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.636139,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.254876,
+        "corrected_p_draw": 0.279102,
+        "draw_delta": 0.024225,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.562189,
+        "p_draw": 0.243781,
+        "p_win_b": 0.19403,
+        "raw_p_win_a": 0.565,
+        "raw_p_draw": 0.245,
+        "raw_p_win_b": 0.195,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-nld-swe-2026-06-20",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.526221,
+        "p_draw": 0.254377,
+        "p_win_b": 0.219402,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.119895,
+        "draw": -0.035321,
+        "away": -0.084574,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.119895
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.636139
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-E-2-1",
+      "group": "E",
+      "match_round": 2,
+      "kickoff_at": "2026-06-20T16:00:00-04:00",
+      "location": "BMO Field, Toronto",
+      "team_a": "Germany",
+      "team_b": "Ivory Coast",
+      "elo_a": 1932.0,
+      "elo_b": 1730.0,
+      "lambda_a": 1.582764,
+      "lambda_b": 1.109215,
+      "p_win_a": 0.583655,
+      "p_draw": 0.225003,
+      "p_win_b": 0.191341,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.701735,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.701735,
+      "recommended_ev": 0.701735,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-E-2-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.701735,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.701735,
+        "recommended_ev": 0.701735,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.582764,
+        "lambda_b": 1.109215,
+        "p_win_a": 0.471222,
+        "p_draw": 0.274058,
+        "p_win_b": 0.25472,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.701735,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.25027,
+        "corrected_p_draw": 0.274058,
+        "draw_delta": 0.023788,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.631841,
+        "p_draw": 0.20398,
+        "p_win_b": 0.164179,
+        "raw_p_win_a": 0.635,
+        "raw_p_draw": 0.205,
+        "raw_p_win_b": 0.165,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-ger-civ-2026-06-20",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.583655,
+        "p_draw": 0.225003,
+        "p_win_b": 0.191341,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.160618,
+        "draw": -0.070078,
+        "away": -0.09054,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.160618
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.701735
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-E-2-2",
+      "group": "E",
+      "match_round": 2,
+      "kickoff_at": "2026-06-20T20:00:00-04:00",
+      "location": "Arrowhead Stadium, Kansas City",
+      "team_a": "Ecuador",
+      "team_b": "Cura\u00e7ao",
+      "elo_a": 1935.0,
+      "elo_b": 1432.0,
+      "lambda_a": 2.062776,
+      "lambda_b": 0.851098,
+      "p_win_a": 0.810237,
+      "p_draw": 0.12509,
+      "p_win_b": 0.064673,
+      "most_likely_score": "2-0",
+      "recommended_score": "2-0",
+      "expected_pool_points": 0.955256,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-0",
+      "best_ev": 0.955256,
+      "recommended_ev": 0.955256,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-E-2-2",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "2-0",
+        "goals_a": 2,
+        "goals_b": 0,
+        "expected_pool_points": 0.955256,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-0",
+        "best_ev": 0.955256,
+        "recommended_ev": 0.955256,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 2.062776,
+        "lambda_b": 0.851098,
+        "p_win_a": 0.645041,
+        "p_draw": 0.219522,
+        "p_win_b": 0.135436,
+        "recommended_score": "2-0",
+        "expected_pool_points": 0.955256,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.200468,
+        "corrected_p_draw": 0.219522,
+        "draw_delta": 0.019054,
+        "poisson_best_score": "2-0",
+        "corrected_best_score": "2-0"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.881035,
+        "p_draw": 0.084619,
+        "p_win_b": 0.034345,
+        "raw_p_win_a": 0.885,
+        "raw_p_draw": 0.085,
+        "raw_p_win_b": 0.0345,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-ecu-kor-2026-06-20",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.810237,
+        "p_draw": 0.12509,
+        "p_win_b": 0.064673,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.235994,
+        "draw": -0.134903,
+        "away": -0.101091,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.235994
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-0",
+          "expected_pool_points": 0.955256
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-F-2-2",
+      "group": "F",
+      "match_round": 2,
+      "kickoff_at": "2026-06-21T00:00:00-04:00",
+      "location": "Estadio BBVA, Monterrey",
+      "team_a": "Tunisia",
+      "team_b": "Japan",
+      "elo_a": 1720.0,
+      "elo_b": 1879.0,
+      "lambda_a": 1.151992,
+      "lambda_b": 1.523991,
+      "p_win_a": 0.170499,
+      "p_draw": 0.241835,
+      "p_win_b": 0.587666,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.709887,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.709887,
+      "recommended_ev": 0.709887,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-F-2-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.709887,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.709887,
+        "recommended_ev": 0.709887,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.151992,
+        "lambda_b": 1.523991,
+        "p_win_a": 0.275198,
+        "p_draw": 0.278477,
+        "p_win_b": 0.446325,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.709887,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.254306,
+        "corrected_p_draw": 0.278477,
+        "draw_delta": 0.024171,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.125628,
+        "p_draw": 0.226131,
+        "p_win_b": 0.648241,
+        "raw_p_win_a": 0.125,
+        "raw_p_draw": 0.225,
+        "raw_p_win_b": 0.645,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-tun-jpn-2026-06-21",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.170499,
+        "p_draw": 0.241835,
+        "p_win_b": 0.587666,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.149569,
+        "draw": -0.052346,
+        "away": 0.201916,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.201916
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.709887
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-H-2-1",
+      "group": "H",
+      "match_round": 2,
+      "kickoff_at": "2026-06-21T12:00:00-04:00",
+      "location": "Mercedes-Benz Stadium, Atlanta",
+      "team_a": "Spain",
+      "team_b": "Saudi Arabia",
+      "elo_a": 2155.0,
+      "elo_b": 1660.0,
+      "lambda_a": 2.048305,
+      "lambda_b": 0.857111,
+      "p_win_a": 0.804981,
+      "p_draw": 0.125946,
+      "p_win_b": 0.069073,
+      "most_likely_score": "2-0",
+      "recommended_score": "2-0",
+      "expected_pool_points": 0.949248,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-0",
+      "best_ev": 0.949248,
+      "recommended_ev": 0.949248,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-H-2-1",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "2-0",
+        "goals_a": 2,
+        "goals_b": 0,
+        "expected_pool_points": 0.949248,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-0",
+        "best_ev": 0.949248,
+        "recommended_ev": 0.949248,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 2.048305,
+        "lambda_b": 0.857111,
+        "p_win_a": 0.640582,
+        "p_draw": 0.221387,
+        "p_win_b": 0.138031,
+        "recommended_score": "2-0",
+        "expected_pool_points": 0.949248,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.202171,
+        "corrected_p_draw": 0.221387,
+        "draw_delta": 0.019216,
+        "poisson_best_score": "2-0",
+        "corrected_best_score": "2-0"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.875438,
+        "p_draw": 0.085043,
+        "p_win_b": 0.03952,
+        "raw_p_win_a": 0.875,
+        "raw_p_draw": 0.085,
+        "raw_p_win_b": 0.0395,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-esp-ksa-2026-06-21",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.804981,
+        "p_draw": 0.125946,
+        "p_win_b": 0.069073,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.234856,
+        "draw": -0.136344,
+        "away": -0.098511,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.234856
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-0",
+          "expected_pool_points": 0.949248
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-G-2-1",
+      "group": "G",
+      "match_round": 2,
+      "kickoff_at": "2026-06-21T15:00:00-04:00",
+      "location": "SoFi Stadium, Inglewood",
+      "team_a": "Belgium",
+      "team_b": "Iran",
+      "elo_a": 1849.0,
+      "elo_b": 1742.0,
+      "lambda_a": 1.455825,
+      "lambda_b": 1.205932,
+      "p_win_a": 0.609048,
+      "p_draw": 0.220561,
+      "p_win_b": 0.170391,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.739751,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.739751,
+      "recommended_ev": 0.739751,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-G-2-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.739751,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.739751,
+        "recommended_ev": 0.739751,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.455825,
+        "lambda_b": 1.205932,
+        "p_win_a": 0.416562,
+        "p_draw": 0.282467,
+        "p_win_b": 0.300971,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.739751,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.25795,
+        "corrected_p_draw": 0.282467,
+        "draw_delta": 0.024517,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.691542,
+        "p_draw": 0.19403,
+        "p_win_b": 0.114428,
+        "raw_p_win_a": 0.695,
+        "raw_p_draw": 0.195,
+        "raw_p_win_b": 0.115,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-bel-irn-2026-06-21",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.609048,
+        "p_draw": 0.220561,
+        "p_win_b": 0.170391,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.27498,
+        "draw": -0.088437,
+        "away": -0.186543,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.27498
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.739751
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-H-2-2",
+      "group": "H",
+      "match_round": 2,
+      "kickoff_at": "2026-06-21T18:00:00-04:00",
+      "location": "Hard Rock Stadium, Miami Gardens",
+      "team_a": "Uruguay",
+      "team_b": "Cape Verde",
+      "elo_a": 1890.0,
+      "elo_b": 1542.0,
+      "lambda_a": 1.799758,
+      "lambda_b": 0.975478,
+      "p_win_a": 0.630119,
+      "p_draw": 0.232366,
+      "p_win_b": 0.137515,
+      "most_likely_score": "1-0",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.744767,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.744767,
+      "recommended_ev": 0.744767,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-H-2-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.744767,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.744767,
+        "recommended_ev": 0.744767,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.799758,
+        "lambda_b": 0.975478,
+        "p_win_a": 0.556451,
+        "p_draw": 0.252165,
+        "p_win_b": 0.191384,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.744767,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.230278,
+        "corrected_p_draw": 0.252165,
+        "draw_delta": 0.021887,
+        "poisson_best_score": "1-0",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.661692,
+        "p_draw": 0.223881,
+        "p_win_b": 0.114428,
+        "raw_p_win_a": 0.665,
+        "raw_p_draw": 0.225,
+        "raw_p_win_b": 0.115,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-ury-cvi-2026-06-21",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.630119,
+        "p_draw": 0.232366,
+        "p_win_b": 0.137515,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.105241,
+        "draw": -0.028285,
+        "away": -0.076956,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.105241
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.744767
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-G-2-2",
+      "group": "G",
+      "match_round": 2,
+      "kickoff_at": "2026-06-21T21:00:00-04:00",
+      "location": "BC Place, Vancouver",
+      "team_a": "New Zealand",
+      "team_b": "Egypt",
+      "elo_a": 1478.0,
+      "elo_b": 1735.0,
+      "lambda_a": 1.056807,
+      "lambda_b": 1.661254,
+      "p_win_a": 0.184991,
+      "p_draw": 0.245427,
+      "p_win_b": 0.569582,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.680556,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.680556,
+      "recommended_ev": 0.680556,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-G-2-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.680556,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.680556,
+        "recommended_ev": 0.680556,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.056807,
+        "lambda_b": 1.661254,
+        "p_win_a": 0.229702,
+        "p_draw": 0.267003,
+        "p_win_b": 0.503296,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.680556,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.243827,
+        "corrected_p_draw": 0.267003,
+        "draw_delta": 0.023175,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.165829,
+        "p_draw": 0.236181,
+        "p_win_b": 0.59799,
+        "raw_p_win_a": 0.165,
+        "raw_p_draw": 0.235,
+        "raw_p_win_b": 0.595,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-nzl-egy-2026-06-21",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.184991,
+        "p_draw": 0.245427,
+        "p_win_b": 0.569582,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.063873,
+        "draw": -0.030822,
+        "away": 0.094694,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.094694
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.680556
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-J-2-1",
+      "group": "J",
+      "match_round": 2,
+      "kickoff_at": "2026-06-22T13:00:00-04:00",
+      "location": "AT&T Stadium, Arlington",
+      "team_a": "Argentina",
+      "team_b": "Austria",
+      "elo_a": 2114.0,
+      "elo_b": 1808.0,
+      "lambda_a": 1.734454,
+      "lambda_b": 1.012206,
+      "p_win_a": 0.587942,
+      "p_draw": 0.241524,
+      "p_win_b": 0.170534,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.698458,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.698458,
+      "recommended_ev": 0.698458,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-J-2-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.698458,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.698458,
+        "recommended_ev": 0.698458,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.734454,
+        "lambda_b": 1.012206,
+        "p_win_a": 0.531945,
+        "p_draw": 0.259475,
+        "p_win_b": 0.20858,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.698458,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.236953,
+        "corrected_p_draw": 0.259475,
+        "draw_delta": 0.022522,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.61194,
+        "p_draw": 0.233831,
+        "p_win_b": 0.154229,
+        "raw_p_win_a": 0.615,
+        "raw_p_draw": 0.235,
+        "raw_p_win_b": 0.155,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-arg-aut-2026-06-22",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.587942,
+        "p_draw": 0.241524,
+        "p_win_b": 0.170534,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.079995,
+        "draw": -0.025644,
+        "away": -0.054351,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.079995
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.698458
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-I-2-1",
+      "group": "I",
+      "match_round": 2,
+      "kickoff_at": "2026-06-22T17:00:00-04:00",
+      "location": "Lincoln Financial Field, Philadelphia",
+      "team_a": "France",
+      "team_b": "Iraq",
+      "elo_a": 2062.0,
+      "elo_b": 1648.0,
+      "lambda_a": 1.907384,
+      "lambda_b": 0.920436,
+      "p_win_a": 0.788151,
+      "p_draw": 0.137977,
+      "p_win_b": 0.073873,
+      "most_likely_score": "1-0",
+      "recommended_score": "2-0",
+      "expected_pool_points": 0.930741,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-0",
+      "best_ev": 0.930741,
+      "recommended_ev": 0.930741,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-I-2-1",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "2-0",
+        "goals_a": 2,
+        "goals_b": 0,
+        "expected_pool_points": 0.930741,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-0",
+        "best_ev": 0.930741,
+        "recommended_ev": 0.930741,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.907384,
+        "lambda_b": 0.920436,
+        "p_win_a": 0.594649,
+        "p_draw": 0.239249,
+        "p_win_b": 0.166102,
+        "recommended_score": "2-0",
+        "expected_pool_points": 0.930741,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.218482,
+        "corrected_p_draw": 0.239249,
+        "draw_delta": 0.020766,
+        "poisson_best_score": "1-0",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.87108,
+        "p_draw": 0.094574,
+        "p_win_b": 0.034345,
+        "raw_p_win_a": 0.875,
+        "raw_p_draw": 0.095,
+        "raw_p_win_b": 0.0345,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-fra-irq-2026-06-22",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.788151,
+        "p_draw": 0.137977,
+        "p_win_b": 0.073873,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.276431,
+        "draw": -0.144674,
+        "away": -0.131757,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.276431
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-0",
+          "expected_pool_points": 0.930741
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-I-2-2",
+      "group": "I",
+      "match_round": 2,
+      "kickoff_at": "2026-06-22T20:00:00-04:00",
+      "location": "MetLife Stadium, East Rutherford",
+      "team_a": "Norway",
+      "team_b": "Senegal",
+      "elo_a": 1917.0,
+      "elo_b": 1869.0,
+      "lambda_a": 1.382167,
+      "lambda_b": 1.270198,
+      "p_win_a": 0.424978,
+      "p_draw": 0.277082,
+      "p_win_b": 0.29794,
+      "most_likely_score": "1-1",
+      "recommended_score": "2-1",
+      "expected_pool_points": 0.519763,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-1",
+      "best_ev": 0.519763,
+      "recommended_ev": 0.519763,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-I-2-2",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "2-1",
+        "goals_a": 2,
+        "goals_b": 1,
+        "expected_pool_points": 0.519763,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-1",
+        "best_ev": 0.519763,
+        "recommended_ev": 0.519763,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.382167,
+        "lambda_b": 1.270198,
+        "p_win_a": 0.383425,
+        "p_draw": 0.285132,
+        "p_win_b": 0.331443,
+        "recommended_score": "2-1",
+        "expected_pool_points": 0.519763,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.260384,
+        "corrected_p_draw": 0.285132,
+        "draw_delta": 0.024749,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.442786,
+        "p_draw": 0.273632,
+        "p_win_b": 0.283582,
+        "raw_p_win_a": 0.445,
+        "raw_p_draw": 0.275,
+        "raw_p_win_b": 0.285,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-nor-sen-2026-06-22",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.424978,
+        "p_draw": 0.277082,
+        "p_win_b": 0.29794,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.059361,
+        "draw": -0.011501,
+        "away": -0.047861,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.059361
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-1",
+          "expected_pool_points": 0.519763
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-J-2-2",
+      "group": "J",
+      "match_round": 2,
+      "kickoff_at": "2026-06-22T23:00:00-04:00",
+      "location": "Levi's Stadium, Santa Clara",
+      "team_a": "Jordan",
+      "team_b": "Algeria",
+      "elo_a": 1628.0,
+      "elo_b": 1710.0,
+      "lambda_a": 1.232756,
+      "lambda_b": 1.424146,
+      "p_win_a": 0.186039,
+      "p_draw": 0.237173,
+      "p_win_b": 0.576789,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-2",
+      "expected_pool_points": 0.70251,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-2",
+      "best_ev": 0.70251,
+      "recommended_ev": 0.70251,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-J-2-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 2,
+      "recommendation": {
+        "score": "1-2",
+        "goals_a": 1,
+        "goals_b": 2,
+        "expected_pool_points": 0.70251,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-2",
+        "best_ev": 0.70251,
+        "recommended_ev": 0.70251,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.232756,
+        "lambda_b": 1.424146,
+        "p_win_a": 0.313731,
+        "p_draw": 0.283841,
+        "p_win_b": 0.402427,
+        "recommended_score": "1-2",
+        "expected_pool_points": 0.70251,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.259205,
+        "corrected_p_draw": 0.283841,
+        "draw_delta": 0.024637,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.131313,
+        "p_draw": 0.217172,
+        "p_win_b": 0.651515,
+        "raw_p_win_a": 0.13,
+        "raw_p_draw": 0.215,
+        "raw_p_win_b": 0.645,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-jor-alg-2026-06-22",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.186039,
+        "p_draw": 0.237173,
+        "p_win_b": 0.576789,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.182418,
+        "draw": -0.06667,
+        "away": 0.249088,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.249088
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-2",
+          "expected_pool_points": 0.70251
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-2",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-K-2-1",
+      "group": "K",
+      "match_round": 2,
+      "kickoff_at": "2026-06-23T13:00:00-04:00",
+      "location": "NRG Stadium, Houston",
+      "team_a": "Portugal",
+      "team_b": "Uzbekistan",
+      "elo_a": 1986.0,
+      "elo_b": 1622.0,
+      "lambda_a": 1.825278,
+      "lambda_b": 0.96184,
+      "p_win_a": 0.723458,
+      "p_draw": 0.168786,
+      "p_win_b": 0.107756,
+      "most_likely_score": "1-0",
+      "recommended_score": "2-0",
+      "expected_pool_points": 0.854673,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-0",
+      "best_ev": 0.854673,
+      "recommended_ev": 0.854673,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-K-2-1",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "2-0",
+        "goals_a": 2,
+        "goals_b": 0,
+        "expected_pool_points": 0.854673,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-0",
+        "best_ev": 0.854673,
+        "recommended_ev": 0.854673,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.825278,
+        "lambda_b": 0.96184,
+        "p_win_a": 0.565755,
+        "p_draw": 0.249187,
+        "p_win_b": 0.185059,
+        "recommended_score": "2-0",
+        "expected_pool_points": 0.854673,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.227558,
+        "corrected_p_draw": 0.249187,
+        "draw_delta": 0.021629,
+        "poisson_best_score": "1-0",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.791045,
+        "p_draw": 0.134328,
+        "p_win_b": 0.074627,
+        "raw_p_win_a": 0.795,
+        "raw_p_draw": 0.135,
+        "raw_p_win_b": 0.075,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-prt-uzb-2026-06-23",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.723458,
+        "p_draw": 0.168786,
+        "p_win_b": 0.107756,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.22529,
+        "draw": -0.114859,
+        "away": -0.110432,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.22529
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-0",
+          "expected_pool_points": 0.854673
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-L-2-1",
+      "group": "L",
+      "match_round": 2,
+      "kickoff_at": "2026-06-23T16:00:00-04:00",
+      "location": "Gillette Stadium, Foxborough",
+      "team_a": "England",
+      "team_b": "Ghana",
+      "elo_a": 2021.0,
+      "elo_b": 1642.0,
+      "lambda_a": 1.849532,
+      "lambda_b": 0.949227,
+      "p_win_a": 0.691242,
+      "p_draw": 0.188816,
+      "p_win_b": 0.119942,
+      "most_likely_score": "1-0",
+      "recommended_score": "2-0",
+      "expected_pool_points": 0.816551,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-0",
+      "best_ev": 0.816551,
+      "recommended_ev": 0.816551,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-L-2-1",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "2-0",
+        "goals_a": 2,
+        "goals_b": 0,
+        "expected_pool_points": 0.816551,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-0",
+        "best_ev": 0.816551,
+        "recommended_ev": 0.816551,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.849532,
+        "lambda_b": 0.949227,
+        "p_win_a": 0.574455,
+        "p_draw": 0.246303,
+        "p_win_b": 0.179242,
+        "recommended_score": "2-0",
+        "expected_pool_points": 0.816551,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.224925,
+        "corrected_p_draw": 0.246303,
+        "draw_delta": 0.021379,
+        "poisson_best_score": "1-0",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.741294,
+        "p_draw": 0.164179,
+        "p_win_b": 0.094527,
+        "raw_p_win_a": 0.745,
+        "raw_p_draw": 0.165,
+        "raw_p_win_b": 0.095,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-eng-gha-2026-06-23",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.691242,
+        "p_draw": 0.188816,
+        "p_win_b": 0.119942,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.166839,
+        "draw": -0.082124,
+        "away": -0.084715,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.166839
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-0",
+          "expected_pool_points": 0.816551
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-L-2-2",
+      "group": "L",
+      "match_round": 2,
+      "kickoff_at": "2026-06-23T19:00:00-04:00",
+      "location": "BMO Field, Toronto",
+      "team_a": "Panama",
+      "team_b": "Croatia",
+      "elo_a": 1582.0,
+      "elo_b": 1905.0,
+      "lambda_a": 0.997176,
+      "lambda_b": 1.760596,
+      "p_win_a": 0.16145,
+      "p_draw": 0.240664,
+      "p_win_b": 0.597886,
+      "most_likely_score": "0-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.708822,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.708822,
+      "recommended_ev": 0.708822,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-L-2-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.708822,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.708822,
+        "recommended_ev": 0.708822,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 0.997176,
+        "lambda_b": 1.760596,
+        "p_win_a": 0.201518,
+        "p_draw": 0.256607,
+        "p_win_b": 0.541875,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.708822,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.234335,
+        "corrected_p_draw": 0.256607,
+        "draw_delta": 0.022273,
+        "poisson_best_score": "0-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.144279,
+        "p_draw": 0.233831,
+        "p_win_b": 0.621891,
+        "raw_p_win_a": 0.145,
+        "raw_p_draw": 0.235,
+        "raw_p_win_b": 0.625,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-pan-hrv-2026-06-23",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.16145,
+        "p_draw": 0.240664,
+        "p_win_b": 0.597886,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.057239,
+        "draw": -0.022777,
+        "away": 0.080016,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.080016
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.708822
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-K-2-2",
+      "group": "K",
+      "match_round": 2,
+      "kickoff_at": "2026-06-23T22:00:00-04:00",
+      "location": "Estadio Akron, Zapopan",
+      "team_a": "Colombia",
+      "team_b": "DR Congo",
+      "elo_a": 1977.0,
+      "elo_b": 1652.0,
+      "lambda_a": 1.763698,
+      "lambda_b": 0.995423,
+      "p_win_a": 0.619132,
+      "p_draw": 0.233595,
+      "p_win_b": 0.147273,
+      "most_likely_score": "1-0",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.733833,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.733833,
+      "recommended_ev": 0.733833,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-K-2-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.733833,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.733833,
+        "recommended_ev": 0.733833,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.763698,
+        "lambda_b": 0.995423,
+        "p_win_a": 0.543042,
+        "p_draw": 0.256262,
+        "p_win_b": 0.200696,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.733833,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.234019,
+        "corrected_p_draw": 0.256262,
+        "draw_delta": 0.022243,
+        "poisson_best_score": "1-0",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.651741,
+        "p_draw": 0.223881,
+        "p_win_b": 0.124378,
+        "raw_p_win_a": 0.655,
+        "raw_p_draw": 0.225,
+        "raw_p_win_b": 0.125,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-col-cdr-2026-06-23",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.619132,
+        "p_draw": 0.233595,
+        "p_win_b": 0.147273,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.108699,
+        "draw": -0.032381,
+        "away": -0.076318,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.108699
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.733833
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-B-3-1",
+      "group": "B",
+      "match_round": 3,
+      "kickoff_at": "2026-06-24T15:00:00-04:00",
+      "location": "BC Place, Vancouver",
+      "team_a": "Switzerland",
+      "team_b": "Canada",
+      "elo_a": 1897.0,
+      "elo_b": 1748.0,
+      "lambda_a": 1.510639,
+      "lambda_b": 1.162174,
+      "p_win_a": 0.445964,
+      "p_draw": 0.28036,
+      "p_win_b": 0.273676,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.53929,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.53929,
+      "recommended_ev": 0.53929,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-B-3-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.53929,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.53929,
+        "recommended_ev": 0.53929,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.510639,
+        "lambda_b": 1.162174,
+        "p_win_a": 0.440568,
+        "p_draw": 0.279361,
+        "p_win_b": 0.28007,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.53929,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.255113,
+        "corrected_p_draw": 0.279361,
+        "draw_delta": 0.024248,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.448276,
+        "p_draw": 0.280788,
+        "p_win_b": 0.270936,
+        "raw_p_win_a": 0.455,
+        "raw_p_draw": 0.285,
+        "raw_p_win_b": 0.275,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-che-can-2026-06-24",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.445964,
+        "p_draw": 0.28036,
+        "p_win_b": 0.273676,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.007708,
+        "draw": 0.001427,
+        "away": -0.009135,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.009135
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.53929
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-B-3-2",
+      "group": "B",
+      "match_round": 3,
+      "kickoff_at": "2026-06-24T15:00:00-04:00",
+      "location": "Lumen Field, Seattle",
+      "team_a": "Bosnia",
+      "team_b": "Qatar",
+      "elo_a": 1708.0,
+      "elo_b": 1678.0,
+      "lambda_a": 1.360446,
+      "lambda_b": 1.290478,
+      "p_win_a": 0.547367,
+      "p_draw": 0.242379,
+      "p_win_b": 0.210254,
+      "most_likely_score": "1-1",
+      "recommended_score": "2-1",
+      "expected_pool_points": 0.670909,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-1",
+      "best_ev": 0.670909,
+      "recommended_ev": 0.670909,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-B-3-2",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "2-1",
+        "goals_a": 2,
+        "goals_b": 1,
+        "expected_pool_points": 0.670909,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-1",
+        "best_ev": 0.670909,
+        "recommended_ev": 0.670909,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.360446,
+        "lambda_b": 1.290478,
+        "p_win_a": 0.373479,
+        "p_draw": 0.285543,
+        "p_win_b": 0.340978,
+        "recommended_score": "2-1",
+        "expected_pool_points": 0.670909,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.260759,
+        "corrected_p_draw": 0.285543,
+        "draw_delta": 0.024785,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.621891,
+        "p_draw": 0.223881,
+        "p_win_b": 0.154229,
+        "raw_p_win_a": 0.625,
+        "raw_p_draw": 0.225,
+        "raw_p_win_b": 0.155,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-bih-qat-2026-06-24",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.547367,
+        "p_draw": 0.242379,
+        "p_win_b": 0.210254,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.248412,
+        "draw": -0.061663,
+        "away": -0.186749,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.248412
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-1",
+          "expected_pool_points": 0.670909
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-C-3-1",
+      "group": "C",
+      "match_round": 3,
+      "kickoff_at": "2026-06-24T18:00:00-04:00",
+      "location": "Hard Rock Stadium, Miami Gardens",
+      "team_a": "Scotland",
+      "team_b": "Brazil",
+      "elo_a": 1755.0,
+      "elo_b": 1991.0,
+      "lambda_a": 1.076519,
+      "lambda_b": 1.630835,
+      "p_win_a": 0.165758,
+      "p_draw": 0.202854,
+      "p_win_b": 0.631388,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.756226,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.756226,
+      "recommended_ev": 0.756226,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-C-3-1",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.756226,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.756226,
+        "recommended_ev": 0.756226,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.076519,
+        "lambda_b": 1.630835,
+        "p_win_a": 0.239094,
+        "p_draw": 0.269877,
+        "p_win_b": 0.49103,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.756226,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.246452,
+        "corrected_p_draw": 0.269877,
+        "draw_delta": 0.023425,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.134328,
+        "p_draw": 0.174129,
+        "p_win_b": 0.691542,
+        "raw_p_win_a": 0.135,
+        "raw_p_draw": 0.175,
+        "raw_p_win_b": 0.695,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-sco-bra-2026-06-24",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.165758,
+        "p_draw": 0.202854,
+        "p_win_b": 0.631388,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.104766,
+        "draw": -0.095747,
+        "away": 0.200513,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.200513
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.756226
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-C-3-2",
+      "group": "C",
+      "match_round": 3,
+      "kickoff_at": "2026-06-24T18:00:00-04:00",
+      "location": "Mercedes-Benz Stadium, Atlanta",
+      "team_a": "Morocco",
+      "team_b": "Haiti",
+      "elo_a": 1848.0,
+      "elo_b": 1488.0,
+      "lambda_a": 1.818865,
+      "lambda_b": 0.965231,
+      "p_win_a": 0.6949,
+      "p_draw": 0.189908,
+      "p_win_b": 0.115192,
+      "most_likely_score": "1-0",
+      "recommended_score": "2-0",
+      "expected_pool_points": 0.820948,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-0",
+      "best_ev": 0.820948,
+      "recommended_ev": 0.820948,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-C-3-2",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "2-0",
+        "goals_a": 2,
+        "goals_b": 0,
+        "expected_pool_points": 0.820948,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-0",
+        "best_ev": 0.820948,
+        "recommended_ev": 0.820948,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.818865,
+        "lambda_b": 0.965231,
+        "p_win_a": 0.563431,
+        "p_draw": 0.249941,
+        "p_win_b": 0.186628,
+        "recommended_score": "2-0",
+        "expected_pool_points": 0.820948,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.228247,
+        "corrected_p_draw": 0.249941,
+        "draw_delta": 0.021694,
+        "poisson_best_score": "1-0",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.751244,
+        "p_draw": 0.164179,
+        "p_win_b": 0.084577,
+        "raw_p_win_a": 0.755,
+        "raw_p_draw": 0.165,
+        "raw_p_win_b": 0.085,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-mar-hai-2026-06-24",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.6949,
+        "p_draw": 0.189908,
+        "p_win_b": 0.115192,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.187813,
+        "draw": -0.085762,
+        "away": -0.102051,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.187813
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-0",
+          "expected_pool_points": 0.820948
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-A-3-1",
+      "group": "A",
+      "match_round": 3,
+      "kickoff_at": "2026-06-24T21:00:00-04:00",
+      "location": "Estadio Azteca, Mexico City",
+      "team_a": "Czechia",
+      "team_b": "Mexico",
+      "elo_a": 1718.0,
+      "elo_b": 1828.0,
+      "lambda_a": 1.202752,
+      "lambda_b": 1.459673,
+      "p_win_a": 0.225658,
+      "p_draw": 0.269261,
+      "p_win_b": 0.505082,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.613284,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.613284,
+      "recommended_ev": 0.613284,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-A-3-1",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.613284,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.613284,
+        "recommended_ev": 0.613284,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.202752,
+        "lambda_b": 1.459673,
+        "p_win_a": 0.299456,
+        "p_draw": 0.282278,
+        "p_win_b": 0.418266,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.613284,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.257777,
+        "corrected_p_draw": 0.282278,
+        "draw_delta": 0.024501,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.19403,
+        "p_draw": 0.263682,
+        "p_win_b": 0.542289,
+        "raw_p_win_a": 0.195,
+        "raw_p_draw": 0.265,
+        "raw_p_win_b": 0.545,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-cze-mex-2026-06-24",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.225658,
+        "p_draw": 0.269261,
+        "p_win_b": 0.505082,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.105426,
+        "draw": -0.018597,
+        "away": 0.124022,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.124022
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.613284
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-A-3-2",
+      "group": "A",
+      "match_round": 3,
+      "kickoff_at": "2026-06-24T21:00:00-04:00",
+      "location": "Estadio BBVA, Monterrey",
+      "team_a": "South Africa",
+      "team_b": "South Korea",
+      "elo_a": 1572.0,
+      "elo_b": 1785.0,
+      "lambda_a": 1.098529,
+      "lambda_b": 1.598159,
+      "p_win_a": 0.189808,
+      "p_draw": 0.238547,
+      "p_win_b": 0.571645,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.686451,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.686451,
+      "recommended_ev": 0.686451,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-A-3-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.686451,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.686451,
+        "recommended_ev": 0.686451,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.098529,
+        "lambda_b": 1.598159,
+        "p_win_a": 0.249608,
+        "p_draw": 0.27277,
+        "p_win_b": 0.477621,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.686451,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.249094,
+        "corrected_p_draw": 0.27277,
+        "draw_delta": 0.023676,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.164179,
+        "p_draw": 0.223881,
+        "p_win_b": 0.61194,
+        "raw_p_win_a": 0.165,
+        "raw_p_draw": 0.225,
+        "raw_p_win_b": 0.615,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-rsa-kr-2026-06-24",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.189808,
+        "p_draw": 0.238547,
+        "p_win_b": 0.571645,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.085429,
+        "draw": -0.04889,
+        "away": 0.134319,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.134319
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.686451
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-E-3-1",
+      "group": "E",
+      "match_round": 3,
+      "kickoff_at": "2026-06-25T16:00:00-04:00",
+      "location": "Lincoln Financial Field, Philadelphia",
+      "team_a": "Cura\u00e7ao",
+      "team_b": "Ivory Coast",
+      "elo_a": 1432.0,
+      "elo_b": 1730.0,
+      "lambda_a": 1.019357,
+      "lambda_b": 1.722286,
+      "p_win_a": 0.098585,
+      "p_draw": 0.151734,
+      "p_win_b": 0.749681,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.891448,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.891448,
+      "recommended_ev": 0.891448,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-E-3-1",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.891448,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.891448,
+        "recommended_ev": 0.891448,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.019357,
+        "lambda_b": 1.722286,
+        "p_win_a": 0.211952,
+        "p_draw": 0.26078,
+        "p_win_b": 0.527269,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.891448,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.238145,
+        "corrected_p_draw": 0.26078,
+        "draw_delta": 0.022635,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.05,
+        "p_draw": 0.105,
+        "p_win_b": 0.845,
+        "raw_p_win_a": 0.05,
+        "raw_p_draw": 0.105,
+        "raw_p_win_b": 0.845,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-kor-civ-2026-06-25",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.098585,
+        "p_draw": 0.151734,
+        "p_win_b": 0.749681,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.161952,
+        "draw": -0.15578,
+        "away": 0.317731,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.317731
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.891448
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-E-3-2",
+      "group": "E",
+      "match_round": 3,
+      "kickoff_at": "2026-06-25T16:00:00-04:00",
+      "location": "MetLife Stadium, East Rutherford",
+      "team_a": "Ecuador",
+      "team_b": "Germany",
+      "elo_a": 1935.0,
+      "elo_b": 1932.0,
+      "lambda_a": 1.328503,
+      "lambda_b": 1.321507,
+      "p_win_a": 0.243438,
+      "p_draw": 0.256388,
+      "p_win_b": 0.500174,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-2",
+      "expected_pool_points": 0.615493,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-2",
+      "best_ev": 0.615493,
+      "recommended_ev": 0.615493,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-E-3-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 2,
+      "recommendation": {
+        "score": "1-2",
+        "goals_a": 1,
+        "goals_b": 2,
+        "expected_pool_points": 0.615493,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-2",
+        "best_ev": 0.615493,
+        "recommended_ev": 0.615493,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.328503,
+        "lambda_b": 1.321507,
+        "p_win_a": 0.358723,
+        "p_draw": 0.285805,
+        "p_win_b": 0.355472,
+        "recommended_score": "1-2",
+        "expected_pool_points": 0.615493,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.260997,
+        "corrected_p_draw": 0.285805,
+        "draw_delta": 0.024807,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.19403,
+        "p_draw": 0.243781,
+        "p_win_b": 0.562189,
+        "raw_p_win_a": 0.195,
+        "raw_p_draw": 0.245,
+        "raw_p_win_b": 0.565,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-ecu-ger-2026-06-25",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.243438,
+        "p_draw": 0.256388,
+        "p_win_b": 0.500174,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.164693,
+        "draw": -0.042024,
+        "away": 0.206717,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.206717
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-2",
+          "expected_pool_points": 0.615493
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-2",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-F-3-1",
+      "group": "F",
+      "match_round": 3,
+      "kickoff_at": "2026-06-25T19:00:00-04:00",
+      "location": "AT&T Stadium, Arlington",
+      "team_a": "Japan",
+      "team_b": "Sweden",
+      "elo_a": 1879.0,
+      "elo_b": 1792.0,
+      "lambda_a": 1.430426,
+      "lambda_b": 1.227344,
+      "p_win_a": 0.435366,
+      "p_draw": 0.28163,
+      "p_win_b": 0.283003,
+      "most_likely_score": "1-1",
+      "recommended_score": "2-1",
+      "expected_pool_points": 0.529936,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-1",
+      "best_ev": 0.529936,
+      "recommended_ev": 0.529936,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-F-3-1",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "2-1",
+        "goals_a": 2,
+        "goals_b": 1,
+        "expected_pool_points": 0.529936,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-1",
+        "best_ev": 0.529936,
+        "recommended_ev": 0.529936,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.430426,
+        "lambda_b": 1.227344,
+        "p_win_a": 0.405244,
+        "p_draw": 0.283595,
+        "p_win_b": 0.311161,
+        "recommended_score": "2-1",
+        "expected_pool_points": 0.529936,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.25898,
+        "corrected_p_draw": 0.283595,
+        "draw_delta": 0.024615,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.448276,
+        "p_draw": 0.280788,
+        "p_win_b": 0.270936,
+        "raw_p_win_a": 0.455,
+        "raw_p_draw": 0.285,
+        "raw_p_win_b": 0.275,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-jpn-swe-2026-06-25",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.435366,
+        "p_draw": 0.28163,
+        "p_win_b": 0.283003,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.043032,
+        "draw": -0.002807,
+        "away": -0.040225,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.043032
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-1",
+          "expected_pool_points": 0.529936
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-F-3-2",
+      "group": "F",
+      "match_round": 3,
+      "kickoff_at": "2026-06-25T19:00:00-04:00",
+      "location": "Arrowhead Stadium, Kansas City",
+      "team_a": "Tunisia",
+      "team_b": "Netherlands",
+      "elo_a": 1720.0,
+      "elo_b": 1944.0,
+      "lambda_a": 1.087947,
+      "lambda_b": 1.613704,
+      "p_win_a": 0.146499,
+      "p_draw": 0.196351,
+      "p_win_b": 0.657149,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.788152,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.788152,
+      "recommended_ev": 0.788152,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-F-3-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.788152,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.788152,
+        "recommended_ev": 0.788152,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.087947,
+        "lambda_b": 1.613704,
+        "p_win_a": 0.24455,
+        "p_draw": 0.27142,
+        "p_win_b": 0.48403,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.788152,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.247861,
+        "corrected_p_draw": 0.27142,
+        "draw_delta": 0.023559,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.104478,
+        "p_draw": 0.164179,
+        "p_win_b": 0.731343,
+        "raw_p_win_a": 0.105,
+        "raw_p_draw": 0.165,
+        "raw_p_win_b": 0.735,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-tun-nld-2026-06-25",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.146499,
+        "p_draw": 0.196351,
+        "p_win_b": 0.657149,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.140073,
+        "draw": -0.107241,
+        "away": 0.247313,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.247313
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.788152
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-D-3-1",
+      "group": "D",
+      "match_round": 3,
+      "kickoff_at": "2026-06-25T22:00:00-04:00",
+      "location": "SoFi Stadium, Inglewood",
+      "team_a": "T\u00fcrkiye",
+      "team_b": "USA",
+      "elo_a": 1911.0,
+      "elo_b": 1815.0,
+      "lambda_a": 1.4418,
+      "lambda_b": 1.217662,
+      "p_win_a": 0.354133,
+      "p_draw": 0.260797,
+      "p_win_b": 0.385071,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-2",
+      "expected_pool_points": 0.479036,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-2",
+      "best_ev": 0.479036,
+      "recommended_ev": 0.479036,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-D-3-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 2,
+      "recommendation": {
+        "score": "1-2",
+        "goals_a": 1,
+        "goals_b": 2,
+        "expected_pool_points": 0.479036,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-2",
+        "best_ev": 0.479036,
+        "recommended_ev": 0.479036,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.4418,
+        "lambda_b": 1.217662,
+        "p_win_a": 0.410327,
+        "p_draw": 0.283116,
+        "p_win_b": 0.306557,
+        "recommended_score": "1-2",
+        "expected_pool_points": 0.479036,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.258542,
+        "corrected_p_draw": 0.283116,
+        "draw_delta": 0.024574,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.330049,
+        "p_draw": 0.251232,
+        "p_win_b": 0.418719,
+        "raw_p_win_a": 0.335,
+        "raw_p_draw": 0.255,
+        "raw_p_win_b": 0.425,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-tur-usa-2026-06-25",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.354133,
+        "p_draw": 0.260797,
+        "p_win_b": 0.385071,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.080278,
+        "draw": -0.031884,
+        "away": 0.112162,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.112162
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-2",
+          "expected_pool_points": 0.479036
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-2",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-D-3-2",
+      "group": "D",
+      "match_round": 3,
+      "kickoff_at": "2026-06-25T22:00:00-04:00",
+      "location": "Levi's Stadium, Santa Clara",
+      "team_a": "Paraguay",
+      "team_b": "Australia",
+      "elo_a": 1658.0,
+      "elo_b": 1770.0,
+      "lambda_a": 1.200637,
+      "lambda_b": 1.462244,
+      "p_win_a": 0.394485,
+      "p_draw": 0.28217,
+      "p_win_b": 0.323346,
+      "most_likely_score": "1-1",
+      "recommended_score": "2-1",
+      "expected_pool_points": 0.491648,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-1",
+      "best_ev": 0.491648,
+      "recommended_ev": 0.491648,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-D-3-2",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "2-1",
+        "goals_a": 2,
+        "goals_b": 1,
+        "expected_pool_points": 0.491648,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-1",
+        "best_ev": 0.491648,
+        "recommended_ev": 0.491648,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.200637,
+        "lambda_b": 1.462244,
+        "p_win_a": 0.298447,
+        "p_draw": 0.282149,
+        "p_win_b": 0.419404,
+        "recommended_score": "2-1",
+        "expected_pool_points": 0.491648,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.257659,
+        "corrected_p_draw": 0.282149,
+        "draw_delta": 0.02449,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.435644,
+        "p_draw": 0.282178,
+        "p_win_b": 0.282178,
+        "raw_p_win_a": 0.44,
+        "raw_p_draw": 0.285,
+        "raw_p_win_b": 0.285,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-par-aus-2026-06-25",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.394485,
+        "p_draw": 0.28217,
+        "p_win_b": 0.323346,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.137197,
+        "draw": 2.9e-05,
+        "away": -0.137225,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.137225
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-1",
+          "expected_pool_points": 0.491648
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-I-3-1",
+      "group": "I",
+      "match_round": 3,
+      "kickoff_at": "2026-06-26T15:00:00-04:00",
+      "location": "Gillette Stadium, Foxborough",
+      "team_a": "Norway",
+      "team_b": "France",
+      "elo_a": 1917.0,
+      "elo_b": 2062.0,
+      "lambda_a": 1.166272,
+      "lambda_b": 1.50533,
+      "p_win_a": 0.241326,
+      "p_draw": 0.261522,
+      "p_win_b": 0.497153,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.601447,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.601447,
+      "recommended_ev": 0.601447,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-I-3-1",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.601447,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.601447,
+        "recommended_ev": 0.601447,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.166272,
+        "lambda_b": 1.50533,
+        "p_win_a": 0.282031,
+        "p_draw": 0.279699,
+        "p_win_b": 0.43827,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.601447,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.255422,
+        "corrected_p_draw": 0.279699,
+        "draw_delta": 0.024277,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.223881,
+        "p_draw": 0.253731,
+        "p_win_b": 0.522388,
+        "raw_p_win_a": 0.225,
+        "raw_p_draw": 0.255,
+        "raw_p_win_b": 0.525,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-nor-fra-2026-06-26",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.241326,
+        "p_draw": 0.261522,
+        "p_win_b": 0.497153,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.05815,
+        "draw": -0.025968,
+        "away": 0.084118,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.084118
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.601447
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-I-3-2",
+      "group": "I",
+      "match_round": 3,
+      "kickoff_at": "2026-06-26T15:00:00-04:00",
+      "location": "BMO Field, Toronto",
+      "team_a": "Senegal",
+      "team_b": "Iraq",
+      "elo_a": 1869.0,
+      "elo_b": 1648.0,
+      "lambda_a": 1.60945,
+      "lambda_b": 1.090823,
+      "p_win_a": 0.630891,
+      "p_draw": 0.216021,
+      "p_win_b": 0.153088,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.756916,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.756916,
+      "recommended_ev": 0.756916,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-I-3-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.756916,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.756916,
+        "recommended_ev": 0.756916,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.60945,
+        "lambda_b": 1.090823,
+        "p_win_a": 0.482281,
+        "p_draw": 0.271794,
+        "p_win_b": 0.245924,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.756916,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.248203,
+        "corrected_p_draw": 0.271794,
+        "draw_delta": 0.023591,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.694581,
+        "p_draw": 0.192118,
+        "p_win_b": 0.1133,
+        "raw_p_win_a": 0.705,
+        "raw_p_draw": 0.195,
+        "raw_p_win_b": 0.115,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-sen-irq-2026-06-26",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.630891,
+        "p_draw": 0.216021,
+        "p_win_b": 0.153088,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.2123,
+        "draw": -0.079676,
+        "away": -0.132624,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.2123
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.756916
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-H-3-1",
+      "group": "H",
+      "match_round": 3,
+      "kickoff_at": "2026-06-26T20:00:00-04:00",
+      "location": "NRG Stadium, Houston",
+      "team_a": "Cape Verde",
+      "team_b": "Saudi Arabia",
+      "elo_a": 1542.0,
+      "elo_b": 1660.0,
+      "lambda_a": 1.194315,
+      "lambda_b": 1.469985,
+      "p_win_a": 0.328928,
+      "p_draw": 0.269102,
+      "p_win_b": 0.40197,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.487679,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.487679,
+      "recommended_ev": 0.487679,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-H-3-1",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.487679,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.487679,
+        "recommended_ev": 0.487679,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.194315,
+        "lambda_b": 1.469985,
+        "p_win_a": 0.295431,
+        "p_draw": 0.281749,
+        "p_win_b": 0.42282,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.487679,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.257294,
+        "corrected_p_draw": 0.281749,
+        "draw_delta": 0.024455,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.343284,
+        "p_draw": 0.263682,
+        "p_win_b": 0.393035,
+        "raw_p_win_a": 0.345,
+        "raw_p_draw": 0.265,
+        "raw_p_win_b": 0.395,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-cvi-ksa-2026-06-26",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.328928,
+        "p_draw": 0.269102,
+        "p_win_b": 0.40197,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.047853,
+        "draw": -0.018068,
+        "away": -0.029785,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.047853
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.487679
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-H-3-2",
+      "group": "H",
+      "match_round": 3,
+      "kickoff_at": "2026-06-26T20:00:00-04:00",
+      "location": "Estadio Akron, Zapopan",
+      "team_a": "Uruguay",
+      "team_b": "Spain",
+      "elo_a": 1890.0,
+      "elo_b": 2155.0,
+      "lambda_a": 1.049394,
+      "lambda_b": 1.67299,
+      "p_win_a": 0.17475,
+      "p_draw": 0.234928,
+      "p_win_b": 0.590323,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.704684,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.704684,
+      "recommended_ev": 0.704684,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-H-3-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.704684,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.704684,
+        "recommended_ev": 0.704684,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.049394,
+        "lambda_b": 1.67299,
+        "p_win_a": 0.226177,
+        "p_draw": 0.265851,
+        "p_win_b": 0.507972,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.704684,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.242776,
+        "corrected_p_draw": 0.265851,
+        "draw_delta": 0.023075,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.152709,
+        "p_draw": 0.221675,
+        "p_win_b": 0.625616,
+        "raw_p_win_a": 0.155,
+        "raw_p_draw": 0.225,
+        "raw_p_win_b": 0.635,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-ury-esp-2026-06-26",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.17475,
+        "p_draw": 0.234928,
+        "p_win_b": 0.590323,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.073467,
+        "draw": -0.044176,
+        "away": 0.117643,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.117643
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.704684
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-G-3-1",
+      "group": "G",
+      "match_round": 3,
+      "kickoff_at": "2026-06-26T23:00:00-04:00",
+      "location": "Lumen Field, Seattle",
+      "team_a": "Egypt",
+      "team_b": "Iran",
+      "elo_a": 1735.0,
+      "elo_b": 1742.0,
+      "lambda_a": 1.316863,
+      "lambda_b": 1.333187,
+      "p_win_a": 0.429874,
+      "p_draw": 0.291211,
+      "p_win_b": 0.278916,
+      "most_likely_score": "1-1",
+      "recommended_score": "2-1",
+      "expected_pool_points": 0.529237,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-1",
+      "best_ev": 0.529237,
+      "recommended_ev": 0.529237,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-G-3-1",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "2-1",
+        "goals_a": 2,
+        "goals_b": 1,
+        "expected_pool_points": 0.529237,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-1",
+        "best_ev": 0.529237,
+        "recommended_ev": 0.529237,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.316863,
+        "lambda_b": 1.333187,
+        "p_win_a": 0.353311,
+        "p_draw": 0.285793,
+        "p_win_b": 0.360896,
+        "recommended_score": "2-1",
+        "expected_pool_points": 0.529237,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.260987,
+        "corrected_p_draw": 0.285793,
+        "draw_delta": 0.024806,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.462687,
+        "p_draw": 0.293532,
+        "p_win_b": 0.243781,
+        "raw_p_win_a": 0.465,
+        "raw_p_draw": 0.295,
+        "raw_p_win_b": 0.245,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-egy-irn-2026-06-26",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.429874,
+        "p_draw": 0.291211,
+        "p_win_b": 0.278916,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.109376,
+        "draw": 0.007739,
+        "away": -0.117115,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.117115
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-1",
+          "expected_pool_points": 0.529237
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-G-3-2",
+      "group": "G",
+      "match_round": 3,
+      "kickoff_at": "2026-06-26T23:00:00-04:00",
+      "location": "BC Place, Vancouver",
+      "team_a": "New Zealand",
+      "team_b": "Belgium",
+      "elo_a": 1478.0,
+      "elo_b": 1849.0,
+      "lambda_a": 0.955933,
+      "lambda_b": 1.836557,
+      "p_win_a": 0.11332,
+      "p_draw": 0.174356,
+      "p_win_b": 0.712325,
+      "most_likely_score": "0-1",
+      "recommended_score": "0-2",
+      "expected_pool_points": 0.841494,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-2",
+      "best_ev": 0.841494,
+      "recommended_ev": 0.841494,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-G-3-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 2,
+      "recommendation": {
+        "score": "0-2",
+        "goals_a": 0,
+        "goals_b": 2,
+        "expected_pool_points": 0.841494,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-2",
+        "best_ev": 0.841494,
+        "recommended_ev": 0.841494,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 0.955933,
+        "lambda_b": 1.836557,
+        "p_win_a": 0.18233,
+        "p_draw": 0.247852,
+        "p_win_b": 0.569818,
+        "recommended_score": "0-2",
+        "expected_pool_points": 0.841494,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.226339,
+        "corrected_p_draw": 0.247852,
+        "draw_delta": 0.021513,
+        "poisson_best_score": "0-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.083744,
+        "p_draw": 0.142857,
+        "p_win_b": 0.773399,
+        "raw_p_win_a": 0.085,
+        "raw_p_draw": 0.145,
+        "raw_p_win_b": 0.785,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-nzl-bel-2026-06-26",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.11332,
+        "p_draw": 0.174356,
+        "p_win_b": 0.712325,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.098587,
+        "draw": -0.104995,
+        "away": 0.203581,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.203581
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-2",
+          "expected_pool_points": 0.841494
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-2",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-L-3-1",
+      "group": "L",
+      "match_round": 3,
+      "kickoff_at": "2026-06-27T17:00:00-04:00",
+      "location": "MetLife Stadium, East Rutherford",
+      "team_a": "Panama",
+      "team_b": "England",
+      "elo_a": 1582.0,
+      "elo_b": 2021.0,
+      "lambda_a": 0.900408,
+      "lambda_b": 1.949811,
+      "p_win_a": 0.113296,
+      "p_draw": 0.17118,
+      "p_win_b": 0.715524,
+      "most_likely_score": "0-1",
+      "recommended_score": "0-2",
+      "expected_pool_points": 0.844693,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-2",
+      "best_ev": 0.844693,
+      "recommended_ev": 0.844693,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-L-3-1",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 2,
+      "recommendation": {
+        "score": "0-2",
+        "goals_a": 0,
+        "goals_b": 2,
+        "expected_pool_points": 0.844693,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-2",
+        "best_ev": 0.844693,
+        "recommended_ev": 0.844693,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 0.900408,
+        "lambda_b": 1.949811,
+        "p_win_a": 0.157089,
+        "p_draw": 0.23395,
+        "p_win_b": 0.608961,
+        "recommended_score": "0-2",
+        "expected_pool_points": 0.844693,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.213643,
+        "corrected_p_draw": 0.23395,
+        "draw_delta": 0.020306,
+        "poisson_best_score": "0-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.094527,
+        "p_draw": 0.144279,
+        "p_win_b": 0.761194,
+        "raw_p_win_a": 0.095,
+        "raw_p_draw": 0.145,
+        "raw_p_win_b": 0.765,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-pan-eng-2026-06-27",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.113296,
+        "p_draw": 0.17118,
+        "p_win_b": 0.715524,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.062562,
+        "draw": -0.089671,
+        "away": 0.152233,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.152233
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-2",
+          "expected_pool_points": 0.844693
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-2",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-L-3-2",
+      "group": "L",
+      "match_round": 3,
+      "kickoff_at": "2026-06-27T17:00:00-04:00",
+      "location": "Lincoln Financial Field, Philadelphia",
+      "team_a": "Croatia",
+      "team_b": "Ghana",
+      "elo_a": 1905.0,
+      "elo_b": 1642.0,
+      "lambda_a": 1.670048,
+      "lambda_b": 1.051242,
+      "p_win_a": 0.559504,
+      "p_draw": 0.257454,
+      "p_win_b": 0.183042,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-0",
+      "expected_pool_points": 0.66805,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-0",
+      "best_ev": 0.66805,
+      "recommended_ev": 0.66805,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-L-3-2",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 0,
+      "recommendation": {
+        "score": "1-0",
+        "goals_a": 1,
+        "goals_b": 0,
+        "expected_pool_points": 0.66805,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-0",
+        "best_ev": 0.66805,
+        "recommended_ev": 0.66805,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.670048,
+        "lambda_b": 1.051242,
+        "p_win_a": 0.506803,
+        "p_draw": 0.266142,
+        "p_win_b": 0.227055,
+        "recommended_score": "1-0",
+        "expected_pool_points": 0.66805,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.243041,
+        "corrected_p_draw": 0.266142,
+        "draw_delta": 0.0231,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.58209,
+        "p_draw": 0.253731,
+        "p_win_b": 0.164179,
+        "raw_p_win_a": 0.585,
+        "raw_p_draw": 0.255,
+        "raw_p_win_b": 0.165,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-hrv-gha-2026-06-27",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.559504,
+        "p_draw": 0.257454,
+        "p_win_b": 0.183042,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.075287,
+        "draw": -0.01241,
+        "away": -0.062876,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.075287
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-0",
+          "expected_pool_points": 0.66805
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-0",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-K-3-1",
+      "group": "K",
+      "match_round": 3,
+      "kickoff_at": "2026-06-27T19:30:00-04:00",
+      "location": "Hard Rock Stadium, Miami Gardens",
+      "team_a": "Colombia",
+      "team_b": "Portugal",
+      "elo_a": 1977.0,
+      "elo_b": 1986.0,
+      "lambda_a": 1.314547,
+      "lambda_b": 1.335536,
+      "p_win_a": 0.283282,
+      "p_draw": 0.277277,
+      "p_win_b": 0.439441,
+      "most_likely_score": "1-1",
+      "recommended_score": "1-2",
+      "expected_pool_points": 0.539984,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "1-2",
+      "best_ev": 0.539984,
+      "recommended_ev": 0.539984,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-K-3-1",
+      "recommended_goals_a": 1,
+      "recommended_goals_b": 2,
+      "recommendation": {
+        "score": "1-2",
+        "goals_a": 1,
+        "goals_b": 2,
+        "expected_pool_points": 0.539984,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "1-2",
+        "best_ev": 0.539984,
+        "recommended_ev": 0.539984,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.314547,
+        "lambda_b": 1.335536,
+        "p_win_a": 0.352232,
+        "p_draw": 0.285784,
+        "p_win_b": 0.361984,
+        "recommended_score": "1-2",
+        "expected_pool_points": 0.539984,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.260978,
+        "corrected_p_draw": 0.285784,
+        "draw_delta": 0.024805,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.253731,
+        "p_draw": 0.273632,
+        "p_win_b": 0.472637,
+        "raw_p_win_a": 0.255,
+        "raw_p_draw": 0.275,
+        "raw_p_win_b": 0.475,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-col-prt-2026-06-27",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.283282,
+        "p_draw": 0.277277,
+        "p_win_b": 0.439441,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.098501,
+        "draw": -0.012152,
+        "away": 0.110652,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.110652
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "1-2",
+          "expected_pool_points": 0.539984
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "1-2",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-K-3-2",
+      "group": "K",
+      "match_round": 3,
+      "kickoff_at": "2026-06-27T19:30:00-04:00",
+      "location": "Mercedes-Benz Stadium, Atlanta",
+      "team_a": "DR Congo",
+      "team_b": "Uzbekistan",
+      "elo_a": 1652.0,
+      "elo_b": 1622.0,
+      "lambda_a": 1.360446,
+      "lambda_b": 1.290478,
+      "p_win_a": 0.394133,
+      "p_draw": 0.284171,
+      "p_win_b": 0.321696,
+      "most_likely_score": "1-1",
+      "recommended_score": "2-1",
+      "expected_pool_points": 0.48309,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "2-1",
+      "best_ev": 0.48309,
+      "recommended_ev": 0.48309,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 2,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-K-3-2",
+      "recommended_goals_a": 2,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "2-1",
+        "goals_a": 2,
+        "goals_b": 1,
+        "expected_pool_points": 0.48309,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "2-1",
+        "best_ev": 0.48309,
+        "recommended_ev": 0.48309,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.360446,
+        "lambda_b": 1.290478,
+        "p_win_a": 0.373479,
+        "p_draw": 0.285543,
+        "p_win_b": 0.340978,
+        "recommended_score": "2-1",
+        "expected_pool_points": 0.48309,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.260759,
+        "corrected_p_draw": 0.285543,
+        "draw_delta": 0.024785,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.402985,
+        "p_draw": 0.283582,
+        "p_win_b": 0.313433,
+        "raw_p_win_a": 0.405,
+        "raw_p_draw": 0.285,
+        "raw_p_win_b": 0.315,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-cdr-uzb-2026-06-27",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.394133,
+        "p_draw": 0.284171,
+        "p_win_b": 0.321696,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": 0.029506,
+        "draw": -0.001961,
+        "away": -0.027545,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.029506
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "2-1",
+          "expected_pool_points": 0.48309
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "2-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-J-3-1",
+      "group": "J",
+      "match_round": 3,
+      "kickoff_at": "2026-06-27T22:00:00-04:00",
+      "location": "Arrowhead Stadium, Kansas City",
+      "team_a": "Algeria",
+      "team_b": "Austria",
+      "elo_a": 1710.0,
+      "elo_b": 1808.0,
+      "lambda_a": 1.215521,
+      "lambda_b": 1.44434,
+      "p_win_a": 0.271058,
+      "p_draw": 0.299474,
+      "p_win_b": 0.429468,
+      "most_likely_score": "1-1",
+      "recommended_score": "0-1",
+      "expected_pool_points": 0.522114,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-1",
+      "best_ev": 0.522114,
+      "recommended_ev": 0.522114,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 0.25,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-J-3-1",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 1,
+      "recommendation": {
+        "score": "0-1",
+        "goals_a": 0,
+        "goals_b": 1,
+        "expected_pool_points": 0.522114,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-1",
+        "best_ev": 0.522114,
+        "recommended_ev": 0.522114,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 0.25,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 1.215521,
+        "lambda_b": 1.44434,
+        "p_win_a": 0.305538,
+        "p_draw": 0.283003,
+        "p_win_b": 0.411459,
+        "recommended_score": "0-1",
+        "expected_pool_points": 0.522114,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.258439,
+        "corrected_p_draw": 0.283003,
+        "draw_delta": 0.024564,
+        "poisson_best_score": "1-1",
+        "corrected_best_score": "1-1"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.256281,
+        "p_draw": 0.306533,
+        "p_win_b": 0.437186,
+        "raw_p_win_a": 0.255,
+        "raw_p_draw": 0.305,
+        "raw_p_win_b": 0.435,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-alg-aut-2026-06-27",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.271058,
+        "p_draw": 0.299474,
+        "p_win_b": 0.429468,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.049257,
+        "draw": 0.02353,
+        "away": 0.025727,
+        "largest_outcome": "home",
+        "largest_abs_delta": 0.049257
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-1",
+          "expected_pool_points": 0.522114
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-1",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
+    },
+    {
+      "match_id": "G-J-3-2",
+      "group": "J",
+      "match_round": 3,
+      "kickoff_at": "2026-06-27T22:00:00-04:00",
+      "location": "AT&T Stadium, Arlington",
+      "team_a": "Jordan",
+      "team_b": "Argentina",
+      "elo_a": 1628.0,
+      "elo_b": 2114.0,
+      "lambda_a": 0.863927,
+      "lambda_b": 2.032146,
+      "p_win_a": 0.087124,
+      "p_draw": 0.153246,
+      "p_win_b": 0.759629,
+      "most_likely_score": "0-2",
+      "recommended_score": "0-2",
+      "expected_pool_points": 0.895959,
+      "strategy": "max_expected_pool_points",
+      "recommendation_reason": "Best score by expected pool points.",
+      "best_ev_score": "0-2",
+      "best_ev": 0.895959,
+      "recommended_ev": 0.895959,
+      "ev_loss_vs_best": 0.0,
+      "score_selection_strategy": "max_ev",
+      "candidate_scores_within_tolerance": 3,
+      "selection_reason": "Best score by expected pool points.",
+      "realism_score": 1.0,
+      "score_rank_by_ev": 1,
+      "fixture_id": "G-J-3-2",
+      "recommended_goals_a": 0,
+      "recommended_goals_b": 2,
+      "recommendation": {
+        "score": "0-2",
+        "goals_a": 0,
+        "goals_b": 2,
+        "expected_pool_points": 0.895959,
+        "source": "hybrid",
+        "score_probability_source": "model_score_grid",
+        "selection_strategy": "max_expected_pool_points",
+        "selection_reason": "Best score by expected pool points.",
+        "best_ev_score": "0-2",
+        "best_ev": 0.895959,
+        "recommended_ev": 0.895959,
+        "ev_loss_vs_best": 0.0,
+        "realism_score": 1.0,
+        "score_rank_by_ev": 1
+      },
+      "model": {
+        "lambda_a": 0.863927,
+        "lambda_b": 2.032146,
+        "p_win_a": 0.140989,
+        "p_draw": 0.223465,
+        "p_win_b": 0.635546,
+        "recommended_score": "0-2",
+        "expected_pool_points": 0.895959,
+        "score_model_strategy": "dixon_coles_correction",
+        "dixon_coles_rho": -0.1,
+        "score_grid_corrected": true,
+        "poisson_p_draw": 0.204069,
+        "corrected_p_draw": 0.223465,
+        "draw_delta": 0.019396,
+        "poisson_best_score": "0-2",
+        "corrected_best_score": "0-2"
+      },
+      "market_1x2": {
+        "available": true,
+        "confidence": "high",
+        "p_win_a": 0.064039,
+        "p_draw": 0.123153,
+        "p_win_b": 0.812808,
+        "raw_p_win_a": 0.065,
+        "raw_p_draw": 0.125,
+        "raw_p_win_b": 0.825,
+        "source_used": "hybrid",
+        "market_slug": "fifwc-jor-arg-2026-06-27",
+        "market_slug_home": null,
+        "market_slug_draw": null,
+        "market_slug_away": null
+      },
+      "hybrid_1x2": {
+        "available": true,
+        "market_weight": 0.7,
+        "p_win_a": 0.087124,
+        "p_draw": 0.153246,
+        "p_win_b": 0.759629,
+        "source_used": "hybrid"
+      },
+      "market_delta": {
+        "home": -0.076949,
+        "draw": -0.100312,
+        "away": 0.177261,
+        "largest_outcome": "away",
+        "largest_abs_delta": 0.177261
+      },
+      "exact_score_market": {
+        "available": false,
+        "score_probability_source": "model_score_grid",
+        "market_score_weight": 0.7,
+        "scores_count": 0,
+        "raw_probability_sum": null,
+        "top_scores": []
+      },
+      "score_recommendations": {
+        "model_score_grid": {
+          "score": "0-2",
+          "expected_pool_points": 0.895959
+        },
+        "market_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "hybrid_exact_score": {
+          "score": null,
+          "expected_pool_points": null
+        },
+        "final": {
+          "score": "0-2",
+          "source": "model_score_grid"
+        }
+      },
+      "warnings": []
     }
   ],
   "teams": [
@@ -6185,7 +11988,7 @@
       "p_top4": 0.13808
     },
     {
-      "team": "Türkiye",
+      "team": "T\u00fcrkiye",
       "group": "D",
       "elo": 1911.0,
       "p_round_of_32": 0.7946,
@@ -6629,7 +12432,7 @@
       "p_top4": 0.00854
     },
     {
-      "team": "Curaçao",
+      "team": "Cura\u00e7ao",
       "group": "E",
       "elo": 1432.0,
       "p_round_of_32": 0.29952,
@@ -6653,8 +12456,8 @@
       "is_recommended": false
     },
     {
-      "player": "Other Türkiye",
-      "team": "Türkiye",
+      "player": "Other T\u00fcrkiye",
+      "team": "T\u00fcrkiye",
       "position": "OTHER",
       "expected_goals": 5.98516,
       "p_top_scorer": 0.07198,
@@ -7093,8 +12896,8 @@
       "is_recommended": false
     },
     {
-      "player": "Other Curaçao",
-      "team": "Curaçao",
+      "player": "Other Cura\u00e7ao",
+      "team": "Cura\u00e7ao",
       "position": "OTHER",
       "expected_goals": 3.09186,
       "p_top_scorer": 0.00378,
@@ -7474,7 +13277,7 @@
     },
     {
       "player": "Kenan Yildiz",
-      "team": "Türkiye",
+      "team": "T\u00fcrkiye",
       "position": "LW",
       "expected_goals": 1.11004,
       "p_top_scorer": 0.0,
@@ -7781,7 +13584,7 @@
         "ev_if_fourth": 0.22459
       },
       {
-        "team": "Türkiye",
+        "team": "T\u00fcrkiye",
         "elo": 1911.0,
         "p_champion": 0.03082,
         "p_runner_up": 0.03046,
@@ -7850,5 +13653,12 @@
   "market_comparison": [],
   "warnings": [
     "Polymarket exact-score markets are not available via Gamma/CLOB. Exact scores use the model score grid."
-  ]
+  ],
+  "source_used_counts": {
+    "model": 0,
+    "market": 0,
+    "hybrid": 72,
+    "model_fallback_missing_market": 0,
+    "model_fallback_low_confidence": 0
+  }
 }

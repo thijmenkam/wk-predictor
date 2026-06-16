@@ -310,6 +310,34 @@ def test_export_frontend_data_writes_market_schema(tmp_path: Path) -> None:
     }
 
 
+def test_export_frontend_data_accepts_dixon_coles_score_model(tmp_path: Path) -> None:
+    output = tmp_path / "frontend_data.json"
+    result = runner.invoke(
+        app,
+        [
+            "export-frontend-data",
+            "--match-round",
+            "1",
+            "--score-model",
+            "dixon_coles_correction",
+            "--dixon-coles-rho",
+            "-0.10",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    payload = json.loads(output.read_text())
+    assert payload["metadata"]["score_model_strategy"] == "dixon_coles_correction"
+    assert payload["metadata"]["dixon_coles_rho"] == -0.10
+    assert payload["metadata"]["score_grid_corrected"] is True
+    assert {match["model"]["score_model_strategy"] for match in payload["matches"]} == {
+        "dixon_coles_correction"
+    }
+    assert {match["model"]["score_grid_corrected"] for match in payload["matches"]} == {True}
+
+
 def test_validate_data_accepts_small_temporary_dataset(tmp_path: Path) -> None:
     teams_path = tmp_path / "teams.csv"
     fixtures_path = tmp_path / "fixtures.csv"

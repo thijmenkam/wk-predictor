@@ -2400,6 +2400,8 @@ def export_frontend_data_command(
         float, typer.Option("--market-score-weight", min=0.0, max=1.0)
     ] = 0.70,
     allow_missing_market: Annotated[bool, typer.Option("--allow-missing-market")] = False,
+    score_model: Annotated[ScoreModelStrategy | None, typer.Option("--score-model")] = None,
+    dixon_coles_rho: Annotated[float | None, typer.Option("--dixon-coles-rho")] = None,
     output: Annotated[Path, typer.Option("--output")] = Path("frontend/public/frontend_data.json"),
 ) -> None:
     """Exporteer frontend matchdata met model-, markt- en hybrid-details."""
@@ -2442,6 +2444,10 @@ def export_frontend_data_command(
         raise typer.Exit(code=2)
 
     config = _config(config_path)
+    effective_rho = (
+        config.score_model.dixon_coles.rho if dixon_coles_rho is None else dixon_coles_rho
+    )
+    effective_score_model = score_model or ScoreModelStrategy(config.score_model.strategy)
     temporary_path = output.parent / ".frontend_matches.tmp.csv"
     try:
         scoring = load_pool_scoring_config(scoring_config)
@@ -2473,6 +2479,9 @@ def export_frontend_data_command(
                 score_probability_source=score_probability_source.value,
                 market_exact_score_odds=exact_score_odds,
                 market_score_weight=market_score_weight,
+                score_model_strategy=effective_score_model.value,
+                dixon_coles_rho=effective_rho,
+                normalize_dixon_coles=config.score_model.dixon_coles.normalize_after_correction,
             )
         )
         market_coverage = int(frame["source_used"].isin(["hybrid", "market"]).sum())
@@ -2491,6 +2500,15 @@ def export_frontend_data_command(
             ),
             "market_weight": market_weight,
             "market_score_weight": market_score_weight,
+            "score_model_strategy": effective_score_model.value,
+            "dixon_coles_rho": (
+                effective_rho
+                if effective_score_model is ScoreModelStrategy.DIXON_COLES_CORRECTION
+                else None
+            ),
+            "score_grid_corrected": (
+                effective_score_model is ScoreModelStrategy.DIXON_COLES_CORRECTION
+            ),
             "market_coverage": market_coverage,
             "exact_score_market_coverage": exact_coverage,
             "fallback_count": fallback_count,
