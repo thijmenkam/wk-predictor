@@ -1,3 +1,25 @@
 match_id,stage,group,match_round,team_a,team_b,goals_a,goals_b,played_at,source,notes
-G-A-1-1,group,A,1,Mexico,South Africa,2,0,2026-06-11T19:00:00Z,manual,test result
-G-A-1-2,group,A,1,South Korea,Czechia,1,1,2026-06-12T02:00:00Z,manual,test result
+G-A-1-1,group,A,1,Mexico,South Africa,2,0,2026-06-11T15:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-A-1-2,group,A,1,South Korea,Czechia,2,1,2026-06-11T22:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-B-1-1,group,B,1,Canada,Bosnia,1,1,2026-06-12T15:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-D-1-1,group,D,1,USA,Paraguay,4,1,2026-06-12T21:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-B-1-2,group,B,1,Qatar,Switzerland,1,1,2026-06-13T15:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-C-1-1,group,C,1,Brazil,Morocco,1,1,2026-06-13T18:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-C-1-2,group,C,1,Haiti,Scotland,0,1,2026-06-13T21:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-D-1-2,group,D,1,Australia,Türkiye,2,0,2026-06-14T00:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-E-1-1,group,E,1,Germany,Curaçao,7,1,2026-06-14T13:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-F-1-1,group,F,1,Netherlands,Japan,2,2,2026-06-14T16:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-E-1-2,group,E,1,Ivory Coast,Ecuador,1,0,2026-06-14T19:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-F-1-2,group,F,1,Sweden,Tunisia,5,1,2026-06-14T22:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-H-1-1,group,H,1,Spain,Cape Verde,0,0,2026-06-15T12:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-G-1-1,group,G,1,Belgium,Egypt,1,1,2026-06-15T15:00:00-04:00,https://github.com/openfootball/worldcup/blob/master/2026--usa/cup.txt,openfootball preliminary result
+G-H-1-2,group,H,1,Saudi Arabia,Uruguay,2,1,2026-06-15T18:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
+G-G-1-2,group,G,1,Iran,New Zealand,1,3,2026-06-15T21:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
+G-I-1-1,group,I,1,France,Senegal,0,1,2026-06-16T15:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
+G-I-1-2,group,I,1,Iraq,Norway,2,0,2026-06-16T18:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
+G-J-1-1,group,J,1,Argentina,Algeria,1,1,2026-06-16T21:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
+G-J-1-2,group,J,1,Austria,Jordan,1,2,2026-06-17T00:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
+G-K-1-1,group,K,1,Portugal,DR Congo,2,0,2026-06-17T13:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
+G-L-1-1,group,L,1,England,Croatia,1,0,2026-06-17T16:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
+G-L-1-2,group,L,1,Ghana,Panama,1,2,2026-06-17T19:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
+G-K-1-2,group,K,1,Uzbekistan,Colombia,0,2,2026-06-17T22:00:00-04:00,random-seed-20260616,deterministic random fill for open round-1 fixture
