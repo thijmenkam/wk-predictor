@@ -3,22 +3,22 @@
 # assignment remains an approximation and must be checked against FIFA's
 # official third-place assignment table.
 round_of_32:
-  - {match_id: "73", stage: round_of_32, slot_a: A2, slot_b: B2}
-  - {match_id: "74", stage: round_of_32, slot_a: E1, slot_b: "BEST3:A/B/C/D/F"}
-  - {match_id: "75", stage: round_of_32, slot_a: F1, slot_b: C2}
-  - {match_id: "76", stage: round_of_32, slot_a: C1, slot_b: F2}
+  - {match_id: "73", stage: round_of_32, slot_a: A2, slot_b: B2, fixed_team_a: South Africa, fixed_team_b: Canada}
+  - {match_id: "74", stage: round_of_32, slot_a: E1, slot_b: "BEST3:A/B/C/D/F", fixed_team_a: Germany, fixed_team_b: Paraguay}
+  - {match_id: "75", stage: round_of_32, slot_a: F1, slot_b: C2, fixed_team_a: Netherlands, fixed_team_b: Morocco}
+  - {match_id: "76", stage: round_of_32, slot_a: C1, slot_b: F2, fixed_team_a: Brazil, fixed_team_b: Japan}
   - {match_id: "77", stage: round_of_32, slot_a: I1, slot_b: "BEST3:C/D/F/G/H"}
-  - {match_id: "78", stage: round_of_32, slot_a: E2, slot_b: I2}
+  - {match_id: "78", stage: round_of_32, slot_a: E2, slot_b: I2, fixed_team_a: Ivory Coast, fixed_team_b: Norway}
   - {match_id: "79", stage: round_of_32, slot_a: A1, slot_b: "BEST3:C/E/F/H/I"}
   - {match_id: "80", stage: round_of_32, slot_a: L1, slot_b: "BEST3:E/H/I/J/K"}
-  - {match_id: "81", stage: round_of_32, slot_a: D1, slot_b: "BEST3:B/E/F/I/J"}
+  - {match_id: "81", stage: round_of_32, slot_a: D1, slot_b: "BEST3:B/E/F/I/J", fixed_team_a: USA, fixed_team_b: Bosnia}
   - {match_id: "82", stage: round_of_32, slot_a: G1, slot_b: "BEST3:A/E/H/I/J"}
   - {match_id: "83", stage: round_of_32, slot_a: K2, slot_b: L2}
   - {match_id: "84", stage: round_of_32, slot_a: H1, slot_b: J2}
-  - {match_id: "85", stage: round_of_32, slot_a: B1, slot_b: "BEST3:E/F/G/I/J"}
-  - {match_id: "86", stage: round_of_32, slot_a: J1, slot_b: H2}
+  - {match_id: "85", stage: round_of_32, slot_a: B1, slot_b: "BEST3:E/F/G/I/J", fixed_team_a: Switzerland}
+  - {match_id: "86", stage: round_of_32, slot_a: J1, slot_b: H2, fixed_team_a: Argentina, fixed_team_b: Cape Verde}
   - {match_id: "87", stage: round_of_32, slot_a: K1, slot_b: "BEST3:D/E/I/J/L"}
-  - {match_id: "88", stage: round_of_32, slot_a: D2, slot_b: G2}
+  - {match_id: "88", stage: round_of_32, slot_a: D2, slot_b: G2, fixed_team_a: Australia, fixed_team_b: Egypt}
 
 round_of_16:
   - {match_id: "89", stage: round_of_16, slot_a: W74, slot_b: W77}

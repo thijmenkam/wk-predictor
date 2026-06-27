@@ -87,6 +87,26 @@ export type Match = {
   warnings?: string[];
 };
 
+export type KnockoutMatch = {
+  match_id: string;
+  stage: string;
+  slot_a: string;
+  slot_b: string;
+  team_a: string | null;
+  team_b: string | null;
+  label_a: string;
+  label_b: string;
+  odds_source: string | null;
+  lambda_a: number | null;
+  lambda_b: number | null;
+  p_win_a: number | null;
+  p_draw: number | null;
+  p_win_b: number | null;
+  p_advance_a: number | null;
+  p_advance_b: number | null;
+  most_likely_score: string | null;
+};
+
 type ProbabilityView = {
   p_win_a: number | null;
   p_draw: number | null;
@@ -156,6 +176,7 @@ export type FrontendData = {
   };
   round_1_predictions?: Match[];
   matches: Match[];
+  round_of_32?: KnockoutMatch[];
   teams: Team[];
   top_scorers: TopScorer[];
   final_standings: {

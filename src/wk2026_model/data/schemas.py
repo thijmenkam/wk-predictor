@@ -154,6 +154,8 @@ class BracketMatchDefinition(BaseModel):
     stage: str
     slot_a: str
     slot_b: str
+    fixed_team_a: str | None = None
+    fixed_team_b: str | None = None
 
 
 class BracketDefinition(BaseModel):

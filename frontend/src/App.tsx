@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import type { FrontendData, Match, Team } from "./types";
+import type { FrontendData, KnockoutMatch, Match, Team } from "./types";
 
-type Tab = "basic" | "matches" | "teams" | "market";
+type Tab = "basic" | "matches" | "knockout" | "teams" | "market";
 type TeamSort = "p_champion" | "p_top4" | "p_final";
 
 const percentage = new Intl.NumberFormat("en", {
@@ -208,6 +208,53 @@ function LargestDeltas({ matches }: { matches: Match[] }) {
   })}</div></section>;
 }
 
+function KnockoutTable({ matches }: { matches: KnockoutMatch[] }) {
+  if (!matches.length) {
+    return <EmptyState>No Round of 32 bracket data is available.</EmptyState>;
+  }
+  return (
+    <div className="knockout-grid">
+      {matches.map((match) => {
+        const resolvedA = Boolean(match.team_a);
+        const resolvedB = Boolean(match.team_b);
+        return (
+          <article key={match.match_id} className="knockout-card">
+            <div className="knockout-id">Match {match.match_id}</div>
+            <div className={resolvedA ? "knockout-team resolved" : "knockout-team"}>
+              <strong>{resolvedA ? teamName(match.team_a ?? "") : match.label_a}</strong>
+              <small>{match.slot_a}</small>
+            </div>
+            <span className="knockout-vs">vs</span>
+            <div className={resolvedB ? "knockout-team resolved" : "knockout-team"}>
+              <strong>{resolvedB ? teamName(match.team_b ?? "") : match.label_b}</strong>
+              <small>{match.slot_b}</small>
+            </div>
+            {match.p_advance_a != null && match.p_advance_b != null ? (
+              <div className="knockout-odds">
+                <div className="advance-heading">Advance odds</div>
+                <div className="advance-line" aria-label="Advance probabilities">
+                  <span><small>{match.team_a ? teamName(match.team_a) : "Team A"}</small><b>{optionalPct(match.p_advance_a)}</b></span>
+                  <span><small>{match.team_b ? teamName(match.team_b) : "Team B"}</small><b>{optionalPct(match.p_advance_b)}</b></span>
+                </div>
+                <dl className="knockout-meta">
+                  <div><dt>Source</dt><dd>{match.odds_source === "model" ? "Model" : match.odds_source ?? "—"}</dd></div>
+                  <div><dt>90-min draw</dt><dd>{optionalPct(match.p_draw)}</dd></div>
+                  <div><dt>xG</dt><dd>{decimal.format(match.lambda_a ?? 0)} / {decimal.format(match.lambda_b ?? 0)}</dd></div>
+                  <div><dt>90-min mode</dt><dd>{match.most_likely_score ?? "—"}</dd></div>
+                </dl>
+              </div>
+            ) : resolvedA && resolvedB ? (
+              <p className="knockout-odds muted">Model odds are missing from this frontend data export.</p>
+            ) : (
+              <p className="knockout-odds muted">Odds available once both sides are known.</p>
+            )}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
 function App() {
   const [data, setData] = useState<FrontendData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -223,7 +270,7 @@ function App() {
         if (!response.ok) throw new Error(`Could not load predictions (${response.status})`);
         return response.json() as Promise<FrontendData>;
       })
-      .then((payload) => setData({ ...payload, schema_version: payload.schema_version ?? "1.0", matches: payload.matches ?? payload.round_1_predictions ?? [], teams: payload.teams ?? [], market_comparison: payload.market_comparison ?? [] }))
+      .then((payload) => setData({ ...payload, schema_version: payload.schema_version ?? "1.0", matches: payload.matches ?? payload.round_1_predictions ?? [], round_of_32: payload.round_of_32 ?? [], teams: payload.teams ?? [], market_comparison: payload.market_comparison ?? [] }))
       .catch((reason: unknown) => {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
         setError(reason instanceof Error ? reason.message : "Could not load predictions");
@@ -257,6 +304,7 @@ function App() {
   const tabs: { id: Tab; label: string }[] = [
     { id: "basic", label: "Basic predictions" },
     { id: "matches", label: "Matches" },
+    { id: "knockout", label: "Knockout" },
     { id: "teams", label: "Teams" },
     ...(data.market_comparison.length ? [{ id: "market" as Tab, label: "Market" }] : []),
   ];
@@ -315,6 +363,8 @@ function App() {
         ) : null}
 
         {tab === "matches" ? <section><div className="page-title"><h1>Match predictions</h1><p>Recommended pool scores and model probabilities for every group-stage fixture.</p></div><div className="controls"><label>Group<select value={group} onChange={(event) => setGroup(event.target.value)}><option value="all">All groups</option>{groups.map((value) => <option key={value}>{value}</option>)}</select></label><label>Round<select value={round} onChange={(event) => setRound(event.target.value)}><option value="all">All rounds</option>{rounds.map((value) => <option key={value}>{value}</option>)}</select></label><span>{filteredMatches.length} matches</span></div><MatchesTable matches={filteredMatches} showExactScore={showExactScore} /><LargestDeltas matches={filteredMatches} /></section> : null}
+
+        {tab === "knockout" ? <section><div className="page-title"><h1>Round of 32</h1><p>Known knockout pairings from the bracket, with unresolved sides shown as qualification slots.</p></div><KnockoutTable matches={data.round_of_32 ?? []} /></section> : null}
 
         {tab === "teams" ? <section><div className="page-title"><h1>Team probabilities</h1><p>Progression odds across every stage of the competition.</p></div><div className="controls"><label>Rank teams by<select value={teamSort} onChange={(event) => setTeamSort(event.target.value as TeamSort)}><option value="p_champion">Champion probability</option><option value="p_top4">Top 4 probability</option><option value="p_final">Final probability</option></select></label></div><TeamsTable teams={sortedTeams} /></section> : null}
 

@@ -688,9 +688,11 @@ def _resolve_bracket_slot(
     results_by_match_id: dict[str, KnockoutResult],
     used_third_teams: set[str],
     best3_assignments: dict[str, Team] | None = None,
+    fixed_team_name: str | None = None,
 ) -> Team:
     if len(slot) == 2 and slot[0] in GROUP_IDS and slot[1] in "123":
-        return resolve_group_slot(slot, group_stage_result, used_third_teams)
+        resolved = resolve_group_slot(slot, group_stage_result, used_third_teams)
+        return teams_by_name[fixed_team_name] if fixed_team_name == resolved.name else resolved
     if slot[0] in {"W", "L"} and slot[1:].isdigit():
         result = results_by_match_id[slot[1:]]
         team_name = result.winner if slot[0] == "W" else result.loser
@@ -703,17 +705,36 @@ def _resolve_bracket_slot(
 def _assign_best3_slots(
     definitions: list[BracketMatchDefinition],
     group_stage_result: GroupStageResult,
+    all_teams_by_name: dict[str, Team],
 ) -> dict[str, Team]:
     """Wijs BEST3-slots rank-first toe zonder een later slot onmogelijk te maken."""
 
-    slots = [
-        slot
-        for definition in definitions
-        for slot in (definition.slot_a, definition.slot_b)
-        if slot.startswith("BEST3:")
-    ]
-    teams_by_name = {team.name: team for team in group_stage_result.qualified_teams}
+    qualified_teams_by_name = {team.name: team for team in group_stage_result.qualified_teams}
     ranked = sorted(group_stage_result.best_third_placed, key=_standing_sort_key)
+    ranked_by_team = {row.team: row for row in ranked}
+    preassigned: dict[str, Team] = {}
+    preused: set[str] = set()
+    all_slots: list[str] = []
+    slots: list[str] = []
+    for definition in definitions:
+        for slot, fixed_team in (
+            (definition.slot_a, definition.fixed_team_a),
+            (definition.slot_b, definition.fixed_team_b),
+        ):
+            if not slot.startswith("BEST3:"):
+                continue
+            all_slots.append(slot)
+            allowed = set(slot.removeprefix("BEST3:").split("/"))
+            if (
+                fixed_team is not None
+                and fixed_team in all_teams_by_name
+                and fixed_team in ranked_by_team
+                and qualified_teams_by_name[fixed_team].group in allowed
+            ):
+                preassigned[slot] = all_teams_by_name[fixed_team]
+                preused.add(fixed_team)
+                continue
+            slots.append(slot)
 
     def search(index: int, used: set[str], assigned: dict[str, Team]) -> dict[str, Team] | None:
         if index == len(slots):
@@ -721,7 +742,7 @@ def _assign_best3_slots(
         slot = slots[index]
         allowed = set(slot.removeprefix("BEST3:").split("/"))
         for row in ranked:
-            team = teams_by_name[row.team]
+            team = qualified_teams_by_name[row.team]
             if team.group not in allowed or team.name in used:
                 continue
             result = search(
@@ -733,7 +754,10 @@ def _assign_best3_slots(
                 return result
         return None
 
-    assignments = search(0, set(), {})
+    assignments = search(0, preused, preassigned)
+    if assignments is None and preassigned:
+        slots = all_slots
+        assignments = search(0, set(), {})
     if assignments is None:
         raise ValueError("no valid assignment exists for all BEST3 bracket slots")
     return assignments
@@ -749,7 +773,11 @@ def _simulate_bracket_with_results(
     results_by_match_id: dict[str, KnockoutResult] = {}
     used_third_teams: set[str] = set()
     round_results: dict[str, list[KnockoutResult]] = {}
-    best3_assignments = _assign_best3_slots(bracket.round_of_32, group_stage_result)
+    best3_assignments = _assign_best3_slots(
+        bracket.round_of_32,
+        group_stage_result,
+        teams_by_name,
+    )
 
     def simulate_definitions(
         key: str, definitions: list[BracketMatchDefinition]
@@ -763,6 +791,7 @@ def _simulate_bracket_with_results(
                 results_by_match_id,
                 used_third_teams,
                 best3_assignments,
+                definition.fixed_team_a,
             )
             team_b = _resolve_bracket_slot(
                 definition.slot_b,
@@ -771,6 +800,7 @@ def _simulate_bracket_with_results(
                 results_by_match_id,
                 used_third_teams,
                 best3_assignments,
+                definition.fixed_team_b,
             )
             if team_a.name == team_b.name:
                 raise ValueError(

@@ -97,6 +97,25 @@ td small { margin-top: 5px; display: block; color: #718078; }
 .delta-list article { padding: 16px; display: grid; grid-template-columns: minmax(220px, 1fr) 80px 120px 120px 96px; gap: 16px; background: #faf9f5; }
 .delta-list article > span { color: #607169; }
 .delta-list article > b { color: #34735d; text-align: right; white-space: nowrap; }
+.knockout-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.knockout-card { padding: 18px; display: grid; gap: 12px; background: #faf9f5; border: 1px solid #d9ddd6; }
+.knockout-id { color: #718078; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.knockout-team { padding: 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: center; background: #edf0e8; border-left: 3px solid #bdc5bf; }
+.knockout-team.resolved { background: #e6edcf; border-left-color: #34735d; }
+.knockout-team strong { font-size: 17px; line-height: 1.25; }
+.knockout-team small { margin-top: 6px; color: #718078; }
+.knockout-vs { color: #718078; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.knockout-odds { padding-top: 14px; border-top: 1px solid #e1e3dd; }
+.advance-heading { margin-bottom: 8px; color: #34735d; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.knockout-odds.muted { margin: 0; color: #718078; font-size: 13px; }
+.advance-line { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.advance-line span { padding: 12px; display: flex; flex-direction: column; gap: 5px; background: #edf0e8; border: 1px solid #d9ddd6; }
+.advance-line small { color: #607169; font-size: 12px; line-height: 1.25; }
+.advance-line b { color: #15251f; font-size: 26px; line-height: 1; }
+.knockout-meta { margin: 12px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+.knockout-meta div { min-width: 0; }
+.knockout-meta dt { color: #718078; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.knockout-meta dd { margin: 3px 0 0; color: #33443d; font-size: 13px; font-weight: 700; }
 .center-state { min-height: 100vh; margin: 0; display: grid; place-content: center; justify-items: center; text-align: center; }
 .center-state h1 { margin-top: 24px; font-size: 42px; }
 .center-state p { color: #65756e; }
@@ -126,6 +145,7 @@ footer { padding: 28px 4vw; display: flex; justify-content: space-between; color
   .detail-grid { grid-template-columns: 1fr; }
   .delta-list article { grid-template-columns: 1fr 1fr; }
   .delta-list article strong { grid-column: 1 / -1; }
+  .knockout-grid { grid-template-columns: 1fr; }
   .exact-scores div { grid-template-columns: 45px 1fr; }
   .exact-scores div span:last-child { grid-column: 2; }
   .table-shell:has(.match-row) { overflow: visible; border: 0; background: transparent; }
